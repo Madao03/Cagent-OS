@@ -1,5 +1,7 @@
 # CagentOS
 
+> English | [中文](README.zh-CN.md)
+>
 > **Status: Work in Progress (Phase 1.5)**
 > A self-contained financial research agent operating system built from scratch — not a LangChain wrapper.
 
