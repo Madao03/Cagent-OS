@@ -431,7 +431,7 @@ category: research
 ### Forward PE / EPS 数据质量
 
 - `DataWall` 自动交叉验证 YFinanceAdapter 和 FinSkillAdapter 的 PE 数据
-- fin-skill MCP `pe_forward` 来自 data vendor Quote API（非 CIQ），可能与 yfinance 的 `forwardPE` 有差异
+- 不同数据源可能使用不同的底层供应商，Forward PE 可能存在显著差异
 - 单一源不可用时，交叉验证器自动回退到可用源，置信度 0.5
 
 ### 工具使用原则
