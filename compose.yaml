@@ -1,0 +1,42 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - OPENROUTER_BASE_URL=${OPENROUTER_BASE_URL}
+      - DEFAULT_MODEL_ALIAS=${DEFAULT_MODEL_ALIAS:-claude-balanced}
+      - SQLITE_DATA_DIR=/app/data
+      - CONVERSATION_DB_PATH=/app/data/conversations.db
+      - MEMORY_DB_PATH=/app/data/memory.db
+      - TRACE_DB_PATH=/app/data/trace.db
+      - MCP_SERVERS_CONFIG=/app/config/mcp_servers.json
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - DEBUG=${DEBUG:-false}
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+    restart: unless-stopped
+
+  # PostgreSQL — stage 1+ for user/auth/session persistence
+  # postgres:
+  #   image: postgres:16
+  #   environment:
+  #     POSTGRES_USER: cage
+  #     POSTGRES_PASSWORD: ${DB_PASSWORD}
+  #     POSTGRES_DB: cagent_os
+  #   volumes:
+  #     - pgdata:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #
+  # Redis — stage 1+ for task queue / rate limiting
+  # redis:
+  #   image: redis:alpine
+  #   ports:
+  #     - "6379:6379"
+
+# volumes:
+#   pgdata:

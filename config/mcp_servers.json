@@ -1,0 +1,36 @@
+{
+  "servers": [
+    {
+      "name": "cmc-mcp",
+      "transport": "streamable-http",
+      "url": "https://mcp.coinmarketcap.com/mcp",
+      "tier": 1,
+      "enabled": false,
+      "auth_header": "X-CMC-MCP-API-KEY",
+      "auth_env": "CMC_API_KEY"
+    },
+    {
+      "name": "fin-skill-mcp",
+      "transport": "stdio",
+      "command": "/path/to/your/mcp-venv/bin/python",
+      "args": ["/path/to/your/mcp-server/mcp_main.py"],
+      "tier": 2,
+      "enabled": true,
+      "alt_transport": {
+        "type": "streamable-http",
+        "url": "http://localhost:8102/mcp",
+        "env": "MCP_TRANSPORT=streamable-http"
+      }
+    },
+    {
+      "name": "jin10-mcp",
+      "transport": "streamable-http",
+      "url": "https://mcp.jin10.com/mcp",
+      "tier": 2,
+      "enabled": false,
+      "auth_header": "Authorization",
+      "auth_prefix": "Bearer ",
+      "auth_env": "JIN10_API_KEY"
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cagent-os"
+version = "0.1.0"
+description = "CagentOS — self-contained financial research agent operating system"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Madao03"},
+]
+dependencies = [
+  "fastapi>=0.115.0",
+  "openai>=1.65.0",
+  "openpyxl>=3.1.0",
+  "pydantic>=2.10.0",
+  "PyYAML>=6.0.2",
+  "httpx>=0.28.0",
+  "requests>=2.32.0",
+  "uvicorn>=0.34.0",
+  "aiosqlite>=0.20.0",
+  "mcp>=1.0.0",
+  "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[project.scripts]
+cagent-os = "cagent_os.interfaces.cli:main"
+cagent-os-server = "cagent_os.interfaces.http.app:create_app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
