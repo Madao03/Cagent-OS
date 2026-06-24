@@ -2,7 +2,7 @@
 
 > English | [中文](README.zh-CN.md)
 >
-> **Status: Work in Progress (Phase 1.5)**
+> **Status: Phase 2 Complete ✅ — 9 skills · 19 tools · 3 data sources · Golden Cases benchmark**
 > A self-contained financial research agent operating system built from scratch — not a LangChain wrapper.
 
 CagentOS is a Python framework for building AI agents that perform financial research. It implements a ReAct loop with event sourcing at its core, surrounded by a plugin-based tool system, cross-session memory, and a data integrity layer designed specifically for financial data.
@@ -30,9 +30,9 @@ AgentRuntime (ReAct loop + Event Sourcing)
   Plugins: financial · web · read · write · skills · bash
         ↑
   Cross-cutting:
-    Ⓐ Memory (hot ≤500 chars in prompt / cold in SQLite, 3 tables)
-    Ⓑ Observability (event stream = trace, no separate logging)
-    Ⓒ Data Integrity Wall (multi-source fetch → variance check → cross-validate)
+    Ⓐ Memory (hot ≤500 chars / cold SQLite 3-tables / LLM contradiction detection)
+    Ⓑ Observability (TraceWriter + TraceReader query API / DICA 4-dimension tagging)
+    Ⓒ Data Integrity Wall (FRED + Jin10 + yfinance 3-source / variance >5% alert / cross-validation)
 ```
 
 ### Core mechanisms
@@ -67,29 +67,33 @@ cagent-os
 - **AgentRuntime**: ReAct loop with iteration limits and graceful failure degradation
 - **ToolRegistry + ToolGuard + ArgumentChecker**: plugin-based tools with JSON Schema validation and allow-list authorization
 - **EventStore**: SQLite-backed event sourcing with WAL mode for concurrent reads
+- **TraceReader**: Conversation history query API (list/summary/timeline/count) + DICA 4-dimension tagging
 - **8 LLM providers**: OpenRouter, DeepSeek, OpenAI, Anthropic, Groq, SiliconFlow, Together, Custom
 - **MCP Client**: Multi-transport session manager (Anthropic official SDK)
-- **Memory system**: Hot memory (≤500 chars in system prompt) + Cold memory (SQLite, 3 tables: user_facts / investment_theses / contradiction_log)
-- **Data Integrity Wall**: Multi-source fetch → variance detection (>5% alert) → cross-validation → VerifiedMetric
+- **Memory system**: Hot memory (≤500 chars in system prompt) + Cold memory (SQLite 3 tables) + **LLM contradiction detection**
+- **Data Integrity Wall**: FRED + Jin10 MCP + yfinance 3-source → variance detection (>5% alert) → cross-validation → VerifiedMetric
+- **Browser fetch**: Playwright + Readability.js + Stealth anti-bot — fetches CDN-protected institutional research sites
+- **Skill Schemas**: Pydantic v2 I/O schemas for 6 core skills + State 3-layer separation + permission matrix
+- **Golden Cases**: 3 evaluation benchmarks (triage/macro/NVDA) + 6-dimension rubric framework
 - **CLI + HTTP dual entry**: REPL for local, FastAPI + SSE for web
 
 ## What's NOT included (yet)
 
-- Multi-agent orchestration (Phase 2+, schemas defined but not wired)
+- Multi-agent orchestration (Phase 4, schemas defined but not wired)
 - Web UI (Phase 4)
-- Evaluation suite / Golden Cases (Phase 2-3)
+- Semantic retrieval / RAG / DeepEval auto-evaluation (Phase 3)
 - Self-improving flywheel / model fine-tuning (Phase 5)
-- Unit tests (work in progress)
 
 ## Skills
 
-8 investment research skills are included as `.md` templates loaded dynamically by the SkillsPlugin:
+**9** investment research skills included as `.md` templates loaded dynamically:
 
-- `us-stock-analysis` — Three-tier analysis (normal / abnormal / black-box) + cyclical trap detection
-- `macro-analysis` — Macro → risk-asset transmission
+- `us-stock-analysis` — Three-tier analysis (normal/abnormal/black-box) + cyclical trap detection
+- `macro-analysis` — **Rewritten** time-horizon × indicator-weight framework + PMI sub-index + CPI-PPI spread
 - `crypto-analysis` — Crypto three-tier analysis + cycle positioning
-- `read-later` — L1/L2/L3 progressive disclosure for URL archiving
-- `content-triage` — Five-dimension scoring (A/B/C classification) + append-only ledger
+- `read-later` — L1/L2/L3 progressive disclosure + Obsidian image localization
+- `content-triage` — Five-dimension scoring (A/B/C) + append-only ledger (29 entries accumulated)
+- `content-assetize` — **New** A-class articles → facts/opinions/frameworks structured assets
 - `crypto-stock-analysis` — MSTR/COIN/miners mNAV + STRC flywheel
 - `tech-sector-bridge` — Macro → tech sector transmission matrix
 - `crypto-funds-flow-analysis` — Stablecoins / CEX / TVL / leverage
@@ -101,21 +105,21 @@ cagent-os
 | 0 | Foundation: Runtime + Plugin + LLM + CLI | ✅ Done |
 | 1 | Knowledge entry: read-later + triage + data wall | ✅ Done |
 | 1.5 | Runtime normalization + open-source prep | ✅ Done |
-| 2 | Knowledge engine + Golden Cases + memory contradiction detection | 🔜 Next |
-| 3 | Semantic retrieval (RAG) + evaluation suite (DeepEval) | Planned |
+| 2 | Knowledge engine + Golden Cases + Schema + Trace + Memory | ✅ Done (2026-06-25) |
+| 3 | Semantic retrieval (RAG) + evaluation suite (DeepEval auto) | 🔜 Next |
 | 4 | Multi-agent DAG + Web UI + Langfuse trace | Planned |
 | 5 | Self-improving flywheel (SFT/DPO) | Future |
 
 ## Design decisions
 
 **Why Event Sourcing instead of a messages table?**
-Every state change (user input, tool call, tool result, assistant reply) is an immutable `JournalEntry`. The `TranscriptReplayer` rebuilds the LLM transcript from events on each turn. Benefits: replayable debugging, natural trace, crash recovery.
+Every state change is an immutable `JournalEntry`. The `TranscriptReplayer` rebuilds the LLM transcript from events on each turn. Benefits: replayable debugging, natural trace, crash recovery.
 
 **Why a ToolGuard instead of trusting the LLM?**
-LLMs hallucinate tool names. The guard enforces a per-agent allow-list. If the LLM returns a tool name not in the list, the call is rejected before it reaches the dispatcher — no silent mis-routing.
+LLMs hallucinate tool names. The guard enforces a per-agent allow-list. If the LLM returns a tool name not in the list, the call is rejected before reaching the dispatcher.
 
 **Why a Data Integrity Wall?**
-Real case: NVDA Forward PE from yfinance = 35.2, from a second source = 18.5 — a 47% discrepancy caused by different data vendors. The wall fetches from multiple sources in parallel, flags variance >5%, and uses 2/3 consensus to pick the trusted value.
+Real case: NVDA Forward PE from yfinance = 35.2, from a second source = 18.5 — 47% discrepancy. The wall fetches from multiple sources in parallel, flags variance >5%, and uses 2/3 consensus. Now augmented with **FRED** (21 series) and **Jin10 MCP** as additional data sources.
 
 ## Tech stack
 
@@ -124,11 +128,13 @@ Real case: NVDA Forward PE from yfinance = 35.2, from a second source = 18.5 —
 | Language | Python ≥ 3.11 |
 | Framework | FastAPI, Pydantic v2 |
 | Database | SQLite (aiosqlite + WAL) |
-| LLM | DeepSeek V4 Pro (default), 7 others supported |
+| LLM | DeepSeek V4 Pro (default), 7 others |
+| Macro data | FRED API (21 series) + Jin10 MCP (quotes/calendar/flash) |
 | MCP | Anthropic official `mcp` SDK |
+| Browser fetch | Playwright + Readability.js (WSL bridge) |
+| Evaluation | Golden Cases × 3 (6-dimension rubric, manual) |
 | CLI | argparse-based REPL |
 | HTTP | FastAPI + SSE streaming |
-| Testing | pytest (WIP) |
 
 ## License
 

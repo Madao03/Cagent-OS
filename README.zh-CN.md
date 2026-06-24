@@ -1,6 +1,6 @@
 # CagentOS
 
-> **状态:开发中 (阶段 1.5)**
+> **状态:阶段 2 完成 ✅ — 9 个技能 · 19 个工具 · 3 个数据源 · Golden Cases 评测基准**
 > 一个从零搭建的金融投研 Agent 操作系统 —— 不是 LangChain 包装器。
 >
 > [English](README.md) | 中文
@@ -30,9 +30,9 @@ AgentRuntime (ReAct 循环 + 事件溯源)
   Plugins: financial · web · read · write · skills · bash
         ↑
   横切关注点:
-    Ⓐ 记忆 (热记忆 ≤500 字注入 prompt / 冷记忆 SQLite 三表)
-    Ⓑ 可观测性 (事件流即 trace,无需额外日志系统)
-    Ⓒ 数据防线 (多源采集 → 方差检测 → 交叉验证)
+    Ⓐ 记忆 (热记忆 ≤500 字注入 / 冷记忆 SQLite 三表 / LLM 矛盾检测)
+    Ⓑ 可观测性 (TraceWriter + TraceReader 查询API / DICA 四维标注)
+    Ⓒ 数据防线 (FRED + 金十 + yfinance 三源 / 方差检测 >5% / 交叉验证)
 ```
 
 ### 核心机制
@@ -67,30 +67,33 @@ cagent-os
 - **AgentRuntime**:ReAct 循环 + 迭代上限 + 优雅失败降级
 - **ToolRegistry + ToolGuard + ArgumentChecker**:插件化工具 + JSON Schema 校验 + 白名单授权
 - **EventStore**:SQLite 事件溯源,WAL 模式支持并发读
+- **TraceReader**:对话历史查询 API (list/summary/timeline/count) + DICA 四维标注
 - **8 个 LLM provider**:OpenRouter / DeepSeek / OpenAI / Anthropic / Groq / SiliconFlow / Together / Custom
 - **MCP Client**:多传输协议 session 管理器(Anthropic 官方 SDK)
-- **记忆系统**:热记忆(≤500 字注入 system prompt)+ 冷记忆(SQLite 三表:user_facts / investment_theses / contradiction_log)
-- **数据防线**:多源并行采集 → 方差检测(>5% 告警)→ 交叉验证 → VerifiedMetric
-- **通用浏览器抓取**:Playwright + Readability.js,自动绕过 Vercel/Cloudflare 反爬,无法用 HTTP 访问的机构研报站也能直接抓取
+- **记忆系统**:热记忆(≤500 字注入 system prompt)+ 冷记忆(SQLite 三表)+ **LLM 矛盾检测** (新分析 vs 历史 thesis)
+- **数据防线**:FRED + 金十 MCP + yfinance 三源 → 方差检测(>5% 告警)→ 交叉验证 → VerifiedMetric
+- **通用浏览器抓取**:Playwright + Readability.js + Stealth 反反爬,Vercel/Cloudflare/CDN 保护站点直接可读
+- **Skill Schema**:6 个核心 skill 的 Pydantic v2 I/O Schema + State 三层分离 + 权限标签矩阵
+- **Golden Cases**:3 个评测基准 (triage/macro/NVDA) + 六维 Rubric 框架
 - **CLI + HTTP 双入口**:REPL 用于本地,FastAPI + SSE 用于 web
 
 ## 不包含什么(暂未实现)
 
-- 多智能体编排(阶段 2+,Schema 已定义但未接入)
+- 多智能体编排(阶段 4,Schema 已定义但未接入)
 - Web UI(阶段 4)
-- 评测体系 / Golden Cases(阶段 2-3)
+- 语义检索 RAG / DeepEval 自动化评测(阶段 3)
 - 自进化飞轮 / 模型微调(阶段 5)
-- 单元测试(进行中)
 
 ## Skills
 
-包含 8 个投研技能,以 `.md` 模板形式由 SkillsPlugin 动态加载:
+包含 **9 个** 投研技能,以 `.md` 模板形式由 SkillsPlugin 动态加载:
 
 - `us-stock-analysis` — 美股三层分析(常态/非常态/黑箱)+ 周期股陷阱检测
-- `macro-analysis` — 宏观 → 风险资产传导
+- `macro-analysis` — **重写** 时间周期×指标权重 + PMI 子项拆解 + CPI-PPI 剪刀差 + 就业结构
 - `crypto-analysis` — Crypto 三层分析 + 周期定位
-- `read-later` — L1/L2/L3 渐进式披露,用于 URL 归档
-- `content-triage` — 五维锚点评分(A/B/C 分诊)+ append-only 台账
+- `read-later` — L1/L2/L3 渐进式披露 + Obsidian 图片本地化
+- `content-triage` — 五维锚点评分(A/B/C 分诊)+ append-only 台账 (29 条积累)
+- `content-assetize` — **新建** A 类文章→事实/观点/框架 三类结构化资产
 - `crypto-stock-analysis` — MSTR/COIN/矿企 mNAV + STRC 飞轮
 - `tech-sector-bridge` — 宏观 → 科技板块传导矩阵
 - `crypto-funds-flow-analysis` — 稳定币 / CEX / TVL / 杠杆资金面
@@ -102,8 +105,8 @@ cagent-os
 | 0 | 地基期:Runtime + Plugin + LLM + CLI | ✅ 完成 |
 | 1 | 知识入口:read-later + 分诊 + 数据防线 | ✅ 完成 |
 | 1.5 | Runtime 规范化 + 开源准备 | ✅ 完成 |
-| 2 | 知识引擎 + Golden Cases + 记忆矛盾检测 | 🔜 下一步 |
-| 3 | 语义检索 (RAG) + 评测体系 (DeepEval) | 规划中 |
+| 2 | 知识引擎 + Golden Cases + Schema + Trace + 矛盾检测 | ✅ 完成 (2026-06-25) |
+| 3 | 语义检索 (RAG) + 评测体系 (DeepEval 自动化) | 🔜 下一步 |
 | 4 | 多 Agent DAG + Web UI + Langfuse 全链路 | 规划中 |
 | 5 | 自进化飞轮 (SFT/DPO) | 远期 |
 
@@ -116,7 +119,7 @@ cagent-os
 LLM 会幻觉工具名。Guard 强制执行 per-agent 白名单。如果 LLM 返回了不在白名单里的工具名,调用在到达 dispatcher 之前就被拒绝 —— 不会静默误路由。
 
 **为什么有数据防线?**
-真实案例:NVDA Forward PE,yfinance 返回 35.2,第二个数据源返回 18.5 —— 47% 的差异,原因是数据供应商不同。数据防线并行从多源采集,标记 >5% 的方差,用 2/3 共识决策选出可信值。
+真实案例:NVDA Forward PE,yfinance 返回 35.2,第二个数据源返回 18.5 —— 47% 的差异,原因是数据供应商不同。数据防线并行从多源采集,标记 >5% 的方差,用 2/3 共识决策选出可信值。现已接入 **FRED**(21 系列)和**金十 MCP** 作为额外数据源。
 
 ## 技术栈
 
@@ -126,10 +129,12 @@ LLM 会幻觉工具名。Guard 强制执行 per-agent 白名单。如果 LLM 返
 | 框架 | FastAPI, Pydantic v2 |
 | 数据库 | SQLite (aiosqlite + WAL) |
 | LLM | DeepSeek V4 Pro(默认),另有 7 个 provider |
+| 宏观数据 | FRED API (21 系列) + 金十 MCP (行情/日历/快讯) |
 | MCP | Anthropic 官方 `mcp` SDK |
+| 浏览器抓取 | Playwright + Readability.js (WSL 桥接) |
+| 评测 | Golden Cases × 3 (六维 Rubric 手动) |
 | CLI | argparse REPL |
 | HTTP | FastAPI + SSE 流式 |
-| 测试 | pytest (WIP) |
 
 ## License
 
