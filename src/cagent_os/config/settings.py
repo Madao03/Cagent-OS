@@ -32,6 +32,7 @@ class Settings:
     search_engine_id: str = ""
     tavily_api_key: str = ""
     jina_api_key: str = ""
+    fred_api_key: str = ""
     market_http_base_url: str = ""
     market_http_token: str = ""
     fmp_base_url: str = ""
@@ -78,6 +79,7 @@ class Settings:
             search_engine_id=constants.SEARCH_ENGINE_ID,
             tavily_api_key=constants.TAVILY_API_KEY,
             jina_api_key=constants.JINA_API_KEY,
+            fred_api_key=constants.FRED_API_KEY,
             market_http_base_url=constants.MARKET_HTTP_BASE_URL,
             market_http_token=constants.MARKET_HTTP_TOKEN,
             fmp_base_url=constants.FMP_BASE_URL,

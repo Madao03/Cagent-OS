@@ -27,7 +27,7 @@
       "transport": "streamable-http",
       "url": "https://mcp.jin10.com/mcp",
       "tier": 2,
-      "enabled": false,
+      "enabled": true,
       "auth_header": "Authorization",
       "auth_prefix": "Bearer ",
       "auth_env": "JIN10_API_KEY"

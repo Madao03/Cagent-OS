@@ -1,5 +1,14 @@
 """Structured trace logging — SQLite-backed event stream.
 
+DICA (Detect-Interaction-Context-Answer) cold optimization framework:
+  Each run produces a trace that captures the four DICA dimensions:
+    D — Detect: What triggered this? (user_query in run_started)
+    I — Interaction: What happened? (tool calls, skill loads, LLM rounds)
+    C — Context: What was the state? (memory injects, watchlist state)
+    A — Answer: What was the result? (final_output in run_completed)
+
+  Phase 2b: Capture the right data. Phase 5: Use for SFT/DPO fine-tuning.
+
 Stage 0: SQLite JSON log.
 Stage 3+: migrate to Langfuse (replace the store, keep the write API).
 """
@@ -63,3 +72,30 @@ class TraceWriter:
             ),
         )
         await self._db.commit()
+
+    # -- DICA-aligned convenience methods -------------------------------------
+
+    async def log_query(self, conversation_id: str, user_query: str, **extra: Any) -> None:
+        """Log the user's query (DICA: Detect). Call at run start."""
+        await self.log(
+            conversation_id=conversation_id,
+            agent_name="harness",
+            event_type="run_started",
+            user_query=user_query,
+            **extra,
+        )
+
+    async def log_completion(
+        self, conversation_id: str, final_output: str, **extra: Any,
+    ) -> None:
+        """Log the agent's final response (DICA: Answer). Call at run end."""
+        # Truncate to avoid bloating the database
+        truncated = final_output[:2000] if len(final_output) > 2000 else final_output
+        await self.log(
+            conversation_id=conversation_id,
+            agent_name="harness",
+            event_type="run_completed",
+            final_output=truncated,
+            final_output_length=len(final_output),
+            **extra,
+        )

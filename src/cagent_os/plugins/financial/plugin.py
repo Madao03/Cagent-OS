@@ -26,10 +26,12 @@ FINANCIAL_WEBSEARCH_CAPABILITY_ID = "financial.websearch"
 
 
 class FinancialPlugin(Plugin):
-    def __init__(self, settings: Settings, toolkit: FinancialToolkit | None = None, data_layer: Any = None) -> None:
+    def __init__(self, settings: Settings, toolkit: FinancialToolkit | None = None, data_layer: Any = None, trace_db_path: str = "data/trace.db", memory_api: Any = None) -> None:
         self._settings = settings
         self._toolkit = toolkit or build_financial_toolkit(settings)
         self._data_layer = data_layer
+        self._trace_db_path = trace_db_path
+        self._memory_api = memory_api
 
     def manifest(self) -> PluginSpec:
         capabilities = [
@@ -92,12 +94,112 @@ class FinancialPlugin(Plugin):
                 required=["ticker"],
             ),
             self._manifest(
+                "financial.trace.query",
+                "Query the agent's own run history from the trace database. "
+                "Returns conversation summaries with query text, outcome, tool counts, "
+                "and final output previews. Use this to review past analyses, debug "
+                "failed runs, or find patterns across conversations. "
+                "Supports: list (recent N), summary (one conv_id), count (stats).",
+                {
+                    "type": "object",
+                    "properties": {
+                        "action": {
+                            "type": "string",
+                            "description": "Query action: 'list' (recent conversations), 'summary' (one conversation by id), 'count' (total runs)",
+                            "default": "list",
+                        },
+                        "conversation_id": {
+                            "type": "string",
+                            "description": "Conversation ID for 'summary' action",
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "default": 10,
+                            "description": "Max results for 'list' action",
+                        },
+                    },
+                    "required": ["action"],
+                },
+            ),
+            self._manifest(
                 "financial.data.health_check",
                 "Check the availability of all registered financial data sources (yfinance, fin-skill MCP). "
                 "Returns each source's status (available/unavailable), latency, and error messages if any. "
                 "Call this BEFORE starting a multi-step analysis to know which data sources are reliable right now. "
                 "If a source is down, use the available ones and note the gap in your output.",
                 {},
+            ),
+            self._manifest(
+                "financial.fred",
+                "Query FRED (Federal Reserve Economic Data) for macro indicators. "
+                "Provides 21 key US economic series: ONRRP, TGA, bank reserves, Fed balance sheet, "
+                "Treasury yields (3M/6M/1Y/2Y/10Y), nonfarm payrolls, unemployment, JOLTS, "
+                "labor participation, avg hourly earnings, CPI, PPI, core PCE, GDP, M1, M2. "
+                "Fills critical gaps in short-term liquidity analysis. "
+                "Use named metrics like 'onrrp', 'cpi', 'unemployment_rate' or 'custom' with a FRED series_id.",
+                {
+                    "type": "object",
+                    "properties": {
+                        "metric": {
+                            "type": "string",
+                            "description": "Named metric (onrrp, tga, bank_reserves, fed_balance_sheet, treasury_3m, treasury_6m, treasury_1y, treasury_2y, treasury_10y, yield_spread_10y2y, nonfarm_payrolls, unemployment_rate, jolts_openings, participation_rate, avg_hourly_earnings, cpi, ppi, core_pce, gdp, m1, m2) or 'custom' with series_id. Also accepts raw FRED series_id directly.",
+                        },
+                        "series_id": {
+                            "type": "string",
+                            "description": "FRED series ID (only needed if metric='custom' or using a raw series_id)",
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "default": 1,
+                            "description": "Number of observations to return (default 1 = latest)",
+                        },
+                    },
+                    "required": ["metric"],
+                },
+            ),
+            self._manifest(
+                "financial.memory.save_thesis",
+                "Save an investment thesis to memory for future contradiction detection. "
+                "After completing a stock/crypto/macro analysis, save key conclusions "
+                "with ticker and thesis_type (bullish/bearish/neutral). These are later "
+                "checked for contradictions when new analyses are run on the same ticker.",
+                {
+                    "type": "object",
+                    "properties": {
+                        "ticker": {"type": "string", "description": "Ticker symbol (NVDA, BTC, etc.)"},
+                        "thesis_type": {"type": "string", "description": "bullish | bearish | neutral"},
+                        "content": {"type": "string", "description": "The core thesis statement (1-3 sentences)"},
+                    },
+                    "required": ["ticker", "thesis_type", "content"],
+                },
+            ),
+            self._manifest(
+                "financial.memory.query_theses",
+                "Query stored investment theses for a ticker. Returns all historical "
+                "theses saved for that ticker, ordered by most recent first. "
+                "Use this before writing a new analysis to check what you previously believed.",
+                {
+                    "type": "object",
+                    "properties": {
+                        "ticker": {"type": "string", "description": "Ticker symbol to query"},
+                    },
+                    "required": ["ticker"],
+                },
+            ),
+            self._manifest(
+                "financial.memory.check_contradictions",
+                "Check if a new analysis conclusion contradicts any stored theses. "
+                "Returns a list of detected contradictions (old thesis vs new claim). "
+                "Call this AFTER completing an analysis to catch belief drift. "
+                "If contradictions are found, surface them to the user for resolution.",
+                {
+                    "type": "object",
+                    "properties": {
+                        "analysis_output": {"type": "string", "description": "The full analysis text to check"},
+                        "tickers": {"type": "array", "items": {"type": "string"}, "description": "Tickers mentioned in the analysis"},
+                    },
+                    "required": ["analysis_output", "tickers"],
+                },
             ),
             self._manifest(
                 "financial.memory.append",
@@ -164,6 +266,16 @@ class FinancialPlugin(Plugin):
             return self._handle_verified_quote(arguments)
         if capability_id == "financial.data.health_check":
             return self._handle_health_check()
+        if capability_id == "financial.trace.query":
+            return self._handle_trace_query(arguments)
+        if capability_id == "financial.fred":
+            return self._handle_fred(arguments)
+        if capability_id == "financial.memory.save_thesis":
+            return self._handle_save_thesis(arguments)
+        if capability_id == "financial.memory.query_theses":
+            return self._handle_query_theses(arguments)
+        if capability_id == "financial.memory.check_contradictions":
+            return self._handle_check_contradictions(arguments)
         if capability_id == "financial.memory.append":
             return self._toolkit.append_memory(
                 user_id=str(arguments.get("user_id", "")),
@@ -207,6 +319,197 @@ class FinancialPlugin(Plugin):
             "warnings": warnings,
             "data_source": "cross_validated",
         }
+
+    def _handle_fred(self, arguments: dict[str, Any]) -> dict[str, Any]:
+        if self._data_layer is None:
+            return {"success": False, "error": "fred_unavailable", "message": "DataLayer not configured"}
+        if "fred" not in self._data_layer.adapter_names:
+            return {
+                "success": False,
+                "error": "fred_unavailable",
+                "message": "FRED adapter not registered. Set FRED_API_KEY in .env to enable.",
+            }
+        fred = self._data_layer.get_adapter("fred")
+        metric = str(arguments.get("metric", ""))
+        series_id = str(arguments.get("series_id", "")) if arguments.get("series_id") else None
+        limit = int(arguments.get("limit", 1))
+
+        async def _fetch():
+            kwargs = {"limit": limit}
+            if series_id:
+                kwargs["series_id"] = series_id
+            return await fred.fetch(metric, **kwargs)
+
+        raw = asyncio.run(_fetch())
+        if raw.value is None:
+            return {
+                "success": False,
+                "error": "fred_no_data",
+                "message": f"No data for metric '{metric}'. Check metric name or use series_id.",
+                "raw_response": raw.raw_response,
+            }
+        return {
+            "success": True,
+            "metric": metric,
+            "series_id": raw.raw_response.get("series_id", ""),
+            "value": raw.value,
+            "unit": raw.raw_response.get("unit", ""),
+            "description": raw.raw_response.get("description", ""),
+            "frequency": raw.raw_response.get("frequency", ""),
+            "latest_date": raw.raw_response.get("latest_date", ""),
+            "fetched_at": raw.fetched_at,
+        }
+
+    def _handle_save_thesis(self, arguments: dict[str, Any]) -> dict[str, Any]:
+        """Save an investment thesis to the memory store."""
+        if self._memory_api is None:
+            return {"success": False, "error": "memory_unavailable", "message": "Memory API not configured"}
+        import asyncio
+        from cagent_os.memory.api import InvestmentThesis
+
+        ticker = str(arguments.get("ticker", "")).upper()
+        thesis_type = str(arguments.get("thesis_type", ""))
+        content = str(arguments.get("content", ""))
+
+        if not ticker or not content:
+            return {"success": False, "error": "invalid_input", "message": "ticker and content are required"}
+
+        async def _save():
+            thesis = InvestmentThesis(
+                user_id="default", ticker=ticker, thesis_type=thesis_type, content=content,
+            )
+            await self._memory_api.save_thesis(thesis)
+            return {"success": True, "ticker": ticker, "message": "Thesis saved to memory"}
+
+        return asyncio.run(_save())
+
+    def _handle_query_theses(self, arguments: dict[str, Any]) -> dict[str, Any]:
+        """Query stored theses for a ticker."""
+        if self._memory_api is None:
+            return {"success": False, "error": "memory_unavailable", "message": "Memory API not configured"}
+        import asyncio
+
+        ticker = str(arguments.get("ticker", "")).upper()
+        if not ticker:
+            return {"success": False, "error": "invalid_input", "message": "ticker is required"}
+
+        async def _query():
+            theses = await self._memory_api.query_by_ticker("default", ticker)
+            return {
+                "success": True,
+                "ticker": ticker,
+                "count": len(theses),
+                "theses": [
+                    {
+                        "ticker": t.ticker,
+                        "type": t.thesis_type,
+                        "content": t.content,
+                        "version": t.version,
+                        "created_at": t.created_at.isoformat() if hasattr(t.created_at, 'isoformat') else str(t.created_at),
+                    }
+                    for t in theses
+                ],
+            }
+
+        return asyncio.run(_query())
+
+    def _handle_check_contradictions(self, arguments: dict[str, Any]) -> dict[str, Any]:
+        """Check an analysis for contradictions against stored theses."""
+        if self._memory_api is None:
+            return {"success": False, "error": "memory_unavailable", "message": "Memory API not configured"}
+        import asyncio
+
+        analysis = str(arguments.get("analysis_output", ""))
+        tickers = list(arguments.get("tickers", []))
+
+        if not analysis or not tickers:
+            return {"success": False, "error": "invalid_input", "message": "analysis_output and tickers are required"}
+
+        async def _check():
+            try:
+                from cagent_os.memory.contradiction import check_analysis_against_memory
+                results = await check_analysis_against_memory(
+                    memory=self._memory_api,
+                    llm_backend=None,  # LLM check requires backend; without it, skip
+                    user_id="default",
+                    analysis_output=analysis,
+                    tickers=[str(t).upper() for t in tickers],
+                )
+                return {
+                    "success": True,
+                    "contradictions_found": len(results),
+                    "contradictions": [
+                        {
+                            "ticker": r.ticker,
+                            "old_fact": r.old_fact,
+                            "new_fact": r.new_fact,
+                            "detected_at": r.detected_at.isoformat() if hasattr(r.detected_at, 'isoformat') else str(r.detected_at),
+                            "resolved": r.resolved,
+                        }
+                        for r in results
+                    ],
+                }
+            except Exception as exc:
+                logger.warning("Contradiction check failed: %s", exc)
+                return {"success": False, "error": "check_failed", "message": str(exc)}
+
+        return asyncio.run(_check())
+
+    def _handle_trace_query(self, arguments: dict[str, Any]) -> dict[str, Any]:
+        """Query trace database for conversation history."""
+        import asyncio
+        from cagent_os.observability.reader import TraceReader
+
+        action = str(arguments.get("action", "list"))
+        conv_id = str(arguments.get("conversation_id", ""))
+        limit = int(arguments.get("limit", 10))
+
+        async def _query():
+            reader = TraceReader(self._trace_db_path)
+            try:
+                await reader.open()
+                if action == "count":
+                    cnt = await reader.count_runs()
+                    return {"success": True, "action": "count", "total_runs": cnt}
+                elif action == "summary" and conv_id:
+                    s = await reader.get_summary(conv_id)
+                    if s is None:
+                        return {"success": False, "error": "not_found", "message": f"No trace for {conv_id}"}
+                    return {
+                        "success": True, "action": "summary",
+                        "conversation_id": s.conversation_id,
+                        "started_at": s.started_at,
+                        "ended_at": s.ended_at,
+                        "user_query": s.user_query,
+                        "final_output_preview": s.final_output_preview,
+                        "event_count": s.event_count,
+                        "tool_call_count": s.tool_call_count,
+                        "tool_failure_count": s.tool_failure_count,
+                        "skill_loaded": s.skill_loaded,
+                        "outcome": s.outcome,
+                    }
+                else:  # list
+                    items = await reader.list_conversations(limit=limit)
+                    return {
+                        "success": True,
+                        "action": "list",
+                        "count": len(items),
+                        "conversations": [
+                            {
+                                "conversation_id": s.conversation_id,
+                                "started_at": s.started_at,
+                                "user_query": s.user_query[:200] if s.user_query else "",
+                                "final_output_preview": s.final_output_preview[:200],
+                                "tool_call_count": s.tool_call_count,
+                                "outcome": s.outcome,
+                            }
+                            for s in items
+                        ],
+                    }
+            finally:
+                await reader.close()
+
+        return asyncio.run(_query())
 
     def _handle_health_check(self) -> dict[str, Any]:
         if self._data_layer is None:

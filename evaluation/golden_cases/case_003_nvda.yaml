@@ -1,0 +1,76 @@
+# Golden Case 003 — US Stock Analysis (NVDA)
+# Tests: three-layer analysis, cyclical trap detection, cross-validation, red-team
+# Expected pass threshold: 18/24
+
+id: "case_003"
+title: "NVDA 估值与风险分析——三层分析 + 周期陷阱 + 交叉验证"
+skill: "us-stock-analysis"
+created: "2026-06-25"
+difficulty: "hard"
+
+scenario: >
+  NVDA 是 watchlist 上的核心标的。用户要求全面的估值和风险分析。
+  考验 Agent 的三层分析框架（常态/非常态/黑箱），
+  是否检测了周期股陷阱信号，
+  是否使用了数据防线的交叉验证（financial.quote.verified），
+  是否执行了红方挑战。
+
+input:
+  type: "text"
+  content: "分析 NVDA（NVIDIA）的当前估值和风险。重点看：1) Forward PE 和 PEG 是否合理，2) 是否有周期股陷阱信号，3) AI CapEx 周期对 NVDA 的影响。给出明确的投资建议。"
+
+expected:
+  task: >
+    Agent 应该加载 us-stock-analysis skill，
+    先做数据收集：financial.quote.verified 交叉验证 PE/PB/ROE，
+    然后三层分析：常态（财报+估值）、非常态（AI CapEx 周期偏离）、黑箱（价格/量价背离）。
+    必须执行 CyclicalTrapCheck 五个信号检测。
+    必须给出红方挑战（至少 3 条反驳论点）。
+    最终给出 recommendation。
+
+  critical_facts:
+    - "Forward PE 必须来自 financial.quote.verified（交叉验证 yfinance + fin-skill）"
+    - "PE 交叉验证结果需标注两个源的差异（如有 >5% 方差必须告警）"
+    - "必须检查 5 个周期陷阱信号：PE压缩/ROE背离/CAPEX周期/库存/指引"
+    - "必须给出红方挑战至少 3 条"
+    - "所有估值数据必须标注来源"
+
+  must_use_tools:
+    - "financial.quote.verified"  # 交叉验证 PE
+    - "financial.quote.query 或 financial.earnings.query"  # 财报数据
+    - "financial.data.health_check"  # 数据源可用性预检
+
+  must_not_do:
+    - "用单个源的 PE 做投资建议（必须交叉验证）"
+    - "跳过周期陷阱检测"
+    - "不做红方挑战"
+    - "不标注置信度给投资建议"
+
+  output_assertions:
+    - "output.ticker == 'NVDA'"
+    - "output.cyclical_trap 不为 None"
+    - "output.cyclical_trap.trap_signals_active 长度 >= 0（至少检测了）"
+    - "output.red_team_challenges 长度 >= 3"
+    - "output.pe_forward 或 output.pe_ttm 不为 None"
+    - "output.recommendation 在 ['accumulate','hold','reduce','avoid'] 中"
+    - "output.confidence 不为空"
+
+rubric:
+  task:
+    score: 0
+    note: "是否加载了正确的 skill；是否先做了数据源健康检查"
+  facts:
+    score: 0
+    note: "PE 是否交叉验证；数据是否标注来源；数字是否从工具获取（非 LLM 记忆）"
+  tools:
+    score: 0
+    note: "是否使用 financial.quote.verified 做交叉验证；是否尝试了财报数据"
+  reasoning:
+    score: 0
+    note: "三层分析是否完整；AI CapEx 周期分析是否有推理链；周期陷阱检测逻辑是否合理"
+  risk:
+    score: 0
+    note: "红方挑战是否不少于 3 条；是否标注了关键风险；是否给出反向情景"
+  format:
+    score: 0
+    note: "是否按 UsStockAnalysisOutput Schema 输出；是否结构清晰"

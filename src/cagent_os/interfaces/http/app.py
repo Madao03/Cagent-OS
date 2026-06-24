@@ -14,6 +14,7 @@ from cagent_os.conversations.repository import InMemoryConversationRepository
 from cagent_os.conversations.service import ConversationService
 from cagent_os.config import get_settings
 from cagent_os.data_layer import DataLayer
+from cagent_os.data_layer.adapters.fred_adapter import FredAdapter
 from cagent_os.data_layer.adapters.yfinance_adapter import YFinanceAdapter
 from cagent_os.interfaces.http.routes_runs import build_runs_router
 from cagent_os.llm.factory import create_backend
@@ -47,6 +48,8 @@ def create_app() -> FastAPI:
     registry = ToolRegistry()
     data_layer = DataLayer()
     data_layer.register_source(YFinanceAdapter())
+    if settings.fred_api_key:
+        data_layer.register_source(FredAdapter(api_key=settings.fred_api_key))
     registry.register_plugin(FinancialPlugin(settings=settings, data_layer=data_layer))
     registry.register_plugin(WebPlugin(settings=settings))
     registry.register_plugin(ReadPlugin(settings=settings))

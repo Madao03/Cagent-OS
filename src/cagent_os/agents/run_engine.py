@@ -192,7 +192,7 @@ class AgentRuntime:
             started = JournalEntry(type="run.started", data={"conversation_id": conversation_id})
             self._event_store.append(conversation_id, started)
             yield started
-            self._trace("run_started", conversation_id, user_id=conversation.user_id)
+            self._trace("run_started", conversation_id, user_id=conversation.user_id, user_query=user_content)
 
             try:
                 setup = self._build_runtime_setup(conversation)
@@ -330,6 +330,7 @@ class AgentRuntime:
                         finish_reason=response.finish_reason or "stop",
                         iterations=state.iteration,
                         elapsed_ms=elapsed_ms,
+                        final_output=final_content,
                     )
                     yield completed
                     return
@@ -419,7 +420,7 @@ class AgentRuntime:
             started = JournalEntry(type="run.started", data={"conversation_id": conversation_id})
             self._event_store.append(conversation_id, started)
             yield started
-            self._trace("run_started", conversation_id, user_id=conversation.user_id)
+            self._trace("run_started", conversation_id, user_id=conversation.user_id, user_query=user_content)
 
             try:
                 setup = self._build_runtime_setup(conversation)

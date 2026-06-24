@@ -1,0 +1,76 @@
+# Golden Case 002 — Macro Analysis
+# Tests: time-horizon framework, PMI/CPI-PPI/employment, FRED integration
+# Expected pass threshold: 18/24
+
+id: "case_002"
+title: "宏观环境评估——判断风险资产方向"
+skill: "macro-analysis"
+created: "2026-06-25"
+difficulty: "hard"
+
+scenario: >
+  用户想了解当前宏观环境对 BTC 和美股持仓的影响。
+  考验 Agent 能否按照新的时间周期框架（短期/中期/长期）组织分析，
+  是否调用了 FRED 数据补充短期流动性缺口，
+  是否正确使用了 PMI 子项解读和 CPI-PPI 剪刀差框架。
+
+input:
+  type: "text"
+  content: "全面评估当前宏观环境，判断对 BTC 和美股（SPX）的短期（1-3个月）和中期（6-12个月）影响。"
+
+expected:
+  task: >
+    Agent 应该先确定时间周期（短期+中期），加载 macro-analysis skill，
+    按三步（短期→中期→长期）收集数据并分析。
+    短期：调用 FRED 获取 ONRRP/TGA/银行储备金/国债利差数据。
+    中期：获取 PMI、CPI、PPI、非农、失业率、JOLTS。
+    使用 CPI-PPI 剪刀差框架判断利润率方向。
+    最终输出结构化报告，标注置信度。
+
+  critical_facts:
+    - "ONRRP 余额（FRED RRPONTSYD）"
+    - "TGA 余额（FRED WDTGAL）"
+    - "10Y-2Y 利差（FRED T10Y2Y）"
+    - "CPI 和 PPI 指数值（用于计算剪刀差）"
+    - "非农、失业率、JOLTS 数据"
+    - "ISM/标普 PMI 数据（总量至少）"
+    - "所有数据必须标注来源（FRED / 金十）"
+
+  must_use_tools:
+    - "financial.fred"  # 短期流动性 + 国债 + 就业 + 通胀
+    - "金十 MCP list_calendar 或 list_flash"  # PMI 数据
+    - "金十 MCP get_quote"  # 市场行情（可选）
+
+  must_not_do:
+    - "只用 LLM 记忆中的数据（必须调工具获取）"
+    - "不区分短期和中期（必须分周期分析）"
+    - "不看 PMI 子项、不看 CPI-PPI 剪刀差就直接下结论"
+    - "混淆相关性和因果关系"
+
+  output_assertions:
+    - "output.short_term 不为 None"
+    - "output.medium_term 不为 None"
+    - "output.medium_term.cpi_ppi_spread 不为 None（已计算剪刀差）"
+    - "output.data_sources 长度 >= 5"
+    - "output.confidence 为 'high' 或 'medium'"
+    - "output.implication_for_risk_assets 不为空"
+
+rubric:
+  task:
+    score: 0
+    note: "是否先确定了时间周期；是否加载了正确的 skill；是否区分了短期和中期分析"
+  facts:
+    score: 0
+    note: "数据是否来自工具调用（而非 LLM 记忆）；是否标注来源；数字是否准确"
+  tools:
+    score: 0
+    note: "是否使用了 FRED（financial.fred）填补短期缺口；是否尝试了 PMI 子项获取"
+  reasoning:
+    score: 0
+    note: "推理链是否完整：景气→库存循环→剪刀差→就业→政策→风险资产；是否区分了相关和因果"
+  risk:
+    score: 0
+    note: "是否标注置信度；是否给出'什么情况下这个判断会错'的反向情景"
+  format:
+    score: 0
+    note: "是否按 MacroAnalysisOutput Schema 输出：short_term/medium_term/long_term 结构清晰"

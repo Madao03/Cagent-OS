@@ -1,0 +1,74 @@
+# Golden Case 001 — Content Triage (batch of 5)
+# Tests: multi-source fetch, 5-dim scoring, ledger append
+# Expected pass threshold: 18/24
+
+id: "case_001"
+title: "5 篇文章批量分诊——覆盖多行业多来源"
+skill: "content-triage"
+created: "2026-06-25"
+difficulty: "medium"
+
+scenario: >
+  用户发来 5 篇不同来源和主题的文章链接，要求一次性分诊。
+  考验 Agent 能否逐篇读取、正确打分、识别 A/B/C 级、追加台账。
+
+input:
+  type: "text"
+  content: |
+    分诊以下 5 篇文章：
+
+    1. https://mp.weixin.qq.com/s/57rJP9qn9j5HiN-_QLsdpQ
+    2. https://mp.weixin.qq.com/s/RwhcDf0VHisuQHGJMv6z2g
+    3. https://mp.weixin.qq.com/s/g679LJJ34T8S2BBWWRhuzw
+    4. https://mp.weixin.qq.com/s/LQgyu94-RGj7ovYG7l-H6g
+    5. https://mp.weixin.qq.com/s/_y1BXuRO9DSmToQEnPHFiw
+
+expected:
+  task: >
+    Agent 应该加载 content-triage skill，读取 watchlist，
+    对每篇文章用 web.fetch_weixin 抓取原文，
+    逐维打分（必须配证据），输出总分和 A/B/C 类别，
+    最后用 write.file mode=append 追加到 knowledge/00_Inbox/分诊台账.md
+
+  critical_facts:
+    - "每篇文章必须有 5 个维度的分值（0-2 分）"
+    - "每个分值必须配一句文中证据"
+    - "台账必须追加到 knowledge/00_Inbox/分诊台账.md"
+    - "总分 0-10，>=7 为 A，5-6 为 B，<=4 为 C"
+
+  must_use_tools:
+    - "docs.read"  # 读取 watchlist
+    - "web.fetch_weixin"  # 抓取微信公众号文章
+    - "write.file (mode=append)"  # 追加台账
+
+  must_not_do:
+    - "只用 LLM 记忆给分（必须读原文）"
+    - "跳过任何一篇文章"
+    - "不给证据直接给分数"
+    - "用 bash/cat 读文件（Windows 不可用）"
+
+  output_assertions:
+    - "output.entries 长度 >= 5"
+    - "每个 entry.scores.total 在 0-10 之间"
+    - "至少 2 个 entry.scores.grade == 'A'（这批文章质量高）"
+    - "output.ledger_appended == True"
+
+rubric:
+  task:
+    score: 0
+    note: "是否按流程：加载 skill → 读 watchlist → 逐篇抓取 → 打分 → 台账"
+  facts:
+    score: 0
+    note: "每篇评分是否有原文证据支持；是否混淆了不同文章的论点"
+  tools:
+    score: 0
+    note: "是否用 web.fetch_weixin 而非 web.fetch（微信 URL）；是否用 docs.read 而非 bash"
+  reasoning:
+    score: 0
+    note: "A/B/C 分级是否合理；是否有明显的打分偏差；证据是否匹配分值"
+  risk:
+    score: 0
+    note: "是否标注了不可用源的降级；是否指出了某篇文章数据的局限性"
+  format:
+    score: 0
+    note: "是否按模板输出五维分+总分+类别+一句话理由；台账格式是否正确"

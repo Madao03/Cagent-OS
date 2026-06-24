@@ -16,6 +16,7 @@ from cagent_os.conversations import (
 )
 from cagent_os.data_layer import DataLayer
 from cagent_os.data_layer.adapters.fin_skill_adapter import FinSkillAdapter
+from cagent_os.data_layer.adapters.fred_adapter import FredAdapter
 from cagent_os.data_layer.adapters.yfinance_adapter import YFinanceAdapter
 from cagent_os.llm.factory import create_backend
 from cagent_os.mcp_client.session import MCPSessionManager
@@ -61,7 +62,9 @@ def build_registry(
     data_layer.register_source(YFinanceAdapter())
     if mcp_manager is not None:
         data_layer.register_source(FinSkillAdapter(mcp_manager))
-    registry.register_plugin(FinancialPlugin(settings=settings, toolkit=toolkit, data_layer=data_layer))
+    if settings.fred_api_key:
+        data_layer.register_source(FredAdapter(api_key=settings.fred_api_key))
+    registry.register_plugin(FinancialPlugin(settings=settings, toolkit=toolkit, data_layer=data_layer, trace_db_path=settings.trace_db_path, memory_api=memory_store))
     registry.register_plugin(WebPlugin(settings=settings))
     registry.register_plugin(ReadPlugin(settings=settings))
     registry.register_plugin(WritePlugin(settings=settings))
