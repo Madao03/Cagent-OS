@@ -111,7 +111,7 @@ description: >
 
 ## 处理流程
 
-**Step 1 · 读取**　逐篇读到结尾（长文/剪藏不能只读开头）。剥离广告、二维码、图片占位等噪音。URL 用 `web.fetch` 抓取，本地文件用 `docs.read` 工具。
+**Step 1 · 读取**　逐篇读到结尾（长文/剪藏不能只读开头）。剥离广告、二维码、图片占位等噪音。URL 用 `web.fetch` 抓取，本地文件用 `docs.read` 工具。⚠️ 遇到 CDN 保护的机构研报站（Grayscale/Vercel 部署），`web.fetch` 会自动降级到浏览器模式；也可手动设 `browser_mode: true`。
 
 **Step 2 · 逐维打分（MUST）**　按锚点表打 5 个分，**每维必须配一句文中证据**。这是不可跳过的步骤——没有证据的分数不可复查、不可信。
 
@@ -135,7 +135,7 @@ description: >
 
 | 操作 | 工具 | 备注 |
 |:-----|:-----|:-----|
-| 抓取 URL 全文 | `web.fetch` | 普通网页；`web.fetch_weixin` 用于微信公众号 |
+| 抓取 URL 全文 | `web.fetch` | 普通网页；`web.fetch_weixin` 用于微信公众号；`web.fetch` 设 `browser_mode: true` 绕过 Vercel/CDN 反爬 |
 | 读取本地文件（watchlist、已有文章） | **`docs.read`** | ⚠️ 绝对不要用 bash/cat——Windows 没有 bash |
 | 交叉验证可疑数字 | `financial.quote.verified` 或 `web.fetch` 多方搜索 | |
 | 新建/覆盖文件（速读卡、台账初始化） | `write.file`（默认 mode="overwrite"） | |

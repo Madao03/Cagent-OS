@@ -12,8 +12,8 @@
     {
       "name": "fin-skill-mcp",
       "transport": "stdio",
-      "command": "/path/to/your/mcp-venv/bin/python",
-      "args": ["/path/to/your/mcp-server/mcp_main.py"],
+      "command": "/path/to/your/fin-skill/.venv/bin/python",
+      "args": ["/path/to/your/fin-skill/mcp_main.py"],
       "tier": 2,
       "enabled": true,
       "alt_transport": {

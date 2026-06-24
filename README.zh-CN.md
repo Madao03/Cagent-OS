@@ -71,6 +71,7 @@ cagent-os
 - **MCP Client**:多传输协议 session 管理器(Anthropic 官方 SDK)
 - **记忆系统**:热记忆(≤500 字注入 system prompt)+ 冷记忆(SQLite 三表:user_facts / investment_theses / contradiction_log)
 - **数据防线**:多源并行采集 → 方差检测(>5% 告警)→ 交叉验证 → VerifiedMetric
+- **通用浏览器抓取**:Playwright + Readability.js,自动绕过 Vercel/Cloudflare 反爬,无法用 HTTP 访问的机构研报站也能直接抓取
 - **CLI + HTTP 双入口**:REPL 用于本地,FastAPI + SSE 用于 web
 
 ## 不包含什么(暂未实现)
