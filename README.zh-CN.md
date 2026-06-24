@@ -116,7 +116,7 @@ cagent-os
 LLM 会幻觉工具名。Guard 强制执行 per-agent 白名单。如果 LLM 返回了不在白名单里的工具名,调用在到达 dispatcher 之前就被拒绝 —— 不会静默误路由。
 
 **为什么有数据防线?**
-真实案例:NVDA Forward PE,yfinance 返回 35.2,fin-skill 返回 18.5 —— 47% 的差异,原因是数据供应商不同(Refinitiv vs data vendor)。数据防线并行从多源采集,标记 >5% 的方差,用 2/3 共识决策选出可信值。
+真实案例:NVDA Forward PE,yfinance 返回 35.2,第二个数据源返回 18.5 —— 47% 的差异,原因是数据供应商不同。数据防线并行从多源采集,标记 >5% 的方差,用 2/3 共识决策选出可信值。
 
 ## 技术栈
 

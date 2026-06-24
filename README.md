@@ -115,7 +115,7 @@ Every state change (user input, tool call, tool result, assistant reply) is an i
 LLMs hallucinate tool names. The guard enforces a per-agent allow-list. If the LLM returns a tool name not in the list, the call is rejected before it reaches the dispatcher — no silent mis-routing.
 
 **Why a Data Integrity Wall?**
-Real case: NVDA Forward PE from yfinance = 35.2, from fin-skill = 18.5 — a 47% discrepancy caused by different data vendors (Refinitiv vs data vendor). The wall fetches from multiple sources in parallel, flags variance >5%, and uses 2/3 consensus to pick the trusted value.
+Real case: NVDA Forward PE from yfinance = 35.2, from a second source = 18.5 — a 47% discrepancy caused by different data vendors. The wall fetches from multiple sources in parallel, flags variance >5%, and uses 2/3 consensus to pick the trusted value.
 
 ## Tech stack
 

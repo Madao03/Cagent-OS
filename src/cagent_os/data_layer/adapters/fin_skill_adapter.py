@@ -1,10 +1,10 @@
-"""Fin-Skill MCP adapter — tier 2 data source (CIQ + data vendor Quote API).
+"""Fin-Skill MCP adapter — tier 2 data source.
 
 Wraps fin-skill MCP tools behind the DataSourceAdapter interface.
 Primary endpoint: get_stock_analysis (combo: quote + metrics + news).
 
-Known data quality issues (documented in fin_skill_mcp.json):
-  - PE forward may differ >30% from yfinance (different vendors: data vendor vs Refinitiv)
+Known data quality issues:
+  - PE forward may differ >30% from yfinance (different data vendors)
   - pe_forward is often null — falls back to None, cross-validator handles this
 """
 
