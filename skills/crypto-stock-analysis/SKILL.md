@@ -1,9 +1,10 @@
 ---
 name: crypto-stock-analysis
 description: |
-  币股分析框架 — 覆盖 MSTR/COIN/MARA/RIOT/CLSK 等加密关联美股。
+  币股分析框架 — 覆盖 MSTR/STRC/STRF/COIN/MARA/RIOT/CLSK 等加密关联美股及优先股。
   不同于传统美股分析，核心驱动因子是 BTC 价格、mNAV、可转债结构、矿机成本、
-  加密周期 β 等加密原生变量。三层分析模式 + 与传统美股框架的对照表。
+  加密周期 β 等加密原生变量。含 Saylor 融资操作(STRC/STRF/可转债)分析。
+  三层分析模式 + 与传统美股框架的对照表。⚠️ 问 STRC 必须加载此 skill。
 category: research
 ---
 
@@ -20,6 +21,22 @@ category: research
 - ⚠️ 需要宏观环境判断 → 同时加载 macro-analysis
 - ⚠️ 需要 BTC 链上/市场数据 → 同时加载 crypto-analysis
 - ⚠️ 需要传统估值对比 → 同时加载 us-stock-analysis
+
+## ⚠️ 步骤 0：标的解构（强制执行，不可跳过）
+
+在对任何币股进行估值或预测之前，**必须先用 RAG + web 搜索完成以下解构**：
+
+1. **标的身份**：这个 ticker 对应的金融工具到底是什么？（普通股？优先股？永续？有到期日？可转换？）
+2. **现金流机制**：钱从哪来？支付给谁？是固定还是浮动？由谁决定何时调整？——**这是最易出错的一步**
+3. **定价机制**：价格由市场供求决定，还是存在主动锚定机制（如发行人承诺维持 par）？
+4. **控制权**：谁有权改变关键参数？这些权力在实际中是否被使用过？
+
+完成后标注：
+```
+[标的解构] 身份: ... | 现金流: ... | 定价: ... | 控制权: ...
+```
+
+⚠️ **不完成这一步，禁止进入估值/预测环节。** 这是系统级纪律，不是建议。
 
 ## 币股分类与驱动因子
 
@@ -215,10 +232,14 @@ BTC β：[数值]
 
 ## 工具使用约定
 
+⚠️ **数据检索优先级: RAG > Web Search** — 先查本地知识库（已归档 29 篇研报/新闻/台账），命中不到再搜外部。
+
 | 操作 | 工具 |
 |:-----|:-----|
+| **🔍 知识库检索（优先）** | **`financial.rag.search`** — 查已归档的币股分析/新闻/MSTR 相关文章 |
 | 币股行情/估值（交叉验证） | `financial.quote.verified` |
 | 币股行情快照 | `financial.quote.query` |
 | 财报数据 | `financial.earnings.query_full` |
-| 搜索 MSTR BTC 持仓等 | `web.fetch` / `financial.websearch` |
+| 外部搜索（fallback） | `web.fetch` / `financial.websearch` |
+| **📊 对立观点（强制）** | `financial.websearch` 搜索 "{标的} bull case" + "{标的} bear case"，必须呈现至少一个有明确来源的反对观点 |
 | 加载关联 Skill | `Skill(skill="...")` |

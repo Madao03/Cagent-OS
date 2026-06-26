@@ -32,13 +32,17 @@ category: research
 
 ### 核心数据源（cagent-os 可用）
 
+⚠️ **检索优先级: RAG > Web Search** — 先查本地知识库（已归档加密研报/分析/新闻），命中不到再搜外部。
+
 | 维度 | 工具 | 覆盖 |
 |------|------|------|
+| **🔍 知识库（优先）** | **`financial.rag.search`** | 已归档加密分析/新闻/台账 |
 | 加密市场全局数据 | CMC MCP `get_global_metrics_latest` | BTC.D、总市值、24h成交量、恐惧贪婪指数 |
-| 加密新闻/叙事 | `FinancialToolkit.search_multi_provider(query)` | 多源加密新闻搜索 |
+| 加密新闻/叙事 | `FinancialToolkit.search_multi_provider(query)` | 多源加密新闻搜索（fallback） |
 | 宏观日历 | 金十 MCP `list_calendar` / `list_flash` | 经济日历、FOMC、CPI |
 | 外围市场价格 | 金十 MCP `get_quote` | SPX/XAUUSD/USOIL/DXY |
 | 网页搜索 | `WebPlugin` | 链上数据、项目基本面、赛道分析 |
+| **📊 对立观点（强制）** | `financial.websearch` 搜索 "{资产} bull case" + "{资产} bear case" | 有争议标的必须呈现至少一个对立专业观点 |
 
 ### 数据源降级链
 

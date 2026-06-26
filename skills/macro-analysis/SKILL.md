@@ -47,6 +47,7 @@ category: research
 
 | 维度 | 数据指标 | 推荐工具 |
 |:-----|:-----|:-----|
+| **🔍 知识库（优先）** | 已归档宏观分析/政策解读/宏观传导文章 (29 篇研报+台账) | **`financial.rag.search`** — 先查本地知识库，再调外部数据 |
 | 货币市场（短期） | 短期国债利率(3M/6M/1Y)、FFR利差、国债拍卖结果 | 金十 MCP `get_quote` / `list_calendar` |
 | 美联储流动性（短期） | ONRRP余额、美联储资产负债表、TGA账户、银行储备金 | **FRED** `financial.fred` (metric: onrrp/tga/bank_reserves/fed_balance_sheet) |
 | 信贷（短期） | M1/M2剪刀差、信贷脉冲 | **FRED** `financial.fred` (metric: m1/m2) + 金十 MCP `list_flash` |

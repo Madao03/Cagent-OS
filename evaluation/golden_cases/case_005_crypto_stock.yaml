@@ -1,0 +1,66 @@
+# Golden Case 005 — Crypto Stock Analysis (STRC/MSTR)
+# Tests: 标的解构, mNAV analysis, flywheel assessment
+# This case is based on a real production failure where the agent
+# misunderstood STRC as a fixed-rate preferred stock (it's variable rate).
+# Expected pass threshold: 18/24
+
+id: "case_005"
+title: "STRC 优先股分析——标的解构 + mNAV + STRC 飞轮"
+skill: "crypto-stock-analysis"
+created: "2026-06-26"
+difficulty: "hard"
+
+scenario: >
+  STRC 是 Strategy (MSTR) 的永续优先股，近期从 $100 par 跌破 $80。
+  用户想了解发生了什么、是否恐慌过头、均值回归的盈利预期如何。
+  这是 2026-06-25 真实对话的简化版——Agent 当时犯了关键错误
+  （把浮动利率当固定票息），此 Case 用来防止这类错误再次发生。
+
+input:
+  type: "text"
+  content: "STRC 是个啥情况，现在恐慌是不是过头了，现在买博弈均值回归的盈利预期如何？"
+
+expected:
+  task: >
+    Agent 必须加载 crypto-stock-analysis skill。
+    第一步：执行标的解构——STRC 是什么金融工具？现金流怎么来？利率是固定还是浮动？谁控制利率调整？
+    第二步：获取 MSTR 的 BTC 持仓、平均成本、mNAV。
+    第三步：分析 STRC 的 par recovery 机制（公司主动加息 vs 被动利差收窄）。
+    第四步：给出 BTC 价格→MSTR→STRC 的传导链分析。
+    ⚠️ 这是系统级纪律——不完成标的解构，禁止进入估值。
+
+  critical_facts:
+    - "必须标注 STRC 是 Variable Rate（浮动利率）优先股，非固定票息"
+    - "必须标注利率调整机制：公司主动设定以锚定 $100 par；跌破 $95 合约义务上调 0.5%"
+    - "必须获取 BTC 当前价格、MSTR BTC 持仓量、平均成本"
+    - "必须计算 mNAV"
+    - "必须说明 ATM 发行暂停（飞轮停转）"
+    - "价格/持仓/现金等 L1 快变量必须实时获取+时间戳"
+
+  must_use_tools:
+    - "Skill(skill=crypto-stock-analysis)"
+    - "financial.rag.search"  # 优先查本地知识库
+    - "financial.quote.query 或 financial.quote.verified"
+    - "financial.websearch"  # 获取最新 STR 相关新闻
+
+  must_not_do:
+    - "不做标的解构就开始分析"
+    - "把 STRC 当固定票息优先股分析"
+    - "用 LLM 记忆中的价格（必须实时获取）"
+    - "给期望值/年化回报时不标注锚定依据"
+    - "给概率不给依据（伪精确）"
+
+  output_assertions:
+    - "output.ticker 包含 'STRC' 或 'MSTR'"
+    - "output.mnav 不为 None"
+    - "output.red_team_challenges 长度 >= 3"
+    - "output.confidence 不为空"
+    - "回答中必须出现 '标的解构' 或明确的结构分析段落"
+
+rubric:
+  task: {score: 0, note: "是否执行标的解构；是否加载正确 skill；是否优先用 RAG"}
+  facts: {score: 0, note: "STRC 利率机制是否正确（浮动 vs 固定）；BTC/MSTR 数据是否实时；是否标注时间戳"}
+  tools: {score: 0, note: "是否优先用 RAG；是否用 financial.quote.verified 交叉验证"}
+  reasoning: {score: 0, note: "par recovery 机制分析是否正确（主动加息 vs 被动利差）；是否识别飞轮停转"}
+  risk: {score: 0, note: "是否给出红方挑战；概率是否有锚定依据；是否标注主观假设"}
+  format: {score: 0, note: "是否按 CryptoStockAnalysisOutput Schema 输出；结构是否清晰"}

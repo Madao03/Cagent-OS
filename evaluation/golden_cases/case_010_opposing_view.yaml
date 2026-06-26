@@ -1,0 +1,61 @@
+# Golden Case 010 — Opposing View Retrieval
+# Tests: bull/bear case search and presentation for controversial assets
+# Expected pass threshold: 18/24
+
+id: "case_010"
+title: "对立观点检索——争议标的必须引入卖方/机构对立观点"
+skill: "us-stock-analysis"
+created: "2026-06-26"
+difficulty: "medium"
+
+scenario: >
+  2026-06-26 新增规则：对有争议标的（价格大幅波动、多空分歧明显），
+  必须主动检索并呈现至少一个有明确来源的对立专业观点。
+  此 Case 用一个经典争议标的验证此规则。
+
+input:
+  type: "text"
+  content: "NVDA 现在估值合理吗？能不能买？"
+
+expected:
+  task: >
+    Agent 应加载 us-stock-analysis。
+    获取实时数据（PE/PEG/市值）+ RAG 检索已归档的 NVDA 分析。
+    然后搜索对立观点：`financial.websearch("NVDA bull case 2026")` 和
+    `financial.websearch("NVDA bear case 2026")`。
+    在分析中单独一节呈现至少一个有明确来源的反对观点。
+    最后给出投资建议+红方挑战。
+
+  critical_facts:
+    - "必须搜索 NVDA bull case 和 NVDA bear case"
+    - "必须呈现至少一个有明确来源的对立观点（机构名/人名+论点）"
+    - "PE 必须交叉验证（financial.quote.verified）"
+    - "必须先调 RAG 查已归档的 NVDA 相关内容"
+    - "L1 数据标注时间戳和来源"
+
+  must_use_tools:
+    - "Skill(skill=us-stock-analysis)"
+    - "financial.rag.search"  # 优先
+    - "financial.quote.verified"  # 交叉验证 PE
+    - "financial.websearch 搜索 bull case + bear case"
+
+  must_not_do:
+    - "不做对立观点检索直接给结论"
+    - "对立观点只引用与自己结论一致的（必须找真正的反对观点）"
+    - "给概率不给依据"
+    - "不做红方挑战"
+
+  output_assertions:
+    - "回答中有 '对立观点' 或 '市场观点' 或 '卖方观点' 等效节"
+    - "对立观点有明确来源标注"
+    - "对比了该观点与本分析的异同"
+    - "有红方挑战节"
+    - "数据标注了来源和时间戳"
+
+rubric:
+  task: {score: 0, note: "是否先查 RAG；是否做了 bull/bear search"}
+  facts: {score: 0, note: "PE 是否交叉验证；对立观点是否有真实来源"}
+  tools: {score: 0, note: "RAG→cross-validate→bull/bear search 顺序是否正确"}
+  reasoning: {score: 0, note: "是否对比了正反方观点；是否给出综合判断"}
+  risk: {score: 0, note: "红方挑战；是否有锚定依据"}
+  format: {score: 0, note: "对立观点是否有独立节；结构是否清晰"}

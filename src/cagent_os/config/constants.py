@@ -57,6 +57,7 @@ PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY", "")
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
 JINA_API_KEY = os.getenv("JINA_API_KEY", "")
 FRED_API_KEY = os.getenv("FRED_API_KEY", "")
+SILICONFLOW_API_KEY = os.getenv("SILICONFLOW_API_KEY", "")
 
 PROVIDER_GOOGLE = "google"
 PROVIDER_PERPLEXITY = "perplexity"

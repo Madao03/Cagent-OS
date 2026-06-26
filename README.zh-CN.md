@@ -1,6 +1,6 @@
 # CagentOS
 
-> **状态:阶段 2 完成 ✅ — 9 个技能 · 19 个工具 · 3 个数据源 · Golden Cases 评测基准**
+> **状态:阶段 3 完成 ✅ — 9 个技能 · 21 个工具 · 3 个数据源 · RAG 语义检索 · Golden Cases x10 · 自动评测**
 > 一个从零搭建的金融投研 Agent 操作系统 —— 不是 LangChain 包装器。
 >
 > [English](README.md) | 中文
@@ -70,18 +70,19 @@ cagent-os
 - **TraceReader**:对话历史查询 API (list/summary/timeline/count) + DICA 四维标注
 - **8 个 LLM provider**:OpenRouter / DeepSeek / OpenAI / Anthropic / Groq / SiliconFlow / Together / Custom
 - **MCP Client**:多传输协议 session 管理器(Anthropic 官方 SDK)
-- **记忆系统**:热记忆(≤500 字注入 system prompt)+ 冷记忆(SQLite 三表)+ **LLM 矛盾检测** (新分析 vs 历史 thesis)
+- **记忆系统**:热记忆(≤500 字注入 system prompt)+ 冷记忆(SQLite 三表)+ **LLM 矛盾检测**
 - **数据防线**:FRED + 金十 MCP + yfinance 三源 → 方差检测(>5% 告警)→ 交叉验证 → VerifiedMetric
 - **通用浏览器抓取**:Playwright + Readability.js + Stealth 反反爬,Vercel/Cloudflare/CDN 保护站点直接可读
+- **RAG 管线**:Qwen3-Embedding-8B (1024 维) + 6 种分块策略 + Reranker (cos 0.79→0.999) + NumPy 向量库
 - **Skill Schema**:6 个核心 skill 的 Pydantic v2 I/O Schema + State 三层分离 + 权限标签矩阵
-- **Golden Cases**:3 个评测基准 (triage/macro/NVDA) + 六维 Rubric 框架
+- **Golden Cases**:10 个评测基准 (覆盖 triage/macro/NVDA/crypto/cross-skill/RAG/容错/纪律/对立观点 7 类)
+- **自动评测**:25 条 criterion LLM-Judge + JSON 结果存储 + 历史对比 + 仪表板
 - **CLI + HTTP 双入口**:REPL 用于本地,FastAPI + SSE 用于 web
 
 ## 不包含什么(暂未实现)
 
 - 多智能体编排(阶段 4,Schema 已定义但未接入)
 - Web UI(阶段 4)
-- 语义检索 RAG / DeepEval 自动化评测(阶段 3)
 - 自进化飞轮 / 模型微调(阶段 5)
 
 ## Skills
@@ -106,7 +107,8 @@ cagent-os
 | 1 | 知识入口:read-later + 分诊 + 数据防线 | ✅ 完成 |
 | 1.5 | Runtime 规范化 + 开源准备 | ✅ 完成 |
 | 2 | 知识引擎 + Golden Cases + Schema + Trace + 矛盾检测 | ✅ 完成 (2026-06-25) |
-| 3 | 语义检索 (RAG) + 评测体系 (DeepEval 自动化) | 🔜 下一步 |
+| 3 | RAG + Rerank + Golden Cases ×10 + LLM-Judge 自动评测 + 仪表板 | ✅ 完成 (2026-06-26) |
+| 4 | 多 Agent DAG + Web UI + Langfuse 全链路 | 🔜 下一步 |
 | 4 | 多 Agent DAG + Web UI + Langfuse 全链路 | 规划中 |
 | 5 | 自进化飞轮 (SFT/DPO) | 远期 |
 
@@ -131,8 +133,9 @@ LLM 会幻觉工具名。Guard 强制执行 per-agent 白名单。如果 LLM 返
 | LLM | DeepSeek V4 Pro(默认),另有 7 个 provider |
 | 宏观数据 | FRED API (21 系列) + 金十 MCP (行情/日历/快讯) |
 | MCP | Anthropic 官方 `mcp` SDK |
+| RAG | Qwen3-Embedding-8B (1024-dim) + Qwen3-Reranker-8B + 6 种分块 |
 | 浏览器抓取 | Playwright + Readability.js (WSL 桥接) |
-| 评测 | Golden Cases × 3 (六维 Rubric 手动) |
+| 评测 | Golden Cases × 10 + 25-criterion LLM-Judge + 仪表板 |
 | CLI | argparse REPL |
 | HTTP | FastAPI + SSE 流式 |
 

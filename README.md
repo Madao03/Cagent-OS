@@ -2,7 +2,7 @@
 
 > English | [中文](README.zh-CN.md)
 >
-> **Status: Phase 2 Complete ✅ — 9 skills · 19 tools · 3 data sources · Golden Cases benchmark**
+> **Status: Phase 3 Complete ✅ — 9 skills · 21 tools · 3 data sources · RAG + Rerank + Auto-Eval**
 > A self-contained financial research agent operating system built from scratch — not a LangChain wrapper.
 
 CagentOS is a Python framework for building AI agents that perform financial research. It implements a ReAct loop with event sourcing at its core, surrounded by a plugin-based tool system, cross-session memory, and a data integrity layer designed specifically for financial data.
@@ -74,14 +74,15 @@ cagent-os
 - **Data Integrity Wall**: FRED + Jin10 MCP + yfinance 3-source → variance detection (>5% alert) → cross-validation → VerifiedMetric
 - **Browser fetch**: Playwright + Readability.js + Stealth anti-bot — fetches CDN-protected institutional research sites
 - **Skill Schemas**: Pydantic v2 I/O schemas for 6 core skills + State 3-layer separation + permission matrix
-- **Golden Cases**: 3 evaluation benchmarks (triage/macro/NVDA) + 6-dimension rubric framework
+- **Golden Cases**: 10 evaluation benchmarks covering 7 scenario types (triage/macro/NVDA/crypto/cross-skill/RAG/degradation/discipline/opposing-view)
+- **RAG Pipeline**: Qwen3-Embedding-8B + 6 chunking schemes + Reranker (cos 0.79→0.999) + NumPy vector store
+- **Auto-Evaluation**: 25 criterion LLM-Judge + JSON result storage + history comparison + dashboard
 - **CLI + HTTP dual entry**: REPL for local, FastAPI + SSE for web
 
 ## What's NOT included (yet)
 
 - Multi-agent orchestration (Phase 4, schemas defined but not wired)
 - Web UI (Phase 4)
-- Semantic retrieval / RAG / DeepEval auto-evaluation (Phase 3)
 - Self-improving flywheel / model fine-tuning (Phase 5)
 
 ## Skills
@@ -106,7 +107,8 @@ cagent-os
 | 1 | Knowledge entry: read-later + triage + data wall | ✅ Done |
 | 1.5 | Runtime normalization + open-source prep | ✅ Done |
 | 2 | Knowledge engine + Golden Cases + Schema + Trace + Memory | ✅ Done (2026-06-25) |
-| 3 | Semantic retrieval (RAG) + evaluation suite (DeepEval auto) | 🔜 Next |
+| 3 | RAG + Rerank + Golden Cases ×10 + LLM-Judge Auto-Eval + Dashboard | ✅ Done (2026-06-26) |
+| 4 | Multi-agent DAG + Web UI + Langfuse trace | 🔜 Next |
 | 4 | Multi-agent DAG + Web UI + Langfuse trace | Planned |
 | 5 | Self-improving flywheel (SFT/DPO) | Future |
 
@@ -132,7 +134,8 @@ Real case: NVDA Forward PE from yfinance = 35.2, from a second source = 18.5 —
 | Macro data | FRED API (21 series) + Jin10 MCP (quotes/calendar/flash) |
 | MCP | Anthropic official `mcp` SDK |
 | Browser fetch | Playwright + Readability.js (WSL bridge) |
-| Evaluation | Golden Cases × 3 (6-dimension rubric, manual) |
+| RAG | Qwen3-Embedding-8B (1024-dim) + Qwen3-Reranker-8B + NumPy + 6 chunking schemes |
+| Evaluation | Golden Cases × 10 + 25-criterion LLM-Judge auto-scoring + Dashboard |
 | CLI | argparse-based REPL |
 | HTTP | FastAPI + SSE streaming |
 

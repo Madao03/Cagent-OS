@@ -1,0 +1,52 @@
+# Golden Case 006 — RAG Retrieval
+# Tests: knowledge base search effectiveness
+# Expected pass threshold: 16/24 (lower threshold — testing infra, not reasoning)
+
+id: "case_006"
+title: "RAG 知识库检索——验证本地归档内容可被召回"
+skill: "macro-analysis"
+created: "2026-06-26"
+difficulty: "easy"
+
+scenario: >
+  知识库中有 1491 个 chunks（29 篇文章+台账）。Agent 应在分析前
+  先用 RAG 搜索本地知识库。此 Case 验证 RAG 管线是否正常工作——
+  检索到正确的文章、rerank 精排准确、结果可用于 prompt 注入。
+
+input:
+  type: "text"
+  content: |
+    帮我查一下：Grayscale 对 AAVE 的 DCF 估值是多少？本地知识库里有没有存过这篇？
+
+expected:
+  task: >
+    Agent 必须先调 financial.rag.status 确认知识库状态，
+    然后调 financial.rag.search 搜索 "AAVE DCF 估值 Grayscale"，
+    验证返回结果中 Top-1 命中 Grayscale AAVE 估值文章。
+
+  critical_facts:
+    - "financial.rag.status 必须返回 available=true, chunks>0"
+    - "financial.rag.search 搜索 'AAVE DCF' 必须返回结果"
+    - "Top-1 结果必须与 Grayscale AAVE 估值相关（similarity >= 0.5）"
+    - "搜索结果必须包含 formatted_context 字段"
+
+  must_use_tools:
+    - "financial.rag.status"
+    - "financial.rag.search"
+
+  must_not_do:
+    - "跳过 RAG 直接用 web.search"
+    - "不检查 RAG 状态直接搜"
+
+  output_assertions:
+    - "回答中提到 RAG 搜索的命中率"
+    - "回答中引用至少一条 RAG 结果的具体内容"
+    - "不出现 '知识库为空'或'没有找到相关内容'（除非确实没命中）"
+
+rubric:
+  task: {score: 0, note: "是否先查 RAG 状态；是否正确调用 search"}
+  facts: {score: 0, note: "检索结果是否准确；是否引用 RAG 内容"}
+  tools: {score: 0, note: "是否正确使用 financial.rag.search 的参数"}
+  reasoning: {score: 0, note: "是否判断了检索结果的相关性（similarity 分数）"}
+  risk: {score: 0, note: "不适用——纯检索任务"}
+  format: {score: 0, note: "是否清晰呈现检索结果"}

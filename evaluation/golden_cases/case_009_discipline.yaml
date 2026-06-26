@@ -1,0 +1,58 @@
+# Golden Case 009 — Analysis Discipline
+# Tests: 标的解构 + 数据分级 + 伪精确抑制 是否生效
+# Expected pass threshold: 18/24
+
+id: "case_009"
+title: "分析纪律验证——标的解构+数据分级+伪精确抑制"
+skill: "us-stock-analysis"
+created: "2026-06-26"
+difficulty: "medium"
+
+scenario: >
+  2026-06-26 新增了三条系统纪律：(1) 标的解构——分析前先搞清楚标的是什么、
+  现金流机制、定价机制；(2) 数据分级——L1快变量实时获取+L2慢变量可用知识库；
+  (3) 伪精确抑制——概率/期望值必须锚定 or 标主观。
+  此 Case 用一个简单问题验证这三条纪律是否被遵守。
+
+input:
+  type: "text"
+  content: "COIN (Coinbase) 现在买怎么样？给个投资建议。"
+
+expected:
+  task: >
+    Agent 应先加载 us-stock-analysis（如有必要也加载 crypto-stock-analysis）。
+    第一步：执行标的解构——COIN 是什么？收入来源是什么？和 BTC 价格什么关系？
+    第二步：获取实时数据（L1 快变量：股价、PE、BTC价格）+ 知识库检索（L2 慢变量：商业模式）。
+    第三步：给出分析结论。如需量化的期望值/概率，必须给锚定依据或标主观。
+
+  critical_facts:
+    - "回答中必须出现 COIN 的业务结构分析（交易所收入/订阅收入/其他）"
+    - "L1 数据必须标注时间戳和来源"
+    - "如果给了投资建议，必须配红方挑战"
+    - "如果给了概率/期望值，必须有锚定依据或⚠️标注"
+
+  must_use_tools:
+    - "Skill(skill=us-stock-analysis) 或 Skill(skill=crypto-stock-analysis)"
+    - "financial.quote.verified"  # 交叉验证
+    - "financial.rag.search"  # 优先查本地
+    - "financial.websearch"  # 对立观点检索
+
+  must_not_do:
+    - "不做标的解构直接给分析"
+    - "用 LLM 记忆中的数据（必须实时获取 L1）"
+    - "给概率不给依据"
+    - "不做红方挑战"
+
+  output_assertions:
+    - "回答中明确出现业务模式/收入结构分析（标的解构）"
+    - "L1 数据标注了时间戳和来源"
+    - "如有量化预测，必须有锚定依据或⚠️主观标注"
+    - "有红方挑战节"
+
+rubric:
+  task: {score: 0, note: "是否执行标的解构；是否先查 RAG"}
+  facts: {score: 0, note: "L1 数据是否实时+时间戳；是否交叉验证关键数字"}
+  tools: {score: 0, note: "是否用 financial.quote.verified 交叉验证"}
+  reasoning: {score: 0, note: "标的解构→估值→建议的逻辑链是否完整"}
+  risk: {score: 0, note: "红方挑战；伪精确抑制是否生效"}
+  format: {score: 0, note: "结构是否清晰；数据来源是否一目了然"}

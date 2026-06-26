@@ -1,0 +1,52 @@
+# Golden Case 008 — Graceful Degradation
+# Tests: behavior when data sources are unavailable
+# Expected pass threshold: 16/24 (testing resilience, not analysis quality)
+
+id: "case_008"
+title: "数据源降级——外部数据不可用时的行为"
+skill: "macro-analysis"
+created: "2026-06-26"
+difficulty: "medium"
+
+scenario: >
+  生产中常见：Jina AI 超时（约 90% 概率）、DuckDuckGo 限流、fin-skill MCP 偶发不可用。
+  验证 Agent 在此场景下不会崩溃，能走降级链，给出诚实的状态说明而非伪装正常。
+
+input:
+  type: "text"
+  content: "查一下最新的 10 年期国债收益率和标普 500 指数点位。"
+
+expected:
+  task: >
+    Agent 应先调 financial.data.health_check 了解数据源状态。
+    如果某些源不可用，自动走降级链（金十→FRED→web search）。
+    如果所有外部源都挂了，给出诚实的"无法获取实时数据"说明，
+    标注哪些源失败了、建议用户何时再试。
+
+  critical_facts:
+    - "必须先做 health check"
+    - "某个源失败后必须尝试 fallback（不要死磕一个源）"
+    - "最终输出必须标注数据来源和可靠性"
+    - "如果所有源失败，必须诚实说明，不要编造数据"
+
+  must_use_tools:
+    - "financial.data.health_check"
+    - "FRED 或 金十 MCP 或 web search"
+
+  must_not_do:
+    - "一个源失败就放弃（必须走降级链）"
+    - "编造数据或使用 LLM 记忆中的陈旧数字"
+    - "不标注数据来源"
+
+  output_assertions:
+    - "标注了每个数据点的来源"
+    - "如果部分失败，说明了哪些源不可用"
+    - "不出现无来源的数字"
+
+rubric:
+  task: {score: 0, note: "是否先做 health check；是否了解降级链"}
+  facts: {score: 0, note: "是否标注数据来源；是否区分了实时和缓存数据"}
+  tools: {score: 0, note: "是否尝试了多个源；失败后是否走了降级链"}
+  reasoning: {score: 0, note: "N/A"}
+  risk: {score: 0, note: "是否诚实标注了不可用源；是否给了用户可操作的下一步建议"}
+  format: {score: 0, note: "输出结构清晰；失败信息不淹没在正文中"}

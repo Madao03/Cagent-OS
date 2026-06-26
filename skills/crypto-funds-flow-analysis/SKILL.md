@@ -92,9 +92,12 @@ category: research
 
 ## 工具使用约定
 
+⚠️ **检索优先级: RAG > Web Search** — 先查本地知识库，命中不到再搜外部。
+
 | 操作 | 工具 |
 |:-----|:-----|
+| **🔍 知识库（优先）** | **`financial.rag.search`** — 查已归档资金面分析/稳定币动态 |
 | 稳定币市值/恐惧贪婪 | CMC MCP `get_global_metrics_latest` |
-| DeFi TVL/DEX 量 | `web.fetch` / `financial.websearch` |
+| DeFi TVL/DEX 量 | `web.fetch` / `financial.websearch` (fallback) |
 | 资金费率/OI | `web.fetch` 搜索 |
 | 加载关联 Skill | `Skill(skill="crypto-analysis")` |

@@ -1,0 +1,58 @@
+# Golden Case 007 — Cross-Skill Collaboration
+# Tests: multi-skill loading, cross-skill data sharing, coherent output
+# Expected pass threshold: 18/24
+
+id: "case_007"
+title: "宏观→Crypto 传导——多 Skill 协作分析"
+skill: "macro-analysis + crypto-analysis"
+created: "2026-06-26"
+difficulty: "hard"
+
+scenario: >
+  用户提出一个跨领域问题：全球 AI 概念股暴跌对 BTC 和加密市场的影响。
+  这个问题需要同时激活 macro-analysis（分析宏观环境）和 crypto-analysis
+  （分析加密市场）两个 skill，还需要 RAG 检索已归档的相关文章。
+  考验 Agent 的多 skill 协作能力。
+
+input:
+  type: "text"
+  content: "最近全球 AI 概念股暴跌，交易逻辑据说变了。这对 BTC 和整个 crypto 市场意味着什么？会联动吗？"
+
+expected:
+  task: >
+    Agent 应同时加载 macro-analysis 和 crypto-analysis 两个 skill。
+    先用 RAG 搜索已归档的"AI 暴跌"相关文章。
+    然后获取宏观数据（金十/FRED）+ 加密市场数据（CMC MCP）。
+    最终给出宏观→风险资产→加密市场的传导链分析，标注各环节置信度。
+
+  critical_facts:
+    - "必须同时加载两个 skill"
+    - "必须先调 RAG 搜索已归档内容"
+    - "宏观数据必须来自工具调用（不是 LLM 记忆）"
+    - "加密数据必须来自 CMC MCP 或 web search"
+    - "必须给出传导链：宏观→风险资产→加密"
+
+  must_use_tools:
+    - "Skill(skill=macro-analysis) + Skill(skill=crypto-analysis)"
+    - "financial.rag.search"
+    - "金十 MCP 或 FRED"
+    - "CMC MCP get_global_metrics_latest"
+
+  must_not_do:
+    - "只用宏观或只用加密视角"
+    - "跳过 RAG"
+    - "不给传导链直接给结论"
+
+  output_assertions:
+    - "回答涵盖宏观和加密两个维度"
+    - "引用了 RAG 检索到的已归档内容"
+    - "给出了传导链（至少 3 个环节）"
+    - "标注了置信度"
+
+rubric:
+  task: {score: 0, note: "是否同时加载两个 skill；是否先调 RAG"}
+  facts: {score: 0, note: "数据是否来自工具调用；两个维度的数据是否都覆盖"}
+  tools: {score: 0, note: "是否使用了多个数据源；跨 skill 工具调用是否协调"}
+  reasoning: {score: 0, note: "传导链是否完整；是否区分了相关性和因果性"}
+  risk: {score: 0, note: "是否标注各环节置信度；是否给出反方观点"}
+  format: {score: 0, note: "两个维度的分析是否整合成一份连贯输出"}

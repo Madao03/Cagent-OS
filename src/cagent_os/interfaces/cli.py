@@ -51,6 +51,7 @@ def _load_mcp_config() -> list[dict]:
 def build_registry(
     mcp_manager: MCPSessionManager | None = None,
     skill_service: UserSkillService | None = None,
+    memory_api: Any = None,
 ) -> tuple[ToolRegistry, FinancialToolkit | None]:
     """Build the tool registry. Returns (registry, toolkit) so callers
     can close the toolkit's MCP event-loop thread on shutdown."""
@@ -64,7 +65,19 @@ def build_registry(
         data_layer.register_source(FinSkillAdapter(mcp_manager))
     if settings.fred_api_key:
         data_layer.register_source(FredAdapter(api_key=settings.fred_api_key))
-    registry.register_plugin(FinancialPlugin(settings=settings, toolkit=toolkit, data_layer=data_layer, trace_db_path=settings.trace_db_path, memory_api=memory_store))
+    # Phase 3: RAG service
+    rag_service = None
+    try:
+        from cagent_os.rag.rag_service import RAGService
+        rag_service = RAGService(
+            knowledge_dir="knowledge",
+            chroma_path="data/vectors",
+            api_key=settings.siliconflow_api_key,
+        )
+        logger.info("RAG service initialized: %d chunks", rag_service.chunk_count)
+    except Exception as exc:
+        logger.warning("RAG service not available: %s", exc)
+    registry.register_plugin(FinancialPlugin(settings=settings, toolkit=toolkit, data_layer=data_layer, trace_db_path=settings.trace_db_path, memory_api=memory_api, rag_service=rag_service))
     registry.register_plugin(WebPlugin(settings=settings))
     registry.register_plugin(ReadPlugin(settings=settings))
     registry.register_plugin(WritePlugin(settings=settings))
@@ -243,20 +256,23 @@ def main() -> None:
     )
     skill_service = UserSkillService(store=skill_store)
 
-    registry, toolkit = build_registry(mcp_manager=mcp_manager, skill_service=skill_service)
+    # Task 5: AsyncBridge — created first, shared by all async resources
+    Path("data").mkdir(exist_ok=True)
+    bridge = AsyncBridge()
+
+    # Memory — created before registry so plugins can use it
+    memory_store = SqliteMemoryStore(db_path="data/memory.db")
+    bridge.run(memory_store.open(), timeout=10)
+
+    registry, toolkit = build_registry(mcp_manager=mcp_manager, skill_service=skill_service, memory_api=memory_store)
     executor = ToolDispatcher(registry=registry)
 
     repo = InMemoryConversationRepository()
     conversation_service = ConversationService(repository=repo)
     llm_backend = create_backend(settings)
 
-    # Task 5: Memory + TraceWriter + AsyncBridge
-    Path("data").mkdir(exist_ok=True)
-    bridge = AsyncBridge()
-    memory_store = SqliteMemoryStore(db_path="data/memory.db")
+    # TraceWriter
     trace_writer = TraceWriter(db_path="data/trace.db")
-    # Open async resources on the bridge loop
-    bridge.run(memory_store.open(), timeout=10)
     bridge.run(trace_writer.open(), timeout=10)
 
     principal_id = settings.default_principal_id

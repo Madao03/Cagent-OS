@@ -32,3 +32,6 @@ knowledge/
 
 # Logs
 logs/
+temp/
+evaluation/results/
+evaluation/responses/

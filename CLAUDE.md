@@ -9,7 +9,7 @@ CagentOS — 面向金融投研场景的 Agent 操作系统。底层 Runtime 基
 - **Python**: >=3.11, **包名**: `cagent_os` (源码在 `src/cagent_os/`)
 - **数据库**: SQLite (`aiosqlite` + WAL 模式)
 - **LLM**: DeepSeek V4 Pro (默认),8 个 provider 框架就绪
-- **当前阶段**: **阶段 2 完成 ✅** (知识引擎 + 横切奠基,2026-06-25)
+- **当前阶段**: **阶段 3 完成 ✅** (语义检索 + 质量门禁,2026-06-26)
 
 ## 常用命令
 
@@ -41,7 +41,7 @@ AgentRuntime (agents/run_engine.py)         ← ReAct 循环 + Event Sourcing
 - Ⓐ Memory: 热记忆(≤500 字注入) + 冷记忆(SQLite 三表) + **LLM 矛盾检测**
 - Ⓑ Observe: TraceWriter + **TraceReader** (查询API) + DICA 四维标注
 - Ⓒ DataWall: **FRED (21 系列) + 金十 MCP + yfinance** 三源 → 方差检测 >5% → 交叉验证
-- Ⓓ Eval: **Golden Cases × 3** + 六维 Rubric 手动评分
+- Ⓓ Eval: **Golden Cases × 10** + 25-criterion LLM-Judge 自动评分 + 仪表板
 
 ## 命名约定
 
@@ -80,7 +80,7 @@ AgentRuntime (agents/run_engine.py)         ← ReAct 循环 + Event Sourcing
 | `crypto-funds-flow-analysis` | 1d | 稳定币/CEX/TVL/杠杆资金面 |
 | `content-assetize` | **2a 新建** | A 类文章→事实/观点/框架 结构化资产 |
 
-## 能力清单 (19 个 capability)
+## 能力清单 (21 个 capability)
 
 **Financial**: `financial.fred` · `financial.websearch` · `financial.earnings.query` · `financial.earnings.query_full` · `financial.quote.query` · `financial.quote.verified` · `financial.data.health_check` · `financial.trace.query` · `financial.memory.save_thesis` · `financial.memory.query_theses` · `financial.memory.check_contradictions` · `financial.memory.append` · `financial.memory.get_document`
 
@@ -88,7 +88,7 @@ AgentRuntime (agents/run_engine.py)         ← ReAct 循环 + Event Sourcing
 
 **Infra**: `docs.read` · `write.file` · `Skill` (技能加载)
 
-## 当前进度 — 阶段 2 完成 ✅
+## 当前进度 — 阶段 3 完成 ✅
 
 ### 已就绪
 - ✅ AgentRuntime + Plugin 体系 + LLM 层完整可运行
@@ -101,14 +101,17 @@ AgentRuntime (agents/run_engine.py)         ← ReAct 循环 + Event Sourcing
 - ✅ Trace: `TraceWriter` + `TraceReader` (查询 API) + DICA 四维标注
 - ✅ 9 个 Skill (8 投研 + 1 资产化), macro 已重写
 - ✅ 浏览器抓取: Playwright + Readability.js + Stealth 反反爬, 自动降级
-- ✅ Golden Cases × 3 (triage/macro/NVDA) + 六维 Rubric + scorer.py
+- ✅ Golden Cases × 10 (triage/macro/NVDA/crypto/crypto-stock/cross-skill/RAG/容错/纪律/对立观点) + 六维 Rubric + scorer.py
+- ✅ RAG 管线: 6-scheme Chunking + Qwen3-Embedding-8B + NumPy + Qwen3-Reranker-8B + 容错重试 + Plugin 接入
+- ✅ 评测自动化: 25-criterion LLM-Judge 自动评分 + JSON 存储 + 历史对比 + 仪表板
 - ✅ 29 篇分诊积累, 分诊台账 (append-only)
 - ✅ 图片多模态骨架 (`image.describe`), 等待 API key 激活
 
-### 待实现 (阶段 3)
-- RAG: Chunking + Embedding (硅基流动 Qwen3-Embedding-8B) + ChromaDB + Rerank
-- 评测自动化: Golden Cases 3→10+ + DeepEval G-Eval 自动评分
-- 多模态图片处理: 代码编排调用多模态 LLM 描述图表并拼回原文
+### 待实现 (阶段 4)
+- 多 Agent 协作 (研究员/风控/编辑) + Pydantic Message Bus
+- Web UI (React + Tailwind)
+- Trace → Langfuse 全链路可视化
+- 评测 CI/CD 回归套件
 
 ## 开发注意事项
 

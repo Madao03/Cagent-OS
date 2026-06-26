@@ -436,8 +436,12 @@ category: research
 
 ### 工具使用原则
 
+⚠️ **数据检索优先级: RAG > Web Search** — 先查本地知识库（已归档 29 篇研报/新闻/台账），命中不到再搜外部。
+
+- **`financial.rag.search`** — 优先调用的知识库检索，查已归档的美股分析/新闻
 - 每次分析必须通过工具实时获取数据，不使用 LLM 记忆中的数字
 - `FinancialToolkit.query_quote` 是首选入口（28 个指标一站式获取）
 - `FinancialToolkit.query_earnings` 补充深度财报数据
 - `WebPlugin` 用于搜索引擎无法覆盖的实时信息
 - 金十 MCP 日历用于财报日确认
+- **`financial.websearch`** — 强制检索对立观点：搜索 "{标的} bull case" + "{标的} bear case"，呈现至少一个有明确来源的反对意见

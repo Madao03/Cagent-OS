@@ -1,0 +1,55 @@
+# Golden Case 004 — Crypto Analysis
+# Tests: cycle positioning, fear/greed, funding rate, MVRV-Z
+# Expected pass threshold: 18/24
+
+id: "case_004"
+title: "BTC 加密市场周期分析——当前处于什么位置"
+skill: "crypto-analysis"
+created: "2026-06-26"
+difficulty: "medium"
+
+scenario: >
+  用户想了解 BTC 当前在加密周期中的位置，评估是否适合加仓。
+  考验 Agent 是否加载 crypto-analysis skill，是否获取链上/市场数据，
+  是否给出周期定位判断，是否标注置信度和红方挑战。
+
+input:
+  type: "text"
+  content: "BTC 现在处于加密周期的什么阶段？适合加仓吗？"
+
+expected:
+  task: >
+    Agent 应加载 crypto-analysis skill，获取恐惧贪婪指数/MVRV-Z/资金费率/稳定币市值等数据，
+    给出周期定位（accumulation/bull/distribution/bear），标注置信度。
+
+  critical_facts:
+    - "必须调 CMC MCP get_global_metrics_latest 获取恐贪指数"
+    - "必须尝试获取 MVRV-Z 或 Puell Multiple"
+    - "必须查看永续合约资金费率（正/负）"
+    - "必须判断稳定币市值趋势（扩张/收缩）"
+    - "所有数据必须标注来源和时间戳"
+
+  must_use_tools:
+    - "CMC MCP get_global_metrics_latest"
+    - "financial.websearch 或 web.fetch"
+    - "Skill(skill=crypto-analysis)"
+
+  must_not_do:
+    - "只用 LLM 记忆中的数据（必须调工具）"
+    - "不做红方挑战就给投资建议"
+    - "不标注置信度"
+
+  output_assertions:
+    - "output.asset == 'BTC'"
+    - "output.cycle_position 不为 None"
+    - "output.cycle_position.cycle_phase 不为空"
+    - "output.confidence 不为空"
+    - "output.red_team_challenges 长度 >= 3"
+
+rubric:
+  task: {score: 0, note: "是否加载正确 skill；是否同时考虑链上+市场数据"}
+  facts: {score: 0, note: "数据是否来自工具调用；是否标注来源和时间戳"}
+  tools: {score: 0, note: "是否尝试 CMC MCP；是否有 fallback 策略"}
+  reasoning: {score: 0, note: "周期定位逻辑是否自洽；是否区分了短期波动和中期趋势"}
+  risk: {score: 0, note: "是否给出红方挑战；是否标注置信度；是否说明什么情况判断会错"}
+  format: {score: 0, note: "是否按 CryptoAnalysisOutput Schema 输出"}

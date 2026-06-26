@@ -26,12 +26,13 @@ FINANCIAL_WEBSEARCH_CAPABILITY_ID = "financial.websearch"
 
 
 class FinancialPlugin(Plugin):
-    def __init__(self, settings: Settings, toolkit: FinancialToolkit | None = None, data_layer: Any = None, trace_db_path: str = "data/trace.db", memory_api: Any = None) -> None:
+    def __init__(self, settings: Settings, toolkit: FinancialToolkit | None = None, data_layer: Any = None, trace_db_path: str = "data/trace.db", memory_api: Any = None, rag_service: Any = None) -> None:
         self._settings = settings
         self._toolkit = toolkit or build_financial_toolkit(settings)
         self._data_layer = data_layer
         self._trace_db_path = trace_db_path
         self._memory_api = memory_api
+        self._rag_service = rag_service
 
     def manifest(self) -> PluginSpec:
         capabilities = [
@@ -41,7 +42,7 @@ class FinancialPlugin(Plugin):
                 {
                     "query": {"type": "string"},
                     "num_results": {"type": "integer", "default": 10},
-                    "provider_params": {"type": "object"},
+                    "provider_params": {"type": "object", "additionalProperties": True},
                 },
                 required=["query"],
             ),
@@ -101,8 +102,6 @@ class FinancialPlugin(Plugin):
                 "failed runs, or find patterns across conversations. "
                 "Supports: list (recent N), summary (one conv_id), count (stats).",
                 {
-                    "type": "object",
-                    "properties": {
                         "action": {
                             "type": "string",
                             "description": "Query action: 'list' (recent conversations), 'summary' (one conversation by id), 'count' (total runs)",
@@ -117,9 +116,8 @@ class FinancialPlugin(Plugin):
                             "default": 10,
                             "description": "Max results for 'list' action",
                         },
-                    },
-                    "required": ["action"],
                 },
+                required=["action"],
             ),
             self._manifest(
                 "financial.data.health_check",
@@ -138,8 +136,6 @@ class FinancialPlugin(Plugin):
                 "Fills critical gaps in short-term liquidity analysis. "
                 "Use named metrics like 'onrrp', 'cpi', 'unemployment_rate' or 'custom' with a FRED series_id.",
                 {
-                    "type": "object",
-                    "properties": {
                         "metric": {
                             "type": "string",
                             "description": "Named metric (onrrp, tga, bank_reserves, fed_balance_sheet, treasury_3m, treasury_6m, treasury_1y, treasury_2y, treasury_10y, yield_spread_10y2y, nonfarm_payrolls, unemployment_rate, jolts_openings, participation_rate, avg_hourly_earnings, cpi, ppi, core_pce, gdp, m1, m2) or 'custom' with series_id. Also accepts raw FRED series_id directly.",
@@ -153,9 +149,29 @@ class FinancialPlugin(Plugin):
                             "default": 1,
                             "description": "Number of observations to return (default 1 = latest)",
                         },
-                    },
-                    "required": ["metric"],
                 },
+                required=["metric"],
+            ),
+            self._manifest(
+                "financial.rag.search",
+                "Search the local RAG knowledge base for relevant content. "
+                "Returns top-ranked text chunks from ingested articles, research reports, "
+                "and assetized facts/opinions/frameworks. "
+                "Use this BEFORE external web search to retrieve previously-read analysis. "
+                f"Currently indexed: {self._rag_service.chunk_count if self._rag_service else 0} chunks.",
+                {
+                    "query": {"type": "string", "description": "Natural language query"},
+                    "top_k": {"type": "integer", "default": 5, "description": "Number of results (default 5, max 20)"},
+                    "chunk_type_filter": {"type": "string", "description": "Optional filter by chunk type"},
+                },
+                required=["query"],
+            ),
+            self._manifest(
+                "financial.rag.status",
+                "Check the RAG knowledge base status: number of indexed chunks, "
+                "embedding model, and whether search is available. "
+                "Call this at the start of a session to know what knowledge is available.",
+                {},
             ),
             self._manifest(
                 "financial.memory.save_thesis",
@@ -164,14 +180,11 @@ class FinancialPlugin(Plugin):
                 "with ticker and thesis_type (bullish/bearish/neutral). These are later "
                 "checked for contradictions when new analyses are run on the same ticker.",
                 {
-                    "type": "object",
-                    "properties": {
                         "ticker": {"type": "string", "description": "Ticker symbol (NVDA, BTC, etc.)"},
                         "thesis_type": {"type": "string", "description": "bullish | bearish | neutral"},
                         "content": {"type": "string", "description": "The core thesis statement (1-3 sentences)"},
-                    },
-                    "required": ["ticker", "thesis_type", "content"],
                 },
+                required=["ticker", "thesis_type", "content"],
             ),
             self._manifest(
                 "financial.memory.query_theses",
@@ -179,12 +192,9 @@ class FinancialPlugin(Plugin):
                 "theses saved for that ticker, ordered by most recent first. "
                 "Use this before writing a new analysis to check what you previously believed.",
                 {
-                    "type": "object",
-                    "properties": {
                         "ticker": {"type": "string", "description": "Ticker symbol to query"},
-                    },
-                    "required": ["ticker"],
                 },
+                required=["ticker"],
             ),
             self._manifest(
                 "financial.memory.check_contradictions",
@@ -193,13 +203,10 @@ class FinancialPlugin(Plugin):
                 "Call this AFTER completing an analysis to catch belief drift. "
                 "If contradictions are found, surface them to the user for resolution.",
                 {
-                    "type": "object",
-                    "properties": {
                         "analysis_output": {"type": "string", "description": "The full analysis text to check"},
                         "tickers": {"type": "array", "items": {"type": "string"}, "description": "Tickers mentioned in the analysis"},
-                    },
-                    "required": ["analysis_output", "tickers"],
                 },
+                required=["analysis_output", "tickers"],
             ),
             self._manifest(
                 "financial.memory.append",
@@ -268,6 +275,10 @@ class FinancialPlugin(Plugin):
             return self._handle_health_check()
         if capability_id == "financial.trace.query":
             return self._handle_trace_query(arguments)
+        if capability_id == "financial.rag.search":
+            return self._handle_rag_search(arguments)
+        if capability_id == "financial.rag.status":
+            return self._handle_rag_status()
         if capability_id == "financial.fred":
             return self._handle_fred(arguments)
         if capability_id == "financial.memory.save_thesis":
@@ -359,6 +370,41 @@ class FinancialPlugin(Plugin):
             "latest_date": raw.raw_response.get("latest_date", ""),
             "fetched_at": raw.fetched_at,
         }
+
+    def _handle_rag_search(self, arguments: dict[str, Any]) -> dict[str, Any]:
+        """Search the RAG knowledge base."""
+        if self._rag_service is None:
+            return {"success": False, "error": "rag_unavailable", "message": "RAG service not configured"}
+        query = str(arguments.get("query", ""))
+        top_k = int(arguments.get("top_k", 5))
+        chunk_filter = arguments.get("chunk_type_filter")
+        if not query:
+            return {"success": False, "error": "invalid_input", "message": "query is required"}
+        where = {"chunk_type": chunk_filter} if chunk_filter else None
+        results = self._rag_service.search(query, top_k=min(top_k, 20), where=where)
+        formatted = self._rag_service.format_context(results, max_results=top_k)
+        return {
+            "success": True, "query": query, "results_count": len(results),
+            "results": [
+                {
+                    "rank": i + 1, "title": r["metadata"].get("title", "?"),
+                    "source": r["metadata"].get("source", ""),
+                    "chunk_type": r["metadata"].get("chunk_type", ""),
+                    "section": r["metadata"].get("section", ""),
+                    "date": r["metadata"].get("date", ""),
+                    "similarity": round(r["similarity"], 4),
+                    "text_preview": r["text"][:300],
+                }
+                for i, r in enumerate(results)
+            ],
+            "formatted_context": formatted,
+        }
+
+    def _handle_rag_status(self) -> dict[str, Any]:
+        """Return RAG system status."""
+        if self._rag_service is None:
+            return {"success": True, "available": False, "message": "RAG not configured"}
+        return {"success": True, **self._rag_service.status}
 
     def _handle_save_thesis(self, arguments: dict[str, Any]) -> dict[str, Any]:
         """Save an investment thesis to the memory store."""
@@ -565,6 +611,6 @@ class FinancialPlugin(Plugin):
             parameters={
                 "type": "object",
                 "properties": properties,
-                "required": required or [],
+                **({"required": required} if required else {}),
             },
         )

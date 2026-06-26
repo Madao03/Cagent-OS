@@ -185,10 +185,13 @@ category: research
 
 ## 工具使用约定
 
+⚠️ **检索优先级: RAG > Web Search** — 先查本地知识库，命中不到再搜外部。
+
 | 操作 | 工具 |
 |:-----|:-----|
+| **🔍 知识库（优先）** | **`financial.rag.search`** — 查已归档科技/板块分析 |
 | 板块 ETF/指数行情 | `financial.quote.query` |
-| 宏观数据获取 | `financial.websearch` / `web.fetch` |
+| 宏观数据获取 | `financial.websearch` / `web.fetch` (fallback) |
 | 交叉验证估值指标 | `financial.quote.verified` |
 | 财报/指引搜索 | `financial.websearch` |
 | 加载关联 Skill | `Skill(skill="macro-analysis")` |
