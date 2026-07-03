@@ -31,8 +31,15 @@ from cagent_os.shared.logging_utils import build_log_extra, configure_logging, f
 from cagent_os.user_skills import FilesystemUserSkillStore, UserSkillService
 
 import json as _json
+import asyncio as _asyncio
+import threading as _threading
+from datetime import datetime as _datetime, timezone as _timezone
 
 logger = logging.getLogger(__name__)
+
+# ── Cron scheduler state ──────────────────────────────────────────────
+_cron_task: _asyncio.Task | None = None
+_cron_stop_event = _threading.Event()
 
 
 def _load_mcp_config(settings) -> list[dict]:
@@ -134,6 +141,61 @@ def create_app() -> FastAPI:
     @app.get("/health")
     def health_check() -> dict:
         return {"status": "healthy"}
+
+    # ── Phase 4b: Cron scheduler ──────────────────────────────────────
+    @app.on_event("startup")
+    async def _startup_cron() -> None:
+        """Start the daily cron scheduler on HTTP server startup."""
+        global _cron_task
+        _cron_stop_event.clear()
+        _cron_task = _asyncio.create_task(_cron_loop())
+        logger.info("Cron scheduler started (daily 8:00 AM)")
+
+    @app.on_event("shutdown")
+    async def _shutdown_cron() -> None:
+        """Stop the cron scheduler on HTTP server shutdown."""
+        global _cron_task
+        _cron_stop_event.set()
+        if _cron_task is not None:
+            _cron_task.cancel()
+            try:
+                await _cron_task
+            except _asyncio.CancelledError:
+                pass
+        logger.info("Cron scheduler stopped")
+
+    async def _cron_loop() -> None:
+        """Background loop: check every 60s if it's 8:00 AM local time, then run daily reports."""
+        last_run_date: str = ""
+        while not _cron_stop_event.is_set():
+            try:
+                now = _datetime.now()
+                today_str = now.strftime("%Y-%m-%d")
+                # Run at 8:00 AM local time, once per day
+                if now.hour == 8 and today_str != last_run_date:
+                    logger.info("Cron: triggering daily reports at %s", now.isoformat())
+                    try:
+                        from cagent_os.multi_agent.cron_agent import CronAgent
+                        agent = CronAgent()
+                        results = await agent.run_all_daily()
+                        for r in results:
+                            if r.error:
+                                logger.error("Cron daily failed: %s — %s", r.name, r.error)
+                            else:
+                                logger.info("Cron daily OK: %s → %s", r.name, r.output_path)
+                        last_run_date = today_str
+                    except Exception as exc:
+                        logger.error("Cron daily run failed: %s", exc)
+                # Sleep in 30-second increments so shutdown is responsive
+                for _ in range(2):
+                    if _cron_stop_event.is_set():
+                        break
+                    await _asyncio.sleep(30)
+            except _asyncio.CancelledError:
+                break
+            except Exception:
+                logger.exception("Cron loop error — will retry in 60s")
+                await _asyncio.sleep(60)
 
     # Phase 4c: Web UI — serve static files
     static_dir = Path(__file__).resolve().parent / "static"

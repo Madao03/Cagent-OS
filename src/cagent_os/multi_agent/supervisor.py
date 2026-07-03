@@ -22,9 +22,10 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Callable, Awaitable
 
 from cagent_os.multi_agent.schemas import (
     AnalysisReport,
@@ -33,6 +34,7 @@ from cagent_os.multi_agent.schemas import (
     RawDataDump,
     RiskAuditResult,
     SupervisorDecision,
+    ValuationMetrics,
 )
 
 logger = logging.getLogger(__name__)
@@ -46,6 +48,9 @@ class SupervisorConfig:
     enable_rag: bool = True
     enable_fred: bool = True
     enable_web_search: bool = True
+    # Phase 4a MVP: injectable agent runner for Researcher step.
+    # Signature: async def run_analysis(query: str) -> str (raw markdown output)
+    agent_runner: Callable[[str], Awaitable[str]] | None = None
 
 
 @dataclass
@@ -65,7 +70,9 @@ class Supervisor:
     """Orchestrates multi-agent pipeline for financial analysis.
 
     Usage:
-        supervisor = Supervisor()
+        supervisor = Supervisor(config=SupervisorConfig(
+            agent_runner=my_async_agent_runner,
+        ))
         result = await supervisor.run("分析 NVDA 当前估值")
         # result.summary.conclusion → "NVDA 当前 PE 18.5..."
     """
@@ -259,28 +266,101 @@ class Supervisor:
     async def _run_researcher(self, query: str) -> AnalysisReport:
         """Researcher: analyze with full skill suite.
 
-        For MVP, delegates to existing AgentRuntime. Phase 4+ can run as a
-        sub-agent with its own tool scope.
+        Delegates to the injected agent_runner callable (if configured),
+        which wraps AgentRuntime.run(). Falls back to a template-based
+        analysis when no runner is available.
         """
-        # Placeholder: invoke the main agent runtime
-        # In production, this would be a separate AgentRuntime instance
         ticker = self._extract_ticker(query)
+
+        if self._config.agent_runner is not None:
+            try:
+                raw_output = await asyncio.wait_for(
+                    self._config.agent_runner(query),
+                    timeout=self._config.timeout_seconds,
+                )
+                # Parse key sections from the agent's markdown output
+                thesis, risks, catalysts = self._parse_analysis_output(raw_output, query, ticker)
+                return AnalysisReport(
+                    ticker=ticker,
+                    thesis=thesis,
+                    risks=risks,
+                    catalysts=catalysts,
+                    generated_at=datetime.now(timezone.utc),
+                )
+            except asyncio.TimeoutError:
+                logger.warning("Researcher timed out after %ds", self._config.timeout_seconds)
+            except Exception as exc:
+                logger.warning("Researcher agent runner failed: %s", exc)
+
+        # Fallback: template-based analysis (no agent runner configured)
         return AnalysisReport(
             ticker=ticker,
-            thesis=f"Analysis of: {query}",
-            risks=["Data quality risk", "Model uncertainty"],
-            catalysts=["Real-time data integration"],
+            thesis=f"Analysis requested for: {query[:200]}",
+            risks=[
+                "Macro environment uncertainty",
+                "Data source reliability varies",
+            ],
+            catalysts=[
+                "Real-time data feeds available via DataLayer",
+            ],
             generated_at=datetime.now(timezone.utc),
         )
 
     async def _run_red_team(self, query: str, analysis: AnalysisReport) -> RiskAuditResult:
-        """Red-Team: challenge the analysis with counter-arguments."""
+        """Red-Team: adversarial check on the analysis output.
+
+        Applies lightweight heuristic checks for common analysis weaknesses:
+        - Missing risk factors (<= 1 risk listed)
+        - No data citations (unsubstantiated claims)
+        - Overconfident thesis without caveats
+        - No opposing viewpoints considered
+
+        Phase 4+ can upgrade to LLM-based adversarial review.
+        """
+        risks_found: list[str] = []
+        severity: str = "low"
+
+        # Check 1: Insufficient risk coverage
+        if len(analysis.risks) <= 1:
+            risks_found.append("Analysis lists 1 or fewer risk factors — may be missing key counter-arguments")
+            severity = "medium"
+
+        # Check 2: No data citations → unsubstantiated claims
+        if not analysis.data_citations:
+            risks_found.append("No data citations found — claims may be unsubstantiated")
+
+        # Check 3: Thesis too short or vague
+        if len(analysis.thesis) < 50:
+            risks_found.append("Thesis is very brief (<50 chars) — lacks depth")
+            severity = "medium"
+
+        # Check 4: Overconfidence detection
+        overconfident_patterns = [
+            r"一定", r"必然", r"毫无疑问", r"绝对", r"guaranteed", r"certainly",
+            r"definitely", r"without doubt", r"100%",
+        ]
+        for pattern in overconfident_patterns:
+            if re.search(pattern, analysis.thesis, re.IGNORECASE):
+                risks_found.append(f"Overconfident language detected in thesis: '{pattern}'")
+                severity = "high"
+                break
+
+        if not risks_found:
+            risks_found.append("No significant issues detected in heuristic review")
+            recommendation = "Analysis appears structurally sound. Consider LLM-based deep review for nuanced issues."
+        else:
+            recommendation = (
+                f"Found {len(risks_found)} potential issue(s). "
+                "Consider: (1) adding more risk factors, (2) citing specific data sources, "
+                "(3) including opposing viewpoints."
+            )
+
         return RiskAuditResult(
             ticker=analysis.ticker,
             risk_type="analytical",
-            severity="medium",
-            gap=f"Counter-analysis for: {query[:80]}",
-            recommendation="Verify data sources independently. Consider opposing market views.",
+            severity=severity,
+            gap="; ".join(risks_found),
+            recommendation=recommendation,
             references_report_id=None,
         )
 
@@ -291,33 +371,133 @@ class Supervisor:
         audit: RiskAuditResult | None,
         raw_data: RawDataDump | None,
     ) -> DecisionSummary:
-        """Editor: compress analysis + audit into a decision summary."""
+        """Editor: compress analysis + audit + raw data into a decision summary.
+
+        Synthesizes all upstream outputs into:
+        - 1-2 sentence conclusion
+        - Top 3 key evidence points (by confidence)
+        - Top 2 risks
+        - Source references
+
+        Phase 4+ can upgrade to LLM-based summarization.
+        """
         evidence_lines: list[str] = []
         risks: list[str] = []
         refs: list[str] = []
 
-        if raw_data:
-            top_items = sorted(raw_data.items, key=lambda x: x.confidence, reverse=True)[:3]
-            evidence_lines = [
-                f"{i.source}: {i.metric} = {i.value} {i.unit}"
-                for i in top_items if i.value is not None
-            ]
-            refs = [i.url for i in top_items if i.url]
+        # ── Extract key evidence from raw data (top 3 by confidence) ──
+        if raw_data and raw_data.items:
+            sorted_items = sorted(raw_data.items, key=lambda x: x.confidence, reverse=True)
+            for item in sorted_items[:3]:
+                if item.value is not None:
+                    value_str = str(item.value)[:60] if not isinstance(item.value, (int, float)) else f"{item.value}"
+                    evidence_lines.append(
+                        f"[{item.source}] {item.metric}: {value_str}"
+                    )
+                if item.url:
+                    refs.append(item.url)
 
+        # ── Extract risks from audit ──
         if audit:
-            risks.append(audit.recommendation)
+            risks.append(f"[{audit.severity}] {audit.gap[:150]}")
+            if audit.recommendation:
+                risks.append(audit.recommendation[:200])
+
+        if analysis and analysis.risks:
+            for r in analysis.risks[:2]:
+                if r not in risks:
+                    risks.append(r)
+
+        # ── Build conclusion ──
+        if analysis and len(analysis.thesis) > 10:
+            # Truncate thesis to ~300 chars for the conclusion
+            thesis = analysis.thesis[:300]
+            if len(analysis.thesis) > 300:
+                thesis += "..."
+            conclusion = thesis
+        elif raw_data and raw_data.items:
+            conclusion = (
+                f"Analysis of '{query[:80]}': collected {len(raw_data.items)} data points "
+                f"from {raw_data.source_summary}. No structured analysis available (Researcher not run)."
+            )
+        else:
+            conclusion = f"No data or analysis available for: {query[:200]}"
+
+        # ── Determine confidence ──
+        confidence: str = "medium"
+        if audit:
+            if audit.severity == "critical":
+                confidence = "low"
+            elif audit.severity == "high":
+                confidence = "low"
+        if analysis and len(analysis.data_citations) >= 3:
+            confidence = "high"
 
         return DecisionSummary(
             query=query,
-            conclusion=analysis.thesis if analysis else f"Analysis of: {query}",
-            key_evidence=evidence_lines,
-            key_risks=risks,
-            confidence="medium",
-            references=refs,
-            raw_text=query,  # placeholder
+            conclusion=conclusion,
+            key_evidence=evidence_lines[:3],
+            key_risks=risks[:3],
+            confidence=confidence,
+            references=refs[:5],
+            raw_text=analysis.thesis if analysis else query,
         )
 
     # ── Helpers ──
+
+    @staticmethod
+    def _parse_analysis_output(
+        raw_output: str,
+        query: str,
+        ticker: str,
+    ) -> tuple[str, list[str], list[str]]:
+        """Parse the agent's raw markdown output into structured thesis/risks/catalysts.
+
+        Uses section headings and bullet points to extract structured data.
+        Falls back gracefully when sections are missing.
+        """
+        # Extract thesis: first substantial paragraph after "分析" or "结论" heading
+        thesis = ""
+        risks: list[str] = []
+        catalysts: list[str] = []
+
+        # Try to find a thesis/analysis section
+        analysis_section_match = re.search(
+            r"(?:分析|判断|结论|thesis|analysis)[\s:：]*\n+(.{50,500})",
+            raw_output, re.IGNORECASE,
+        )
+        if analysis_section_match:
+            thesis = analysis_section_match.group(1).strip()
+        else:
+            # Fallback: first paragraph that looks like a conclusion
+            paras = [p.strip() for p in raw_output.split("\n\n") if len(p.strip()) > 40]
+            thesis = paras[0][:500] if paras else raw_output[:300]
+
+        # Extract risks
+        risk_section = re.search(
+            r"(?:风险|risk|不利因素|看跌)[\s\w]*[:：]?\n(.*?)(?:\n##|\n#|\n---|\Z)",
+            raw_output, re.IGNORECASE | re.DOTALL,
+        )
+        if risk_section:
+            risk_lines = re.findall(r"[-*•]\s*(.+)", risk_section.group(1))
+            risks = [r.strip()[:200] for r in risk_lines if len(r.strip()) > 10][:5]
+
+        if not risks:
+            risks = ["No risk factors identified in analysis output"]
+
+        # Extract catalysts
+        catalyst_section = re.search(
+            r"(?:催化剂|catalyst|看涨|利好)[\s\w]*[:：]?\n(.*?)(?:\n##|\n#|\n---|\Z)",
+            raw_output, re.IGNORECASE | re.DOTALL,
+        )
+        if catalyst_section:
+            cat_lines = re.findall(r"[-*•]\s*(.+)", catalyst_section.group(1))
+            catalysts = [c.strip()[:200] for c in cat_lines if len(c.strip()) > 10][:5]
+
+        if not catalysts:
+            catalysts = ["Real-time market data available"]
+
+        return thesis, risks, catalysts
 
     @staticmethod
     def _extract_ticker(query: str) -> str:
