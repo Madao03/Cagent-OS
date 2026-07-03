@@ -117,6 +117,24 @@ def _safe_print(*args, **kwargs) -> None:
         print(*safe_args, **kwargs)
 
 
+def _print_cron_result(result: Any) -> None:
+    """Print a CronResult to stdout."""
+    if result.error:
+        print(f"[ERROR] {result.name}: {result.error}")
+    else:
+        print(f"[OK] {result.name}")
+        print(f"  Output: {result.output_path}")
+        summary = result.supervisor_result
+        if summary:
+            if summary.raw_data:
+                print(f"  Data: {len(summary.raw_data.items)} items")
+            if summary.summary:
+                print(f"  Conclusion: {summary.summary.conclusion[:200]}")
+            print(f"  Elapsed: {summary.elapsed_ms}ms")
+            if summary.errors:
+                print(f"  Errors: {summary.errors}")
+
+
 def _print_event(event, *, verbose: bool = False) -> None:
     """Print a single run event to stdout."""
     if event.type == "message.assistant_delta":
@@ -241,6 +259,13 @@ def main() -> None:
     chat_parser.add_argument("message", nargs="+", help="Message to send")
     chat_parser.add_argument("--verbose", "-v", action="store_true", help="Verbose tool output")
 
+    cron_parser = sub.add_parser("cron", help="Scheduled report generation")
+    cron_sub = cron_parser.add_subparsers(dest="cron_command")
+    cron_sub.add_parser("daily", help="Run all daily templates (crypto + macro)")
+    cron_sub.add_parser("crypto", help="Run crypto daily briefing only")
+    cron_sub.add_parser("macro", help="Run macro weekly report only")
+    cron_sub.add_parser("list", help="List available report templates")
+
     args = parser.parse_args()
 
     # Wire up dependencies
@@ -297,7 +322,31 @@ def main() -> None:
     )
 
     try:
-        if args.command == "chat":
+        if args.command == "cron":
+            from cagent_os.multi_agent.cron_agent import CronAgent, run_cron_daily_sync
+            if args.cron_command == "list":
+                agent = CronAgent()
+                print("Available report templates:")
+                for tid in agent.available_templates:
+                    t = agent.get_template(tid)
+                    if t:
+                        print(f"  {tid:20s} — {t.name} ({t.frequency})")
+            elif args.cron_command == "daily":
+                run_cron_daily_sync()
+            elif args.cron_command == "crypto":
+                import asyncio
+                agent = CronAgent()
+                result = asyncio.run(agent.run_daily_crypto())
+                _print_cron_result(result)
+            elif args.cron_command == "macro":
+                import asyncio
+                agent = CronAgent()
+                result = asyncio.run(agent.run_weekly_macro())
+                _print_cron_result(result)
+            else:
+                print("Usage: cagent-os cron {daily|crypto|macro|list}")
+            return
+        elif args.command == "chat":
             user_message = " ".join(args.message)
             _run_one_shot(
                 engine,

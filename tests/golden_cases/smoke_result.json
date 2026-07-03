@@ -1,0 +1,73 @@
+{
+  "timestamp": "2026-07-03T23:58:27.202176",
+  "total": 11,
+  "passed": 10,
+  "results": [
+    {
+      "name": "health:yfinance",
+      "passed": true,
+      "detail": "up",
+      "time": "2026-07-03T23:58:23.726791"
+    },
+    {
+      "name": "health:fred",
+      "passed": true,
+      "detail": "up",
+      "time": "2026-07-03T23:58:23.726791"
+    },
+    {
+      "name": "health:akshare-stock",
+      "passed": true,
+      "detail": "up",
+      "time": "2026-07-03T23:58:23.726791"
+    },
+    {
+      "name": "health:akshare-futures",
+      "passed": true,
+      "detail": "up",
+      "time": "2026-07-03T23:58:23.726791"
+    },
+    {
+      "name": "fred:fed_funds",
+      "passed": true,
+      "detail": "3.63% (2026-06-01)",
+      "time": "2026-07-03T23:58:24.760412"
+    },
+    {
+      "name": "yfinance:AAPL_fwd_pe",
+      "passed": false,
+      "detail": "None",
+      "time": "2026-07-03T23:58:26.525138"
+    },
+    {
+      "name": "akshare:A股茅台",
+      "passed": true,
+      "detail": "¥1194.45",
+      "time": "2026-07-03T23:58:27.019766"
+    },
+    {
+      "name": "akshare:螺纹钢",
+      "passed": true,
+      "detail": "¥3062.0",
+      "time": "2026-07-03T23:58:27.201176"
+    },
+    {
+      "name": "cases:total",
+      "passed": true,
+      "detail": "13 cases",
+      "time": "2026-07-03T23:58:27.201176"
+    },
+    {
+      "name": "cases:scenarios",
+      "passed": true,
+      "detail": "13 scenarios",
+      "time": "2026-07-03T23:58:27.201176"
+    },
+    {
+      "name": "cases:priorities",
+      "passed": true,
+      "detail": "all P0 or P1",
+      "time": "2026-07-03T23:58:27.201176"
+    }
+  ]
+}

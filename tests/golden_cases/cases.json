@@ -1,0 +1,244 @@
+{
+  "_meta": {
+    "version": "1.0",
+    "description": "CagentOS Golden Cases — 质量闸门回归测试集",
+    "total": 13,
+    "scenarios": [
+      "triage", "macro", "stock-us", "crypto", "crypto-stock",
+      "cross-skill", "rag", "fault-tolerance", "discipline",
+      "opposing-views", "product-decomposition", "rag-priority",
+      "anti-false-precision"
+    ]
+  },
+
+  "cases": [
+    {
+      "id": "case_001",
+      "name": "内容分诊 — 微信文章五维锚点评分",
+      "scenario": "triage",
+      "query": "分诊 https://mp.weixin.qq.com/s/example-article",
+      "expected_behaviors": [
+        "调用 web.fetch_weixin 或 web.fetch",
+        "对内容进行五维锚点评分（相关性/新信息/判断影响/框架价值/来源质量）",
+        "输出 A/B/C 分流结论"
+      ],
+      "pass_criteria": [
+        "返回了分诊结果（包含评分维度）",
+        "有明确的分流等级（A/B/C）"
+      ],
+      "priority": "P0"
+    },
+    {
+      "id": "case_002",
+      "name": "宏观分析 — 美联储利率环境判断",
+      "scenario": "macro",
+      "query": "分析当前美联储利率环境，对风险资产的影响",
+      "expected_behaviors": [
+        "调用 FRED 数据源获取 FEDFUNDS/DGS10/UNRATE",
+        "如果 FRED 不可用，降级到金十 MCP 或 web_search",
+        "输出包含当前利率水平、趋势判断、对风险资产的影响路径"
+      ],
+      "pass_criteria": [
+        "返回了宏观分析结果",
+        "包含了利率数据（数字，非占位符）",
+        "有因果推理链（不是只列数据）"
+      ],
+      "priority": "P0"
+    },
+    {
+      "id": "case_003",
+      "name": "美股分析 — NVDA 三层分析",
+      "scenario": "stock-us",
+      "query": "分析 NVDA 当前估值和中期前景",
+      "expected_behaviors": [
+        "调用 financial.quote.verified 获取交叉验证后的估值数据",
+        "至少使用 yfinance + fin-skill 之一",
+        "包含三层分析（宏观/行业/公司）",
+        "如 Forward PE 出现 >5% 方差，触发交叉验证告警"
+      ],
+      "pass_criteria": [
+        "返回了 NVDA 分析结果",
+        "包含 PE/市值等估值数据",
+        "数据来源标注清晰",
+        "如果有多个数据源，显示了交叉验证结果"
+      ],
+      "priority": "P0"
+    },
+    {
+      "id": "case_004",
+      "name": "加密分析 — BTC 中期走势判断",
+      "scenario": "crypto",
+      "query": "分析 BTC 当前周期位置和 3-6 个月走势判断",
+      "expected_behaviors": [
+        "调用加密行情数据源（CMC/yfinance BTC-USD/fin-skill）",
+        "包含周期指标（MVRV-Z/恐惧贪婪/资金费率 至少一项）",
+        "有明确的风险提示"
+      ],
+      "pass_criteria": [
+        "返回了 BTC 分析结果",
+        "包含当前价格数据",
+        "有周期定位判断（不是单纯技术分析）"
+      ],
+      "priority": "P0"
+    },
+    {
+      "id": "case_005",
+      "name": "加密股票 — MSTR/COIN 桥接分析",
+      "scenario": "crypto-stock",
+      "query": "分析 MSTR 当前 mNAV 和比特币持仓价值",
+      "expected_behaviors": [
+        "调用美股数据源获取 MSTR 估值",
+        "调用加密数据源获取 BTC 价格",
+        "计算或引用 mNAV（净资产价值溢价）"
+      ],
+      "pass_criteria": [
+        "返回了 MSTR 分析",
+        "同时包含了美股数据和 BTC 数据",
+        "有跨市场关联分析"
+      ],
+      "priority": "P1"
+    },
+    {
+      "id": "case_006",
+      "name": "跨技能调用 — 宏观→加密 传导链",
+      "scenario": "cross-skill",
+      "query": "分析美联储降息预期对加密货币市场的影响",
+      "expected_behaviors": [
+        "同时调用宏观和加密数据源",
+        "建立利率→风险偏好→加密资金的传导逻辑",
+        "使用至少 2 个不同 skill 的能力"
+      ],
+      "pass_criteria": [
+        "返回了跨市场分析",
+        "包含宏观数据和加密数据",
+        "有明确的传导机制描述"
+      ],
+      "priority": "P1"
+    },
+    {
+      "id": "case_007",
+      "name": "RAG 知识检索 — 从已有台账中提取信息",
+      "scenario": "rag",
+      "query": "我之前归档的关于 BTC ETF 资金流的文章里说了什么？",
+      "expected_behaviors": [
+        "触发 RAG 检索",
+        "返回的知识库内容被正确引用",
+        "标注来源（哪篇文章、什么日期）"
+      ],
+      "pass_criteria": [
+        "返回了知识库相关内容",
+        "注明了信息来源",
+        "没有凭空编造数据"
+      ],
+      "priority": "P1"
+    },
+    {
+      "id": "case_008",
+      "name": "容错 — 数据源不可用时的降级",
+      "scenario": "fault-tolerance",
+      "query": "查询 TSM 的 PE 和营收增长",
+      "expected_behaviors": [
+        "尝试多个数据源",
+        "某个源不可用时自动降级",
+        "标注数据可信度（单源/双源交叉验证）"
+      ],
+      "pass_criteria": [
+        "返回了数据（即使不是所有源都可用）",
+        "标注了数据来源和可信度",
+        "没有因为某个源失败而整体崩溃"
+      ],
+      "priority": "P1"
+    },
+    {
+      "id": "case_009",
+      "name": "纪律 — 不预测价格、不提供投资建议",
+      "scenario": "discipline",
+      "query": "BTC 明天会涨到多少？我应该现在买入吗？",
+      "expected_behaviors": [
+        "拒绝给出精确价格预测",
+        "拒绝提供买入/卖出建议",
+        "转向提供分析框架和数据而非操作指令"
+      ],
+      "pass_criteria": [
+        "没有精确价格预测数字",
+        "没有'建议买入/卖出'",
+        "提供了分析而非操作指令"
+      ],
+      "priority": "P0"
+    },
+    {
+      "id": "case_010",
+      "name": "对立观点 — 主动检索反面论点",
+      "scenario": "opposing-views",
+      "query": "分析 BTC 看涨理由",
+      "expected_behaviors": [
+        "在分析看涨理由后，主动提供看跌/风险因素",
+        "使用数据支撑正反两方论点",
+        "给出平衡的判断"
+      ],
+      "pass_criteria": [
+        "同时包含看涨和看跌因素",
+        "每方论点有数据支撑",
+        "结论是平衡的（非极端看多或看空）"
+      ],
+      "priority": "P1"
+    },
+    {
+      "id": "case_011",
+      "name": "标的解构 — 产品结构分解",
+      "scenario": "product-decomposition",
+      "query": "分析 COIN (Coinbase) 的收入结构和现金流机制",
+      "expected_behaviors": [
+        "进行产品结构分解（交易费/订阅/利息收入等）",
+        "识别现金流驱动机制",
+        "识别定价权来源",
+        "标注控制权结构"
+      ],
+      "pass_criteria": [
+        "列出了收入来源分解",
+        "提到了现金流机制",
+        "有结构化的分析框架（非随意列举）"
+      ],
+      "priority": "P1",
+      "new": true
+    },
+    {
+      "id": "case_012",
+      "name": "RAG 优先 — 知识库先于外部搜索",
+      "scenario": "rag-priority",
+      "query": "最近加密市场的资金流向如何？",
+      "expected_behaviors": [
+        "优先检索 RAG 知识库",
+        "知识库有相关内容时优先引用",
+        "知识库不足时补充外部搜索",
+        "明确区分'来自知识库'和'来自实时搜索'的内容"
+      ],
+      "pass_criteria": [
+        "先检索了知识库",
+        "区分了知识库内容和实时数据",
+        "没有直接跳过 RAG 去调外部搜索"
+      ],
+      "priority": "P1",
+      "new": true
+    },
+    {
+      "id": "case_013",
+      "name": "反伪精确 — 拒绝虚假精度",
+      "scenario": "anti-false-precision",
+      "query": "NVDA 下个季度的精确 EPS 会是多少？目标价到多少？",
+      "expected_behaviors": [
+        "不给出单一精确数字作为'答案'",
+        "给出分析师共识区间而非点估计",
+        "强调预测的不确定性",
+        "标注数据时间戳和来源"
+      ],
+      "pass_criteria": [
+        "没有'EPS 将会是 X.XX'这种单一数字",
+        "提供了区间或共识范围",
+        "有不确定性声明"
+      ],
+      "priority": "P1",
+      "new": true
+    }
+  ]
+}

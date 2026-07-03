@@ -1,0 +1,56 @@
+# Golden Case 012 — RAG 优先（知识库先于外部搜索）
+# Tests: RAG retrieval priority enforcement
+# Expected pass threshold: 16/24
+
+id: "case_012"
+title: "RAG 优先——知识库检索先于外部搜索"
+skill: "crypto-funds-flow-analysis"
+created: "2026-07-04"
+difficulty: "medium"
+
+scenario: >
+  系统新增规则：任何分析类问题，必须先调 financial.rag.search
+  检索本地知识库，再搜外网。禁止跳过 RAG 直接调外网搜索。
+  此 Case 验证 RAG 优先规则是否被强制执行。
+
+input:
+  type: "text"
+  content: "最近加密市场的资金流向如何？稳定币市值有什么变化？"
+
+expected:
+  task: >
+    Agent 应先调 financial.rag.status 确认知识库可用。
+    然后调 financial.rag.search 搜索资金流向/稳定币相关内容。
+    如果 RAG 命中 → 优先引用知识库内容并标注来源和日期。
+    如果 RAG 不足 → 补充 external websearch。
+    明确区分"来自知识库"和"来自实时搜索"的内容。
+
+  critical_facts:
+    - "先调了 RAG 再调外部搜索（顺序不可逆）"
+    - "知识库有相关内容时优先引用了"
+    - "区分了知识库内容和实时数据"
+    - "标注了知识库来源的日期"
+
+  must_use_tools:
+    - "financial.rag.status"
+    - "financial.rag.search"
+    - "Skill(skill=crypto-funds-flow-analysis)"
+
+  must_not_do:
+    - "跳过 RAG 直接调外部搜索"
+    - "RAG 有结果但不引用"
+    - "混用知识库和实时数据不区分来源"
+
+  output_assertions:
+    - "有知识库检索结果的引用"
+    - "标注了知识库来源和日期"
+    - "外部搜索的内容标注了'实时'或'web'来源"
+    - "如果 RAG 无结果，明确说明了再降级到外部搜索"
+
+rubric:
+  task: {score: 0, note: "是否先调 RAG 再外部搜索；是否加载了 skill"}
+  facts: {score: 0, note: "是否区分了知识库内容和实时数据"}
+  tools: {score: 0, note: "RAG→外部搜索顺序是否正确"}
+  reasoning: {score: 0, note: "RAG 结果是否被正确引用"}
+  risk: {score: 0, note: "来源是否标注；是否有数据时效性声明"}
+  format: {score: 0, note: "知识库 vs 实时的来源区分是否清晰"}

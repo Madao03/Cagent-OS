@@ -174,22 +174,35 @@ class FinancialToolkit:
                 "no_symbol", "No symbol could be extracted for the quote request.",
                 started,
             )
-        if not self.bridge_available():
-            return _not_available("quote query")
 
         items: list[dict[str, Any]] = []
-        for sym in tickers:
-            result = self._call_mcp("get_stock_quote", {"symbol": sym.upper()})
-            data = self._parse_mcp_result(result)
-            if data:
-                items.append(data)
-            else:
-                items.append({"symbol": sym, "error": "no data"})
+        data_source = "none"
+
+        # ── Tier 1: fin-skill MCP ──
+        if self.bridge_available():
+            for sym in tickers:
+                result = self._call_mcp("get_stock_quote", {"symbol": sym.upper()})
+                data = self._parse_mcp_result(result)
+                if data:
+                    items.append(data)
+                else:
+                    items.append({"symbol": sym, "error": "no data from MCP"})
+            if _has_meaningful_quotes(items):
+                data_source = "fin_skill_mcp"
+
+        # ── Tier 2: yfinance fallback ──
+        if not _has_meaningful_quotes(items):
+            yf_items = self._fetch_yfinance_quotes(tickers)
+            if _has_meaningful_quotes(yf_items):
+                items = yf_items
+                data_source = "yfinance"
+            elif not items:
+                items = yf_items
 
         if not _has_meaningful_quotes(items):
             return _error(
                 "finance_empty_result",
-                "Finance request returned no valid quote prices.",
+                "Finance request returned no valid quote prices from any source (MCP + yfinance).",
                 started,
             )
 
@@ -197,9 +210,50 @@ class FinancialToolkit:
             "success": True,
             "question": question,
             "items": items,
-            "data_source": "fin_skill_mcp",
+            "data_source": data_source,
             "execution_time": round(time.perf_counter() - started, 4),
         }
+
+    def _fetch_yfinance_quotes(self, tickers: list[str]) -> list[dict[str, Any]]:
+        """Fallback quote fetch via yfinance (sync, runs in caller's thread).
+
+        yfinance is a free, no-API-key tier-1 data source. It covers
+        equities, ETFs, crypto (e.g. BTC-USD), and indices (^GSPC).
+        Used when the fin-skill MCP bridge is unavailable or returns no data.
+        """
+        import yfinance as yf
+
+        items: list[dict[str, Any]] = []
+        for sym in tickers:
+            try:
+                stock = yf.Ticker(sym.upper())
+                info = stock.info or {}
+                if not info:
+                    items.append({"symbol": sym, "error": "yfinance returned empty info"})
+                    continue
+                items.append({
+                    "symbol": sym.upper(),
+                    "price": info.get("currentPrice") or info.get("regularMarketPrice"),
+                    "previous_close": info.get("previousClose") or info.get("regularMarketPreviousClose"),
+                    "open": info.get("open") or info.get("regularMarketOpen"),
+                    "day_high": info.get("dayHigh") or info.get("regularMarketDayHigh"),
+                    "day_low": info.get("dayLow") or info.get("regularMarketDayLow"),
+                    "volume": info.get("volume") or info.get("regularMarketVolume"),
+                    "market_cap": info.get("marketCap"),
+                    "change": info.get("regularMarketChange"),
+                    "change_percent": info.get("regularMarketChangePercent"),
+                    "currency": info.get("currency", "USD"),
+                    "name": info.get("shortName") or info.get("longName", sym),
+                    "exchange": info.get("exchange", ""),
+                    "fifty_two_week_high": info.get("fiftyTwoWeekHigh"),
+                    "fifty_two_week_low": info.get("fiftyTwoWeekLow"),
+                    "fifty_day_avg": info.get("fiftyDayAverage"),
+                    "two_hundred_day_avg": info.get("twoHundredDayAverage"),
+                })
+            except Exception:
+                logger.debug("yfinance quote fetch failed for %s", sym, exc_info=True)
+                items.append({"symbol": sym, "error": "yfinance fetch failed"})
+        return items
 
     # ------------------------------------------------------------------
     # Earnings / financials

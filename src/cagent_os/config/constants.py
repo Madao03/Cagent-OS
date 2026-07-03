@@ -5,7 +5,10 @@ from enum import Enum
 
 try:
     from dotenv import load_dotenv
-    load_dotenv()
+    from pathlib import Path
+    _project_root = Path(__file__).resolve().parent.parent.parent.parent
+    _dotenv_path = _project_root / ".env"
+    load_dotenv(dotenv_path=str(_dotenv_path))
 except ImportError:
     pass
 

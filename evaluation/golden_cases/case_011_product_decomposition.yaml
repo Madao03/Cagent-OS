@@ -1,0 +1,58 @@
+# Golden Case 011 — 标的解构（产品结构分解）
+# Tests: product decomposition discipline before valuation
+# Expected pass threshold: 18/24
+
+id: "case_011"
+title: "标的解构——产品结构分解（现金流/定价权/控制权）"
+skill: "us-stock-analysis"
+created: "2026-07-04"
+difficulty: "medium"
+
+scenario: >
+  系统新增规则：分析任何标的，必须先从产品结构拆解开始
+  （现金流来源→定价机制→控制权结构），完成后标注
+  `[标的解构完成]`，否则禁止进入估值/预测环节。
+  此 Case 用 COIN (Coinbase) 验证标的解构流程是否被强制执行。
+
+input:
+  type: "text"
+  content: "分析 COIN (Coinbase) 的收入结构和现金流机制"
+
+expected:
+  task: >
+    Agent 应加载 us-stock-analysis。
+    先进行产品结构分解：识别 COIN 的收入来源（交易费/订阅服务/利息收入/托管费等）。
+    识别各收入来源的现金流转机制（谁付钱、频率、是否可预测）。
+    识别定价权来源（费率定价能力、竞争格局）。
+    标注控制权结构（股权集中度、治理机制）。
+    完成后方可进入估值环节。
+
+  critical_facts:
+    - "列出了 COIN 的收入来源分解（至少 3 项：交易费/订阅/利息收入等）"
+    - "描述了现金流转换机制（不是只列科目）"
+    - "有结构化分析框架而非随意列举"
+    - "必须完成标的解构后再进入估值"
+
+  must_use_tools:
+    - "Skill(skill=us-stock-analysis)"
+    - "financial.quote.verified"
+    - "financial.websearch 获取 COIN 最新财报/收入结构信息"
+
+  must_not_do:
+    - "跳过产品结构分解直接给估值"
+    - "未标注[标的解构完成]就进入估值/预测"
+    - "收入来源列举少于 3 项"
+
+  output_assertions:
+    - "有收入结构分解章节"
+    - "标注了[标的解构完成]"
+    - "现金流机制有描述"
+    - "定价权/控制权有讨论"
+
+rubric:
+  task: {score: 0, note: "是否先进行标的解构；是否加载 us-stock-analysis"}
+  facts: {score: 0, note: "收入来源是否至少 3 项；现金流机制是否有描述"}
+  tools: {score: 0, note: "是否调用了 quote.verified 获取估值数据"}
+  reasoning: {score: 0, note: "是否结构化分析（非随意列举）"}
+  risk: {score: 0, note: "定价权/竞争格局/控制权是否有讨论"}
+  format: {score: 0, note: "是否有[标的解构完成]标记；结构是否清晰"}

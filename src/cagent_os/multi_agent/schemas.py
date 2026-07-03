@@ -53,6 +53,53 @@ class RiskAuditResult(BaseModel):
     references_report_id: str | None = None
 
 
+# ── Data Collector agent → Researcher ──
+
+class DataSourceItem(BaseModel):
+    """One data point from a single source."""
+    source: str           # "FRED" | "jin10" | "yfinance" | "rag" | "web" | "fin-skill"
+    metric: str           # e.g. "CPI YoY", "BTC price", "NVDA PE"
+    value: str | float | None = None
+    unit: str = ""        # "%", "USD", "BTC" etc.
+    timestamp: str = ""   # ISO 8601, when was this data observed
+    url: str = ""         # source URL if applicable
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0)  # 1.0 = high confidence
+    raw_text: str = ""    # original text from source (for traceability)
+
+
+class RawDataDump(BaseModel):
+    """DataCollector output: cleaned, deduplicated, confidence-annotated data."""
+    query: str
+    items: list[DataSourceItem] = Field(default_factory=list)
+    rag_results: list[dict] = Field(default_factory=list)  # from financial.rag.search
+    source_summary: str = ""    # e.g. "3 sources: FRED(5 items), web(3), rag(2)"
+    collected_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+# ── Editor Agent output ──
+
+class DecisionSummary(BaseModel):
+    """Editor output: 500-char decision summary."""
+    query: str
+    conclusion: str                        # 1-2 sentence verdict
+    key_evidence: list[str] = Field(default_factory=list)   # top 3 data points
+    key_risks: list[str] = Field(default_factory=list)       # top 2 risks
+    confidence: Literal["high", "medium", "low"] = "medium"
+    references: list[str] = Field(default_factory=list)     # source citations
+    generated_at: datetime = Field(default_factory=datetime.utcnow)
+    raw_text: str = ""                    # full text before compression
+
+
+# ── Supervisor routing ──
+
+class SupervisorDecision(BaseModel):
+    """Supervisor routing: which agents to invoke, in what order."""
+    intent: str = ""                       # "research" | "quick_lookup" | "triage"
+    agents: list[str] = Field(default_factory=list)  # ordered agent names
+    parallel_groups: list[list[str]] = Field(default_factory=list)  # [["crawler","researcher"], ["red_team"], ["editor"]]
+    reasoning: str = ""                    # why this routing plan
+
+
 # ── Counter-narrative agent ──
 
 class CounterNarrative(BaseModel):
