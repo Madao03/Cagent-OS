@@ -31,7 +31,19 @@ def build_runs_router(
     @router.post("/api/v1/conversations/{conversation_id}/messages")
     def post_message(conversation_id: str, payload: PostMessageRequest, request: Request) -> StreamingResponse:
         principal_id = resolve_principal_id(request)
-        conversation_service.get_conversation(principal_id, conversation_id)
+
+        # Auto-create conversation if it doesn't exist (MVP convenience)
+        try:
+            conversation_service.get_conversation(principal_id, conversation_id)
+        except (KeyError, LookupError):
+            user_skill_snapshot = user_skill_service.load_snapshot(payload.user_id)
+            conversation_service.create_conversation(
+                principal_id=principal_id,
+                user_id=payload.user_id,
+                user_skill_snapshot=user_skill_snapshot,
+            )
+            logger.info("Auto-created conversation %s", conversation_id)
+
         logger.info(
             "Conversation message request received %s",
             format_log_context(

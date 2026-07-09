@@ -229,6 +229,13 @@ async function send() {
         body: JSON.stringify({user_id: 'default', content: msg, stream: true})
       });
 
+      if (!resp.ok) {
+        const errText = await resp.text();
+        addMsg('error', `[HTTP ${resp.status}] ${errText}`);
+        loading = false; btn.disabled = false; input.focus();
+        return;
+      }
+
       const assistantDiv = document.createElement('div');
       assistantDiv.className = 'msg assistant';
       assistantDiv.textContent = '';
