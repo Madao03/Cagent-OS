@@ -42,7 +42,7 @@ def build_runs_router(
                 user_id=payload.user_id,
                 user_skill_snapshot=user_skill_snapshot,
             )
-            logger.info("Auto-created conversation %s", conversation_id)
+            logger.info("Auto-created conversation %s for user %s", conversation_id, payload.user_id)
 
         logger.info(
             "Conversation message request received %s",

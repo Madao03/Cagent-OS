@@ -5,6 +5,8 @@ from pydantic import BaseModel, Field
 
 class PostMessageRequest(BaseModel):
     content: str
+    user_id: str = "default"
+    stream: bool = True
 
 
 class OneshotRunRequest(BaseModel):
