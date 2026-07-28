@@ -25,6 +25,11 @@ dependencies = [
   "python-dotenv>=1.0.0",
   "numpy>=1.24.0",
   "aiohttp>=3.9.0",
+  "slowapi>=0.1.9",
+  "bcrypt>=4.2.0",
+  "pyjwt>=2.9.0",
+  "beautifulsoup4>=4.12.0",
+  "lxml>=5.0.0",
 ]
 
 [project.optional-dependencies]
@@ -34,6 +39,9 @@ dev = [
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+markers = [
+    "sec: tests that hit the SEC EDGAR API (slow, rate-limited, network-dependent)",
+]
 
 [project.scripts]
 cagent-os = "cagent_os.interfaces.cli:main"

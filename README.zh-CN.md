@@ -1,6 +1,6 @@
 # CagentOS
 
-> **状态:阶段 3 完成 ✅ — 9 个技能 · 21 个工具 · 3 个数据源 · RAG 语义检索 · Golden Cases x10 · 自动评测**
+> **状态:阶段 4a/4b 完成 ✅ — 15 个技能 · 28+ 个工具 · 5 个数据源 · 多 Agent + Cron 定时 + RAG 语义检索 + 自动评测**
 > 一个从零搭建的金融投研 Agent 操作系统 —— 不是 LangChain 包装器。
 >
 > [English](README.md) | 中文
@@ -27,12 +27,21 @@ AgentRuntime (ReAct 循环 + 事件溯源)
         ↑
   EventStore (SQLite, WAL 模式)
         ↑
-  Plugins: financial · web · read · write · skills · bash
+  Plugins: financial · web · read · write · skills · bash · panews
         ↑
   横切关注点:
     Ⓐ 记忆 (热记忆 ≤500 字注入 / 冷记忆 SQLite 三表 / LLM 矛盾检测)
     Ⓑ 可观测性 (TraceWriter + TraceReader 查询API / DICA 四维标注)
-    Ⓒ 数据防线 (FRED + 金十 + yfinance 三源 / 方差检测 >5% / 交叉验证)
+    Ⓒ 数据防线 (FRED + 金十 + yfinance + akshare + PANews 五源 / 方差检测 >5%)
+    Ⓓ 评测 (Golden Cases ×13 + 25-criterion LLM-Judge)
+  ────────────────────────────────────────
+  多 Agent 层 (阶段 4a/4b):
+    Supervisor (自研编排器)
+      ├── DataCollector (并行) — RAG + FRED + web 搜索
+      ├── Researcher   (并行) — 全 Skill 套件,可注入 AgentRuntime
+      ├── Red-Team     (串行) — 启发式对抗检查
+      └── Editor       (串行) — 决策摘要压缩
+    CronAgent (定时) — 加密日报 + 宏观周报模板
 ```
 
 ### 核心机制
@@ -71,33 +80,47 @@ cagent-os
 - **8 个 LLM provider**:OpenRouter / DeepSeek / OpenAI / Anthropic / Groq / SiliconFlow / Together / Custom
 - **MCP Client**:多传输协议 session 管理器(Anthropic 官方 SDK)
 - **记忆系统**:热记忆(≤500 字注入 system prompt)+ 冷记忆(SQLite 三表)+ **LLM 矛盾检测**
-- **数据防线**:FRED + 金十 MCP + yfinance 三源 → 方差检测(>5% 告警)→ 交叉验证 → VerifiedMetric
+- **数据防线**:FRED + 金十 MCP + yfinance + akshare + PANews 五源 → 方差检测(>5% 告警)→ 交叉验证 → VerifiedMetric
 - **通用浏览器抓取**:Playwright + Readability.js + Stealth 反反爬,Vercel/Cloudflare/CDN 保护站点直接可读
 - **RAG 管线**:Qwen3-Embedding-8B (1024 维) + 6 种分块策略 + Reranker (cos 0.79→0.999) + NumPy 向量库
-- **Skill Schema**:6 个核心 skill 的 Pydantic v2 I/O Schema + State 三层分离 + 权限标签矩阵
-- **Golden Cases**:10 个评测基准 (覆盖 triage/macro/NVDA/crypto/cross-skill/RAG/容错/纪律/对立观点 7 类)
+- **Skill Schema**:核心 skill 的 Pydantic v2 I/O Schema + State 三层分离 + 权限标签矩阵
+- **Golden Cases**:13 个评测基准 (覆盖 triage/macro/NVDA/crypto/crypto-stock/cross-skill/RAG/容错/纪律/对立观点/标的解构/RAG优先/反伪精确)
 - **自动评测**:25 条 criterion LLM-Judge + JSON 结果存储 + 历史对比 + 仪表板
 - **CLI + HTTP 双入口**:REPL 用于本地,FastAPI + SSE 用于 web
+- **多 Agent 编排**(阶段 4a):自研 Supervisor 协调 4 个 Agent(DataCollector → Researcher → Red-Team → Editor),Pydantic 消息总线,并行+串行流水线,意图路由
+- **定时调度器**(阶段 4b):CronAgent + 预配置报告模板(加密日报 + 宏观周报),接入 FastAPI lifespan(每天 8:00 触发)
+- **A 股 / 期货数据**:akshare 适配器,覆盖中国市场(Sina 源,5 交易所 × 82 个期货品种)
+- **加密资讯**:PANews 插件(7 个能力 — search/briefing/trending/article/polymarket/hooks/events)
 
 ## 不包含什么(暂未实现)
 
-- 多智能体编排(阶段 4,Schema 已定义但未接入)
-- Web UI(阶段 4)
+- Web UI(阶段 4c — React + Tailwind,已有静态原型壳)
+- Langfuse 全链路可视化(阶段 4d)
+- 评测 CI/CD 回归套件(阶段 4e)
 - 自进化飞轮 / 模型微调(阶段 5)
 
 ## Skills
 
-包含 **9 个** 投研技能,以 `.md` 模板形式由 SkillsPlugin 动态加载:
+包含 **15 个** 投研技能,以 `.md` 模板形式由 SkillsPlugin 动态加载:
 
+**核心研究技能 (9 个):**
 - `us-stock-analysis` — 美股三层分析(常态/非常态/黑箱)+ 周期股陷阱检测
 - `macro-analysis` — **重写** 时间周期×指标权重 + PMI 子项拆解 + CPI-PPI 剪刀差 + 就业结构
 - `crypto-analysis` — Crypto 三层分析 + 周期定位
 - `read-later` — L1/L2/L3 渐进式披露 + Obsidian 图片本地化
 - `content-triage` — 五维锚点评分(A/B/C 分诊)+ append-only 台账 (29 条积累)
-- `content-assetize` — **新建** A 类文章→事实/观点/框架 三类结构化资产
+- `content-assetize` — A 类文章→事实/观点/框架 三类结构化资产
 - `crypto-stock-analysis` — MSTR/COIN/矿企 mNAV + STRC 飞轮
 - `tech-sector-bridge` — 宏观 → 科技板块传导矩阵
 - `crypto-funds-flow-analysis` — 稳定币 / CEX / TVL / 杠杆资金面
+
+**扩展技能 (6 个):**
+- `defi-analysis` — DeFi 协议研究与估值(需求/供给/收入/代币经济四维拆解)
+- `event-calendar` — 经济事件日历与影响评估
+- `investment-memo` — 结构化投资备忘录生成
+- `multicoin-lens` — 多币种对比分析框架
+- `data-source-handbook` — 数据源参考与可靠性指南
+- `fin-skill-dq-guard` — 金融数据质量校验护栏
 
 ## 路线图
 
@@ -108,8 +131,11 @@ cagent-os
 | 1.5 | Runtime 规范化 + 开源准备 | ✅ 完成 |
 | 2 | 知识引擎 + Golden Cases + Schema + Trace + 矛盾检测 | ✅ 完成 (2026-06-25) |
 | 3 | RAG + Rerank + Golden Cases ×10 + LLM-Judge 自动评测 + 仪表板 | ✅ 完成 (2026-06-26) |
-| 4 | 多 Agent DAG + Web UI + Langfuse 全链路 | 🔜 下一步 |
-| 4 | 多 Agent DAG + Web UI + Langfuse 全链路 | 规划中 |
+| 4a | Supervisor + 4 Agent + 消息总线 | ✅ 完成 (2026-07-13) |
+| 4b | Cron 定时调度 + 每日简报模板 | ✅ 完成 (2026-07-13) |
+| 4c | Web UI (React + Tailwind) | 🔜 下一步 |
+| 4d | Langfuse 全链路可视化 | 规划中 |
+| 4e | 评测 CI/CD 回归套件 | 规划中 |
 | 5 | 自进化飞轮 (SFT/DPO) | 远期 |
 
 ## 设计决策
@@ -131,11 +157,16 @@ LLM 会幻觉工具名。Guard 强制执行 per-agent 白名单。如果 LLM 返
 | 框架 | FastAPI, Pydantic v2 |
 | 数据库 | SQLite (aiosqlite + WAL) |
 | LLM | DeepSeek V4 Pro(默认),另有 7 个 provider |
-| 宏观数据 | FRED API (21 系列) + 金十 MCP (行情/日历/快讯) |
+| 宏观数据 | FRED API (44 系列) + 金十 MCP (行情/日历/快讯) |
+| 股票数据 | yfinance + akshare (A股 / 港股 / 美股指数) |
+| 期货数据 | akshare (DCE/CZCE/SHFE/CFFEX/GFEX × 82 品种) |
+| 加密资讯 | PANews (7 个能力 — search/briefing/trending/article/polymarket/hooks/events) |
+| 多 Agent | 自研 Supervisor (asyncio.gather 并行 + 串行流水线) |
+| 定时调度 | CronAgent (FastAPI lifespan,每天 8:00 触发) |
 | MCP | Anthropic 官方 `mcp` SDK |
 | RAG | Qwen3-Embedding-8B (1024-dim) + Qwen3-Reranker-8B + 6 种分块 |
 | 浏览器抓取 | Playwright + Readability.js (WSL 桥接) |
-| 评测 | Golden Cases × 10 + 25-criterion LLM-Judge + 仪表板 |
+| 评测 | Golden Cases × 13 + 25-criterion LLM-Judge + 仪表板 |
 | CLI | argparse REPL |
 | HTTP | FastAPI + SSE 流式 |
 
