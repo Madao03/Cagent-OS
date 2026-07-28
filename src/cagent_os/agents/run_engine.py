@@ -34,6 +34,7 @@ from cagent_os.agents.definition import AgentProfile
 from cagent_os.agents.prompt_compiler import PromptBuilder
 from cagent_os.plugins.contracts import ToolRequest, ToolResult
 from cagent_os.plugins.executor import ToolDispatcher
+from cagent_os.provenance import FactRegistry, check_provenance, evaluate_gate, apply_markers
 from cagent_os.plugins.policy import ToolGuard
 from cagent_os.plugins.validator import ArgumentChecker, ArgumentError
 from cagent_os.config import Settings, get_settings
@@ -103,6 +104,79 @@ class _AgentRunState:
     iteration: int = 0
     consecutive_exceptional_failures: int = 0
     tool_results: list[dict] = field(default_factory=list)
+    provenance_retry_count: int = 0
+    # Best-attempt tracking: when gate retries, keep the output with fewest untraced
+    best_output_text: str | None = None
+    best_untraced_count: int = 999999
+    best_check_result: Any = None
+
+
+def _build_provenance_event(
+    registry: FactRegistry,
+    result: Any,  # CheckResult
+) -> JournalEntry:
+    """Build a ``run.provenance`` journal entry for the frontend.
+    
+    Serializes the fact registry and check result into a single event
+    that the frontend uses to render data cards and unavailable-data states.
+    """
+    # Serialize facts: fact_id → {source, caliber, period_*, audited, ...}
+    facts_data: dict[str, dict] = {}
+    for f in registry.facts:
+        d = f.to_dict()
+        # Ensure id is present (to_dict may omit)
+        d["id"] = f.id
+        facts_data[f.id] = d
+
+    # Serialize traced numbers with fact_id references
+    traced_list: list[dict] = []
+    for tn in result.traced_numbers:
+        entry = {
+            "raw": tn.raw,
+            "value": tn.value,
+            "start": tn.start,
+            "end": tn.end,
+            "status": tn.status,
+            "fact_id": tn.fact_id,
+            "source": tn.source,
+            "kind": tn.kind,
+        }
+        if tn.citation_url:
+            entry["citation_url"] = tn.citation_url
+            entry["citation_sentence"] = tn.citation_sentence
+        if tn.conflict_detail:
+            entry["conflict_detail"] = tn.conflict_detail
+        traced_list.append(entry)
+
+    # Serialize untraced numbers
+    untraced_list: list[dict] = []
+    for un in result.untraced_numbers:
+        untraced_list.append({
+            "raw": un.raw,
+            "value": un.value,
+            "start": un.start,
+            "end": un.end,
+            "status": un.status,
+        })
+
+    return JournalEntry(
+        type="run.provenance",
+        data={
+            "facts": facts_data,
+            "traced_numbers": traced_list,
+            "untraced_numbers": untraced_list,
+            "derived_traced": result.derived_traced,
+            "derived_errors": result.derived_errors,
+            "derived_warnings": result.derived_warnings,
+            "derivations": result.derivations,
+            "out_of_coverage": registry.out_of_coverage,
+            "all_tools_failed": registry.all_tools_failed,
+            "total_numbers": result.total_numbers,
+            "non_data": result.non_data,
+            "sign_conflicts": result.sign_conflicts,
+            "coverage_rate": result.coverage_rate if hasattr(result, 'coverage_rate') else 0.0,
+        },
+    )
 
 
 # ------------------------------------------------------------------
@@ -158,6 +232,7 @@ class AgentRuntime:
         conversation_id: str,
         principal_id: str,
         user_content: str,
+        skip_provenance_gate: bool = False,
     ) -> Iterator[JournalEntry]:
         conversation = self._conversation_service.get_conversation(principal_id, conversation_id)
         if not self._lock_manager.acquire(conversation_id):
@@ -172,6 +247,10 @@ class AgentRuntime:
 
         state = _AgentRunState()
         started_at = time.perf_counter()
+        # ★ Provenance: fresh FactRegistry per run, attached to the dispatcher.
+        # Every successful tool result is auto-registered at field level.
+        fact_registry = FactRegistry(turn=0)
+        self._capability_executor.attach_fact_registry(fact_registry)
         try:
             logger.info(
                 "Run started %s",
@@ -298,9 +377,120 @@ class AgentRuntime:
                         content=message.content,
                         consecutive_exceptional_tool_failures=state.consecutive_exceptional_failures,
                     )
+
+                    # ★ Provenance gate: check before yielding.
+                    # If untraced numbers found → inject feedback → regenerate.
+                    # If max retries exceeded → output with ⚠️ markers.
+                    if skip_provenance_gate:
+                        # Gate skipped — yield output directly.
+                        # Used for baseline rescoring: capture raw agent output
+                        # before the gate modifies it, to fairly compare V1 vs V2.
+                        logger.info("Provenance gate SKIPPED by request")
+                        assistant_event = assistant_message(final_content)
+                        self._event_store.append(conversation_id, assistant_event)
+                        yield assistant_event
+                        completed_event = JournalEntry(
+                            type="run.completed",
+                            data={"finish_reason": "stop"},
+                        )
+                        self._event_store.append(conversation_id, completed_event)
+                        yield completed_event
+                        return
+
+                    gate = evaluate_gate(
+                        final_content, fact_registry,
+                        retry_count=state.provenance_retry_count,
+                    )
+
+                    # Trace the check result regardless of outcome
+                    try:
+                        prov = gate.check_result
+                        self._trace(
+                            "provenance_check", conversation_id,
+                            user_id=conversation.user_id,
+                            user_query=user_content[:200],
+                            gate_action=gate.action,
+                            retry_count=state.provenance_retry_count,
+                            total_numbers=prov.total_numbers,
+                            traced=prov.traced,
+                            untraced=prov.untraced,
+                            sign_conflicts=prov.sign_conflicts,
+                            untraced_rate=round(prov.untraced_rate, 4),
+                            untraced_items=[
+                                {"raw": u.raw, "value": u.value}
+                                for u in prov.untraced_numbers[:30]
+                            ],
+                            sign_conflict_items=[
+                                {"raw": s.raw, "detail": s.conflict_detail[:120]}
+                                for s in prov.sign_conflict_numbers[:10]
+                            ],
+                        )
+                    except Exception:
+                        logger.exception("Provenance trace failed (non-blocking)")
+
+                    if gate.action == "regenerate":
+                        # ★ GATE: block output, inject feedback, let agent try again.
+                        # Track best attempt so far (fewest untraced) — when retries
+                        # are exhausted, we output the best, not the last.
+                        current_untraced = gate.check_result.untraced + gate.check_result.sign_conflicts
+                        if (state.best_output_text is None
+                                or current_untraced < state.best_untraced_count):
+                            state.best_output_text = final_content
+                            state.best_untraced_count = current_untraced
+                            state.best_check_result = gate.check_result
+                            logger.info(
+                                "Provenance gate: new best (%d untraced) at attempt %d",
+                                current_untraced, state.provenance_retry_count,
+                            )
+                        # Append the agent's draft (so transcript is continuous),
+                        # then inject a system-level correction message.
+                        self._event_store.append(
+                            conversation_id,
+                            assistant_message(final_content),
+                        )
+                        feedback_event = user_message(
+                            f"[系统溯源校验] {gate.untraced_summary}"
+                        )
+                        self._event_store.append(conversation_id, feedback_event)
+                        state.provenance_retry_count += 1
+                        logger.info(
+                            "Provenance gate: regenerate (attempt %d), %d untraced numbers",
+                            state.provenance_retry_count, gate.check_result.untraced,
+                        )
+                        continue  # ← back to top of while loop
+
+                    # Gate passed OR max retries exceeded
+                    if gate.action == "output_with_markers" and gate.check_result.untraced > 0:
+                        # ★ Use best attempt (fewest untraced) instead of last attempt.
+                        # The last regeneration may be worse than earlier ones
+                        # (e.g., agent confused by feedback, XPEV degradation).
+                        # This ensures the gate never makes output worse.
+                        if (state.best_output_text is not None
+                                and state.best_untraced_count < gate.check_result.untraced):
+                            logger.warning(
+                                "Provenance gate: using best attempt (%d untraced) "
+                                "instead of last (%d untraced)",
+                                state.best_untraced_count, gate.check_result.untraced,
+                            )
+                            final_content = state.best_output_text
+                            gate = evaluate_gate(
+                                final_content, fact_registry,
+                                retry_count=state.provenance_retry_count,
+                            )
+                        # Apply visible ⚠️ markers to untraced numbers
+                        final_content = apply_markers(final_content, gate.check_result)
+                        logger.warning(
+                            "Provenance gate: output with %d untraced markers after %d retries",
+                            gate.check_result.untraced, state.provenance_retry_count,
+                        )
+
                     assistant_event = assistant_message(final_content)
                     self._event_store.append(conversation_id, assistant_event)
                     yield assistant_event
+
+                    # ★ Persist provenance data for history replay
+                    _prov_event = _build_provenance_event(fact_registry, gate.check_result)
+                    self._event_store.append(conversation_id, _prov_event)
 
                     elapsed_ms = int((time.perf_counter() - started_at) * 1000)
                     completed = JournalEntry(
@@ -400,6 +590,9 @@ class AgentRuntime:
 
         state = _AgentRunState()
         started_at = time.perf_counter()
+        # ★ Provenance: fresh FactRegistry per run, attached to the dispatcher.
+        fact_registry = FactRegistry(turn=0)
+        self._capability_executor.attach_fact_registry(fact_registry)
         try:
             logger.info(
                 "Streaming run started %s",
@@ -586,6 +779,13 @@ class AgentRuntime:
                 assistant_event = assistant_message(final_content)
                 self._event_store.append(conversation_id, assistant_event)
                 yield assistant_event
+
+                # ★ Provenance: check and emit metadata for frontend data cards.
+                # Persist to event store so history replay includes provenance cards.
+                _prov_result = check_provenance(final_content, fact_registry)
+                _prov_event = _build_provenance_event(fact_registry, _prov_result)
+                self._event_store.append(conversation_id, _prov_event)
+                yield _prov_event
 
                 elapsed_ms = int((time.perf_counter() - started_at) * 1000)
                 completed = JournalEntry(
@@ -965,7 +1165,12 @@ class AgentRuntime:
     ) -> _ExecutionResult:
         events: list[JournalEntry] = []
         attempt_started_at = time.perf_counter()
+        fact_refs: list[str] | None = None
         try:
+            # Snapshot fact count before execution to detect new registrations
+            fact_registry = getattr(self._capability_executor, 'fact_registry', None)
+            facts_before = len(fact_registry.facts) if fact_registry else 0
+
             result = self._capability_executor.execute(
                 ToolRequest(
                     capability_id=capability_id,
@@ -973,6 +1178,18 @@ class AgentRuntime:
                     context={"user_id": user_id},
                 )
             )
+
+            # Collect newly registered fact IDs for LLM-visible annotations.
+            # Format: "f:0:3 = revenue@2025Q4" — includes period so the
+            # model can distinguish same-caliber facts from different quarters.
+            if fact_registry and result.status == "ok":
+                new_facts = fact_registry.facts[facts_before:]
+                if new_facts:
+                    fact_refs = [
+                        _format_fact_ref(f)
+                        for f in new_facts
+                        if f.kind == "data"
+                    ]
         except ToolAccessDenied as exc:
             logger.warning(
                 "Tool execution denied %s",
@@ -1055,6 +1272,7 @@ class AgentRuntime:
             tool_call_id=tool_call_id,
             capability_id=capability_id,
             result=result,
+            fact_refs=fact_refs,
         )
         self._event_store.append(conversation_id, completion_event)
         events.append(completion_event)
@@ -1118,21 +1336,25 @@ class AgentRuntime:
         tool_call_id: str,
         capability_id: str,
         result,
+        fact_refs: list[str] | None = None,
     ) -> JournalEntry:
         payload = result.content if isinstance(result.content, dict) else {}
         message = str(payload.get("message", "")) if isinstance(payload, dict) else ""
         details = payload.get("details") if isinstance(payload, dict) else None
+        data: dict[str, Any] = {
+            "tool_call_id": tool_call_id,
+            "name": capability_id,
+            "result": result.content,
+            "status": result.status,
+            "error_code": result.error_code,
+            "message": message,
+            "details": details,
+        }
+        if fact_refs:
+            data["_fact_refs"] = fact_refs
         return JournalEntry(
             type="run.tool_completed" if result.status == "ok" else "run.tool_failed",
-            data={
-                "tool_call_id": tool_call_id,
-                "name": capability_id,
-                "result": result.content,
-                "status": result.status,
-                "error_code": result.error_code,
-                "message": message,
-                "details": details,
-            },
+            data=data,
         )
 
     # ------------------------------------------------------------------
@@ -1264,6 +1486,59 @@ class AgentRuntime:
 
 _URL_PATTERN = re.compile(r"https?://\S+")
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+
+
+# ── P1 derived chain: fact_ref formatting ─────────────────────
+
+def _format_fact_ref(fact) -> str:
+    """Format a fact as 'f:0:3 = revenue@2025Q4 (222.5亿)' for LLM visibility.
+
+    Converts period_end + period_type into a compact label so the model
+    can distinguish same-caliber facts from different quarters:
+      - quarter + 2025-12-31 → 2025Q4
+      - fiscal_year + 2025-12-31 → FY2025
+      - no period → just caliber
+    """
+    caliber = getattr(fact, 'caliber', '') or getattr(fact, 'display', '') or ''
+    period_end = getattr(fact, 'period_end', '') or ''
+    period_type = getattr(fact, 'period_type', '') or ''
+
+    if period_end and period_type:
+        label = _period_label(period_end, period_type)
+        if label:
+            caliber = f"{caliber}@{label}"
+
+    value_hint = ""
+    try:
+        v = float(fact.value)
+        if abs(v) >= 1e8:
+            value_hint = f" ({v/1e8:.1f}亿)"
+        elif 0 < abs(v) < 1:
+            value_hint = f" ({v*100:.1f}%)"
+    except (ValueError, TypeError):
+        pass
+
+    return f"{fact.id} = {caliber}{value_hint}"
+
+
+def _period_label(period_end: str, period_type: str) -> str:
+    """Convert period_end + period_type to a compact quarter/year label.
+
+    Examples:
+        2025-12-31 + quarter → 2025Q4
+        2025-12-31 + fiscal_year → FY2025
+    """
+    m = re.match(r'(\d{4})-(\d{2})-\d{2}', period_end)
+    if not m:
+        return ""
+    year, month = int(m.group(1)), int(m.group(2))
+
+    if period_type in ("quarter", "QTR", "quarterly"):
+        q = (month - 1) // 3 + 1
+        return f"{year}Q{q}"
+    elif period_type in ("fiscal_year", "FY", "annual", "yearly"):
+        return f"FY{year}"
+    return ""
 
 
 def _build_read_later_prompt_injection(user_content: str) -> str:

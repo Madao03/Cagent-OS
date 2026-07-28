@@ -13,6 +13,34 @@ from cagent_os.plugins.plugin import Plugin
 
 logger = logging.getLogger(__name__)
 
+# ★ Out-of-coverage institutional explanation template.
+# These are CONSTANTS — institutional facts do not change, and the LLM
+# should not generate them from scratch (it will fabricate plausible-sounding
+# but incorrect explanations). The tool returns this text; the agent relays it.
+#
+# Correct facts per HK_FINANCIALS_ADAPTER.md:
+#   - HKEX Main Board: annual report + interim (semi-annual) report required
+#   - HKEX does NOT require standalone Q1/Q3 quarterly reports
+#   - Unsponsored ADRs (e.g. TCEHY) are exempt from SEC registration
+#   - No CIK = no SEC filings at all (no 20-F, no 6-K, nothing)
+_NOT_SEC_REGISTERED_TEMPLATE = """{ticker} is not registered with the SEC — no CIK found in SEC company_tickers.json.
+
+Companies listed only on HKEX follow HKEX disclosure rules, not SEC:
+- HKEX Main Board requires: annual reports + interim (semi-annual) reports
+- HKEX does NOT require standalone quarterly reports (Q1, Q3)
+- Quarterly financial data is structurally unavailable through any SEC-based source
+
+Important — do NOT claim or imply the following (they are false):
+- "This company files 20-F with the SEC" — it does not (no CIK = no filings at all)
+- "EDGAR only covers annual 20-F for this company" — EDGAR covers nothing for it
+- "I can retrieve the latest fiscal year data via EDGAR" — no data exists to retrieve
+
+Acceptable response format:
+1. State that the data is structurally unavailable
+2. Quote the institutional reason above (HKEX rules, not SEC-registered)
+3. Offer alternative: annual data may be available from HKEX news platform or company IR page (non-EDGAR source, lower reliability)
+4. Do NOT fabricate numbers, use estimates, or promise EDGAR data that does not exist""".strip()
+
 KNOWN_FINANCE_ERROR_CODES = {
     "finance_data_unavailable",
     "finance_provider_error",
@@ -211,14 +239,58 @@ class FinancialPlugin(Plugin):
             self._manifest(
                 "financial.memory.append",
                 "Append one sentence of memory text to the user's markdown document.",
-                {"user_id": {"type": "string"}, "text": {"type": "string"}},
-                required=["user_id", "text"],
+                {"text": {"type": "string"}},
+                required=["text"],
             ),
             self._manifest(
                 "financial.memory.get_document",
                 "Fetch the user's markdown memory document.",
-                {"user_id": {"type": "string"}},
-                required=["user_id"],
+                {},
+            ),
+            self._manifest(
+                "financial.edgar.facts",
+                "Get authoritative financial statements from SEC EDGAR (free, no API key). "
+                "Returns audited revenue, net_income, EPS, assets, equity, cash_flow, etc. "
+                "Each metric includes: value, currency (USD/CNY), start/end dates, form (10-K/20-F), "
+                "audited flag, accession number (for traceability), and tag_used (XBRL tag). "
+                "This is the PRIMARY source for financial report data — use before fin-skill or websearch. "
+                "Supports both US domestic (10-K, us-gaap) and foreign private issuers (20-F, ifrs-full).",
+                {
+                    "ticker": {"type": "string", "description": "Stock symbol, e.g. AAPL, NVDA, XPEV, BABA"},
+                    "fiscal_year": {"type": "integer", "description": "Target fiscal year (e.g. 2025). Optional — defaults to latest."},
+                    "fiscal_period": {"type": "string", "description": "FY (annual, default), Q1, Q2, Q3"},
+                },
+                required=["ticker"],
+            ),
+            self._manifest(
+                "financial.edgar.release",
+                "Get earnings press release data from SEC EDGAR 6-K/8-K filings. "
+                "Extracts quarterly revenue, net income, gross profit, operating income, cost of sales, "
+                "EPS, and company guidance from the Business Outlook section. "
+                "Data is unaudited (press release) with full traceability to accession + document. "
+                "This is the PRIMARY source for quarterly breakdown data — use before fin-skill or websearch. "
+                "Currency: native reporting currency (CNY for XPEV/BABA, USD for AAPL). "
+                "FX rate captured from footnote when USD convenience translation is present.",
+                {
+                    "ticker": {"type": "string", "description": "Stock symbol, e.g. XPEV, AAPL, BABA"},
+                    "quarter_end": {"type": "string", "description": "Quarter end date in YYYY-MM-DD format. Q1=03-31, Q2=06-30, Q3=09-30, Q4=12-31."},
+                },
+                required=["ticker", "quarter_end"],
+            ),
+            self._manifest(
+                "financial.ashare.report",
+                "Get A-share (China) financial report data via akshare → Sina Finance. "
+                "Returns balance sheet, income statement, and cash flow statement data "
+                "for a Chinese-listed stock. All reports are cumulative by default — "
+                "single-quarter values are computed via differencing. "
+                "Metrics include: 营业总收入, 营业收入, 净利润, 归属于母公司所有者的净利润, "
+                "营业利润, 资产总计, 负债合计, 经营活动现金流量净额, etc. "
+                "accounting_standard=CAS, source_tier=secondary (akshare is aggregator, "
+                "not primary source).",
+                {
+                    "ticker": {"type": "string", "description": "A-share stock code, e.g. 600519, 000001"},
+                },
+                required=["ticker"],
             ),
         ]
         return PluginSpec(plugin_id="financial", capabilities=capabilities)
@@ -229,7 +301,7 @@ class FinancialPlugin(Plugin):
             raise KeyError(capability_id)
 
         def _handler(request: ToolRequest) -> ToolResult:
-            content = self._dispatch(capability_id, request.arguments)
+            content = self._dispatch(capability_id, request.arguments, request_context=request.context)
             if isinstance(content, dict) and content.get("success") is False:
                 error_code = self._normalize_error_code(content.get("error"))
                 return ToolResult(status="error", content=content, error_code=error_code)
@@ -237,7 +309,7 @@ class FinancialPlugin(Plugin):
 
         return _handler
 
-    def _dispatch(self, capability_id: str, arguments: dict[str, Any]) -> dict[str, Any]:
+    def _dispatch(self, capability_id: str, arguments: dict[str, Any], request_context: dict[str, Any] | None = None) -> dict[str, Any]:
         if capability_id == FINANCIAL_WEBSEARCH_CAPABILITY_ID:
             return self._toolkit.search_multi_provider(
                 query=str(arguments.get("query", "")),
@@ -282,18 +354,22 @@ class FinancialPlugin(Plugin):
         if capability_id == "financial.fred":
             return self._handle_fred(arguments)
         if capability_id == "financial.memory.save_thesis":
-            return self._handle_save_thesis(arguments)
+            return self._handle_save_thesis(arguments, request_context)
         if capability_id == "financial.memory.query_theses":
-            return self._handle_query_theses(arguments)
+            return self._handle_query_theses(arguments, request_context)
         if capability_id == "financial.memory.check_contradictions":
-            return self._handle_check_contradictions(arguments)
+            return self._handle_check_contradictions(arguments, request_context)
         if capability_id == "financial.memory.append":
-            return self._toolkit.append_memory(
-                user_id=str(arguments.get("user_id", "")),
-                text=str(arguments.get("text", "")),
-            )
+            return self._handle_memory_append(arguments, request_context)
         if capability_id == "financial.memory.get_document":
-            return self._toolkit.get_memory_document(user_id=str(arguments.get("user_id", "")))
+            return self._handle_get_document(arguments, request_context)
+
+        if capability_id == "financial.edgar.facts":
+            return self._handle_edgar_facts(arguments)
+        if capability_id == "financial.edgar.release":
+            return self._handle_edgar_release(arguments)
+        if capability_id == "financial.ashare.report":
+            return self._handle_ashare_report(arguments)
         raise KeyError(capability_id)
 
     def _handle_verified_quote(self, arguments: dict[str, Any]) -> dict[str, Any]:
@@ -406,101 +482,6 @@ class FinancialPlugin(Plugin):
             return {"success": True, "available": False, "message": "RAG not configured"}
         return {"success": True, **self._rag_service.status}
 
-    def _handle_save_thesis(self, arguments: dict[str, Any]) -> dict[str, Any]:
-        """Save an investment thesis to the memory store."""
-        if self._memory_api is None:
-            return {"success": False, "error": "memory_unavailable", "message": "Memory API not configured"}
-        import asyncio
-        from cagent_os.memory.api import InvestmentThesis
-
-        ticker = str(arguments.get("ticker", "")).upper()
-        thesis_type = str(arguments.get("thesis_type", ""))
-        content = str(arguments.get("content", ""))
-
-        if not ticker or not content:
-            return {"success": False, "error": "invalid_input", "message": "ticker and content are required"}
-
-        async def _save():
-            thesis = InvestmentThesis(
-                user_id="default", ticker=ticker, thesis_type=thesis_type, content=content,
-            )
-            await self._memory_api.save_thesis(thesis)
-            return {"success": True, "ticker": ticker, "message": "Thesis saved to memory"}
-
-        return asyncio.run(_save())
-
-    def _handle_query_theses(self, arguments: dict[str, Any]) -> dict[str, Any]:
-        """Query stored theses for a ticker."""
-        if self._memory_api is None:
-            return {"success": False, "error": "memory_unavailable", "message": "Memory API not configured"}
-        import asyncio
-
-        ticker = str(arguments.get("ticker", "")).upper()
-        if not ticker:
-            return {"success": False, "error": "invalid_input", "message": "ticker is required"}
-
-        async def _query():
-            theses = await self._memory_api.query_by_ticker("default", ticker)
-            return {
-                "success": True,
-                "ticker": ticker,
-                "count": len(theses),
-                "theses": [
-                    {
-                        "ticker": t.ticker,
-                        "type": t.thesis_type,
-                        "content": t.content,
-                        "version": t.version,
-                        "created_at": t.created_at.isoformat() if hasattr(t.created_at, 'isoformat') else str(t.created_at),
-                    }
-                    for t in theses
-                ],
-            }
-
-        return asyncio.run(_query())
-
-    def _handle_check_contradictions(self, arguments: dict[str, Any]) -> dict[str, Any]:
-        """Check an analysis for contradictions against stored theses."""
-        if self._memory_api is None:
-            return {"success": False, "error": "memory_unavailable", "message": "Memory API not configured"}
-        import asyncio
-
-        analysis = str(arguments.get("analysis_output", ""))
-        tickers = list(arguments.get("tickers", []))
-
-        if not analysis or not tickers:
-            return {"success": False, "error": "invalid_input", "message": "analysis_output and tickers are required"}
-
-        async def _check():
-            try:
-                from cagent_os.memory.contradiction import check_analysis_against_memory
-                results = await check_analysis_against_memory(
-                    memory=self._memory_api,
-                    llm_backend=None,  # LLM check requires backend; without it, skip
-                    user_id="default",
-                    analysis_output=analysis,
-                    tickers=[str(t).upper() for t in tickers],
-                )
-                return {
-                    "success": True,
-                    "contradictions_found": len(results),
-                    "contradictions": [
-                        {
-                            "ticker": r.ticker,
-                            "old_fact": r.old_fact,
-                            "new_fact": r.new_fact,
-                            "detected_at": r.detected_at.isoformat() if hasattr(r.detected_at, 'isoformat') else str(r.detected_at),
-                            "resolved": r.resolved,
-                        }
-                        for r in results
-                    ],
-                }
-            except Exception as exc:
-                logger.warning("Contradiction check failed: %s", exc)
-                return {"success": False, "error": "check_failed", "message": str(exc)}
-
-        return asyncio.run(_check())
-
     def _handle_trace_query(self, arguments: dict[str, Any]) -> dict[str, Any]:
         """Query trace database for conversation history."""
         import asyncio
@@ -588,6 +569,495 @@ class FinancialPlugin(Plugin):
             "all_available": all_available,
             "sources": sources,
         }
+
+    def _handle_edgar_facts(self, arguments: dict[str, Any]) -> dict[str, Any]:
+        """Handle financial.edgar.facts — EDGAR authoritative financial data.
+
+        Degradation: EDGAR → fin-skill MCP (with source labeling).
+        """
+        import time as _time
+        started = _time.perf_counter()
+
+        ticker = str(arguments.get("ticker", "")).strip().upper()
+        if not ticker:
+            return {"success": False, "error": "no_symbol", "message": "ticker is required"}
+
+        fy = int(arguments["fiscal_year"]) if arguments.get("fiscal_year") else None
+        fp = str(arguments.get("fiscal_period", "FY"))
+
+        # ★ Code-level SEC registration check (replaces prompt-based routing).
+        # If the ticker has no CIK in SEC's company_tickers.json, it is NOT
+        # registered with the SEC — EDGAR data is structurally unavailable.
+        # This blocks the 5+ doomed tool calls that prompt-based routing
+        # could not prevent, because prompt rules are advisory, not enforced.
+        from cagent_os.data_layer.adapters.edgar_adapter import EdgardAdapter
+        adapter = EdgardAdapter()
+        if not adapter.has_sec_cik(ticker):
+            return {
+                "success": False,
+                "error": "not_sec_registered",
+                "unavailable": True,
+                "reason": "institutional",
+                "message": _NOT_SEC_REGISTERED_TEMPLATE.format(ticker=ticker),
+                "execution_time": round(_time.perf_counter() - started, 4),
+            }
+
+        # Try EDGAR first (authoritative, free)
+        try:
+            result = asyncio.run(adapter.get_earnings_summary(ticker, fiscal_year=fy, fiscal_period=fp))
+            if "error" not in result and result.get("metrics"):
+                result["execution_time"] = round(_time.perf_counter() - started, 4)
+                return result
+            # EDGAR returned no data — fall through to fin-skill
+            logger.info("EDGAR no data for %s, falling back to fin-skill", ticker)
+        except Exception as exc:
+            logger.warning("EDGAR failed for %s: %s — falling back to fin-skill", ticker, exc)
+
+        # Degradation: fin-skill MCP (must label source degradation)
+        fin_result = self._toolkit.query_earnings(
+            question=f"EDGAR fallback for {ticker}",
+            symbols=[ticker],
+            calendar_year=fy,
+        )
+        if fin_result.get("success"):
+            fin_result["source"] = "fin_skill_mcp"
+            fin_result["degraded_from"] = "edgar"
+            fin_result["degradation_reason"] = "EDGAR unavailable or no data"
+        fin_result["execution_time"] = round(_time.perf_counter() - started, 4)
+        return fin_result
+
+    # ── Memory handlers (user-scoped) ────────────────────────────
+
+    @staticmethod
+    def _extract_user_id(request_context: dict[str, Any] | None) -> str:
+        """Extract user_id from request context. Hard-reject if absent.
+
+        Mirrors the safe pattern in plugins/memory/plugin.py.
+        LLM arguments are NEVER trusted for user identity.
+        """
+        if not request_context:
+            return ""
+        return str(request_context.get("user_id", "")).strip()
+
+    def _handle_save_thesis(self, arguments: dict[str, Any], request_context: dict[str, Any] | None) -> dict[str, Any]:
+        """Save an investment thesis to the memory store."""
+        user_id = self._extract_user_id(request_context)
+        if not user_id:
+            return {"success": False, "error": "missing_user_id",
+                    "message": "User identity is required for memory operations"}
+
+        if self._memory_api is None:
+            return {"success": False, "error": "memory_unavailable", "message": "Memory API not configured"}
+        import asyncio
+        from cagent_os.memory.api import InvestmentThesis
+
+        ticker = str(arguments.get("ticker", "")).upper()
+        thesis_type = str(arguments.get("thesis_type", ""))
+        content = str(arguments.get("content", ""))
+
+        if not ticker or not content:
+            return {"success": False, "error": "invalid_input", "message": "ticker and content are required"}
+
+        async def _save():
+            thesis = InvestmentThesis(
+                user_id=user_id, ticker=ticker, thesis_type=thesis_type, content=content,
+            )
+            await self._memory_api.save_thesis(thesis)
+            return {"success": True, "ticker": ticker, "message": "Thesis saved to memory"}
+
+        return asyncio.run(_save())
+
+    def _handle_query_theses(self, arguments: dict[str, Any], request_context: dict[str, Any] | None) -> dict[str, Any]:
+        """Query stored theses for a ticker."""
+        user_id = self._extract_user_id(request_context)
+        if not user_id:
+            return {"success": False, "error": "missing_user_id",
+                    "message": "User identity is required for memory operations"}
+
+        if self._memory_api is None:
+            return {"success": False, "error": "memory_unavailable", "message": "Memory API not configured"}
+        import asyncio
+
+        ticker = str(arguments.get("ticker", "")).upper()
+        if not ticker:
+            return {"success": False, "error": "invalid_input", "message": "ticker is required"}
+
+        async def _query():
+            theses = await self._memory_api.query_by_ticker(user_id, ticker)
+            return {
+                "success": True,
+                "ticker": ticker,
+                "count": len(theses),
+                "theses": [
+                    {
+                        "ticker": t.ticker,
+                        "type": t.thesis_type,
+                        "content": t.content,
+                        "version": t.version,
+                        "created_at": t.created_at.isoformat() if hasattr(t.created_at, 'isoformat') else str(t.created_at),
+                    }
+                    for t in theses
+                ],
+            }
+
+        return asyncio.run(_query())
+
+    def _handle_check_contradictions(self, arguments: dict[str, Any], request_context: dict[str, Any] | None) -> dict[str, Any]:
+        """Check an analysis for contradictions against stored theses."""
+        user_id = self._extract_user_id(request_context)
+        if not user_id:
+            return {"success": False, "error": "missing_user_id",
+                    "message": "User identity is required for memory operations"}
+
+        if self._memory_api is None:
+            return {"success": False, "error": "memory_unavailable", "message": "Memory API not configured"}
+        import asyncio
+
+        analysis = str(arguments.get("analysis_output", ""))
+        tickers = list(arguments.get("tickers", []))
+
+        if not analysis or not tickers:
+            return {"success": False, "error": "invalid_input", "message": "analysis_output and tickers are required"}
+
+        async def _check():
+            try:
+                from cagent_os.memory.contradiction import check_analysis_against_memory
+                results = await check_analysis_against_memory(
+                    memory=self._memory_api,
+                    llm_backend=None,
+                    user_id=user_id,
+                    analysis_output=analysis,
+                    tickers=[str(t).upper() for t in tickers],
+                )
+                return {
+                    "success": True,
+                    "contradictions_found": len(results),
+                    "contradictions": [
+                        {
+                            "ticker": r.ticker,
+                            "old_fact": r.old_fact,
+                            "new_fact": r.new_fact,
+                            "detected_at": r.detected_at.isoformat() if hasattr(r.detected_at, 'isoformat') else str(r.detected_at),
+                            "resolved": r.resolved,
+                        }
+                        for r in results
+                    ],
+                }
+            except Exception as exc:
+                logger.warning("Contradiction check failed: %s", exc)
+                return {"success": False, "error": "check_failed", "message": str(exc)}
+
+        return asyncio.run(_check())
+
+    def _handle_memory_append(self, arguments: dict[str, Any], request_context: dict[str, Any] | None) -> dict[str, Any]:
+        """Append memory text — user-scoped from context, NOT from LLM args."""
+        user_id = self._extract_user_id(request_context)
+        if not user_id:
+            return {"success": False, "error": "missing_user_id",
+                    "message": "User identity is required for memory operations"}
+        return self._toolkit.append_memory(
+            user_id=user_id,
+            text=str(arguments.get("text", "")),
+        )
+
+    def _handle_get_document(self, arguments: dict[str, Any], request_context: dict[str, Any] | None) -> dict[str, Any]:
+        """Get memory document — user-scoped from context, NOT from LLM args."""
+        user_id = self._extract_user_id(request_context)
+        if not user_id:
+            return {"success": False, "error": "missing_user_id",
+                    "message": "User identity is required for memory operations"}
+        return self._toolkit.get_memory_document(user_id=user_id)
+
+    def _handle_edgar_release(self, arguments: dict[str, Any], request_context: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Handle financial.edgar.release — earnings press release data.
+
+        Pipeline: S3 (find) → download → extract (S4-S8 + G4).
+        """
+        import time as _time
+        started = _time.perf_counter()
+
+        ticker = str(arguments.get("ticker", "")).strip().upper()
+        quarter_end = str(arguments.get("quarter_end", "")).strip()
+
+        if not ticker:
+            return {"success": False, "error": "no_ticker", "message": "ticker is required"}
+        if not quarter_end:
+            return {"success": False, "error": "no_quarter", "message": "quarter_end is required (YYYY-MM-DD)"}
+
+        # ★ Code-level SEC registration check — same gate as edgar.facts.
+        from cagent_os.data_layer.adapters.edgar_adapter import EdgardAdapter
+        adapter = EdgardAdapter()
+        if not adapter.has_sec_cik(ticker):
+            return {
+                "success": False,
+                "error": "not_sec_registered",
+                "unavailable": True,
+                "reason": "institutional",
+                "message": _NOT_SEC_REGISTERED_TEMPLATE.format(ticker=ticker),
+                "execution_time": round(_time.perf_counter() - started, 4),
+            }
+
+        # Check offline cache first (F4: materialized extraction results).
+        # SEC documents are immutable by accession — cached results are always valid.
+        from cagent_os.data_layer.lane2.materializer import EdgarReleaseStore
+        store = EdgarReleaseStore()
+        cached = store.get(ticker, quarter_end)
+        if cached:
+            cached["execution_time"] = round(_time.perf_counter() - started, 4)
+            return cached
+
+        try:
+            # Step 1: Find the earnings release document (S3 Phase 1)
+            from cagent_os.data_layer.lane2.classifier import EarningsReleaseFinder
+            finder = EarningsReleaseFinder()
+            release = asyncio.run(finder.find(ticker, quarter_end))
+            if not release or not release.get("found"):
+                entity_type = (release or {}).get("entity_type", "")
+                if entity_type == "foreign_private_issuer":
+                    # FPI quarterly data from fin-skill may be extrapolated.
+                    # Refuse degradation — missing data is visible; wrong data is silent.
+                    return {
+                        "success": False,
+                        "error": "no_release_found_fpi",
+                        "message": (
+                            f"No earnings release found for {ticker} Q ending {quarter_end}. "
+                            "FPI (foreign private issuer) quarterly data is NOT degraded "
+                            "to fin-skill to avoid extrapolated/estimated values from "
+                            "third-party aggregators. Use financial.edgar.facts for "
+                            "audited annual data from 20-F filings."
+                        ),
+                        "entity_type": entity_type,
+                        "degradation_blocked": True,
+                        "degradation_reason": "FPI quarterly data may be extrapolated",
+                    }
+                return {
+                    "success": False,
+                    "error": "no_release_found",
+                    "message": f"No earnings release found for {ticker} Q ending {quarter_end}",
+                    "entity_type": entity_type,
+                }
+
+            # Step 2: Download the EX-99.1 document
+            import requests
+            resp = requests.get(
+                release["url"],
+                headers={"User-Agent": "CagentOS madaocage@gmail.com"},
+                timeout=30,
+            )
+            if resp.status_code != 200:
+                return {
+                    "success": False,
+                    "error": "download_failed",
+                    "message": f"Failed to download {release['url']}: HTTP {resp.status_code}",
+                }
+
+            # Step 3: Extract financial data from HTML
+            from cagent_os.data_layer.lane2.extractor import EarningsReleaseExtractor
+            extractor = EarningsReleaseExtractor()
+            meta = {
+                "accession": release["accession"],
+                "document": release["document"],
+                "form": release["form"],
+                "filing_date": release["filing_date"],
+                "ticker": ticker,
+            }
+            extracted = extractor.extract(resp.content, meta=meta)
+
+            # Build response
+            # ★ accounting_standard is issuer-level, not document-level.
+            # Look up by CIK (same company uses same standard across all filings).
+            from cagent_os.data_layer.adapters.edgar_adapter import get_issuer_accounting_standard
+            issuer_std = asyncio.run(get_issuer_accounting_standard(ticker))
+
+            records_out = []
+            # ★ Field-level merge: the extractor produces records from
+            # different tables in the same filing. Raw CNY tables have
+            # revenue + gross_profit but no net_income. Billion-scale
+            # "Key Financial Results" tables have revenue + net_income
+            # but no gross_profit. Merging by (period_end, period_type)
+            # at field level preserves all available data.
+            _FINANCIAL_FIELDS = (
+                "revenue", "cost_of_sales", "gross_profit",
+                "operating_income", "net_income", "eps_diluted",
+                "fx_rate",
+            )
+            from collections import defaultdict as _dd
+            period_groups: dict[tuple[str, str], list[dict]] = _dd(list)
+            for r in extracted.records:
+                period_groups[(r.period_end or "", r.period_type or "")].append({
+                    "period_start": r.period_start,
+                    "period_end": r.period_end,
+                    "period_type": r.period_type,
+                    "currency": r.currency,
+                    "fx_rate": r.fx_rate,
+                    "fx_rate_date": r.fx_rate_date,
+                    "revenue": r.metrics.get("revenue"),
+                    "cost_of_sales": r.metrics.get("cost_of_sales"),
+                    "gross_profit": r.metrics.get("gross_profit"),
+                    "operating_income": r.metrics.get("operating_income"),
+                    "net_income": r.metrics.get("net_income"),
+                    "eps_diluted": r.metrics.get("eps_diluted"),
+                    "extraction_method": r.extraction_method,
+                    # ★ Issuer-level attributes (same for all records from this CIK)
+                    "accounting_standard": issuer_std,
+                    "audited": False,  # Press releases are never audited
+                })
+
+            for per_key, recs in period_groups.items():
+                if len(recs) == 1:
+                    records_out.append(recs[0])
+                    continue
+
+                # Multiple records for same period: field-level merge.
+                # Identify the "primary" record (has raw-scale revenue, > 1e6).
+                primary = None
+                secondary = None
+                for rec in recs:
+                    rev = rec.get("revenue")
+                    if rev is not None and isinstance(rev, (int, float)) and rev > 1e6:
+                        primary = rec
+                    elif rev is not None and isinstance(rev, (int, float)):
+                        secondary = rec
+
+                if primary is None:
+                    primary = recs[0]  # fallback
+
+                merged = dict(primary)  # start with primary
+                if secondary is not None:
+                    # ★ Validate scale: revenue ratio should be ~1e9 (billion → raw CNY).
+                    # Use FIXED 1e9 for conversion — a computed ratio embeds
+                    # rounding error from the source's 2-significant-digit precision
+                    # and creates false precision (510086161.35 instead of 510000000).
+                    # The ratio is ONLY used as a validation check.
+                    p_rev = primary.get("revenue")
+                    s_rev = secondary.get("revenue")
+                    if p_rev and s_rev and s_rev != 0:
+                        ratio = p_rev / s_rev
+                        if not (0.99e9 <= ratio <= 1.01e9):
+                            logger.warning(
+                                "Scale ratio out of range for %s %s: %.0f (expected ~1e9). "
+                                "Falling back to computed ratio.",
+                                ticker, quarter_end, ratio,
+                            )
+                            scale = ratio
+                        else:
+                            scale = 1e9  # fixed, not computed
+                    else:
+                        scale = 1e9  # no revenue anchor, assume billion
+                    # Import fields from secondary that primary is missing
+                    for field in _FINANCIAL_FIELDS:
+                        if merged.get(field) is None and secondary.get(field) is not None:
+                            merged[field] = secondary[field] * scale
+                            # ★ Tag precision: billion-scale source has only
+                            # 2 significant digits. The ×1e9 conversion makes
+                            # this explicit rather than hidden in the last 7 digits.
+                            if merged.get("_precision") is None:
+                                merged["_precision"] = {}
+                            merged["_precision"][field] = "2_sig_digits_from_billion"
+
+                records_out.append(merged)
+
+            # ★ Regression guard: quarterly records should carry net_income.
+            # A previous bug (record-level dedup) silently dropped the
+            # billion-scale records that were the only source of quarterly
+            # net_income. This is a runtime WARNING — missing net_income is
+            # possible (early filings, ex992 boundaries). The HARD assertion
+            # lives in tests, where a known fixture (XPEV Q4 2025) should
+            # always have quarterly net_income.
+            quarter_recs = [r for r in records_out if r.get("period_type") == "quarter"]
+            if quarter_recs and all(r.get("net_income") is None for r in quarter_recs):
+                logger.warning(
+                    "All %d quarterly records have net_income=None for %s QE %s. "
+                    "This may indicate a field-level merge failure or sparse filing.",
+                    len(quarter_recs), ticker, quarter_end,
+                )
+
+            guidance_out = []
+            for g in extracted.guidance:
+                guidance_out.append({
+                    "period_label": g.period_label,
+                    "metric_name": g.metric_name,
+                    "low": g.low,
+                    "high": g.high,
+                    "currency": g.currency,
+                    "yoy_change_low": g.yoy_change_low,
+                    "yoy_change_high": g.yoy_change_high,
+                    "extraction_conf": g.extraction_conf,
+                })
+
+            result = {
+                "success": True,
+                "ticker": ticker,
+                "quarter_end": quarter_end,
+                "source": "edgar_release",
+                "source_tier": "primary",
+                "accession": release["accession"],
+                "document": release["document"],
+                "filing_date": release["filing_date"],
+                "form": release["form"],
+                "conf": release["conf"],
+                "audited": False,
+                "accounting_standard": issuer_std,
+                "records": records_out,
+                "guidance": guidance_out,
+                "record_count": len(records_out),
+                "guidance_count": len(guidance_out),
+                "execution_time": round(_time.perf_counter() - started, 4),
+            }
+
+            # Cache result for future queries (F4: offline materialization)
+            store.put(ticker, quarter_end, result)
+
+            return result
+        except Exception as exc:
+            logger.exception("EDGAR release extraction failed for %s Q ending %s",
+                             ticker, quarter_end)
+            return {
+                "success": False,
+                "error": "extraction_failed",
+                "message": str(exc),
+            }
+
+    def _handle_ashare_report(self, arguments: dict[str, Any]) -> dict[str, Any]:
+        """Handle financial.ashare.report — A-share financial statements."""
+        import asyncio as _asyncio
+        import time as _time
+
+        started = _time.perf_counter()
+        ticker = str(arguments.get("ticker", "")).strip()
+        if not ticker:
+            return {"success": False, "error": "no_ticker", "message": "ticker is required"}
+
+        try:
+            from cagent_os.data_layer.adapters.akshare_financials_adapter import (
+                AkshareFinancialsAdapter,
+            )
+            adapter = AkshareFinancialsAdapter()
+            raw = _asyncio.run(adapter.fetch("financials", ticker=ticker))
+        except Exception as exc:
+            logger.exception("A-share report fetch failed for %s", ticker)
+            return {
+                "success": False,
+                "error": "ashare_fetch_failed",
+                "message": str(exc),
+            }
+
+        if raw.value is None:
+            return {
+                "success": False,
+                "error": "ashare_no_data",
+                "message": str(raw.raw_response.get("error", "Unknown error")),
+            }
+
+        data = raw.value
+        # ★ Strip internal reconciliation data — not agent-consumable.
+        # FactRegistry would register reconciliation check values as
+        # spurious facts (e.g., "expected=319918844905.58" as a fact).
+        if "records" in data:
+            for p in data["records"]:
+                p.pop("reconciliation", None)
+        data["execution_time"] = round(_time.perf_counter() - started, 4)
+        return data
 
     @staticmethod
     def _normalize_error_code(raw_error: Any) -> str:

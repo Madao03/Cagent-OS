@@ -35,3 +35,13 @@ logs/
 temp/
 evaluation/results/
 evaluation/responses/
+
+# Debug / temp scripts
+_check_*.py
+_facts_output.txt
+
+# Duplicate frontend assets (served from static/ instead)
+cagentos-frontend/
+
+# Data backups
+data-backup-*/
