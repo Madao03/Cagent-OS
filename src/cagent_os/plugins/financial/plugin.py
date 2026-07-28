@@ -61,6 +61,8 @@ class FinancialPlugin(Plugin):
         self._trace_db_path = trace_db_path
         self._memory_api = memory_api
         self._rag_service = rag_service
+        self._rag_status_cache: dict[tuple[str, str], tuple[float, dict[str, Any]]] = {}  # (user_id, session_id) → (cached_at, status)
+        self._RAG_STATUS_CACHE_TTL = 600  # 10 minutes
 
     def manifest(self) -> PluginSpec:
         capabilities = [
@@ -350,7 +352,7 @@ class FinancialPlugin(Plugin):
         if capability_id == "financial.rag.search":
             return self._handle_rag_search(arguments)
         if capability_id == "financial.rag.status":
-            return self._handle_rag_status()
+            return self._handle_rag_status(request_context)
         if capability_id == "financial.fred":
             return self._handle_fred(arguments)
         if capability_id == "financial.memory.save_thesis":
@@ -447,6 +449,12 @@ class FinancialPlugin(Plugin):
             "fetched_at": raw.fetched_at,
         }
 
+    # ★ Similarity floor: top-1 < 0.5 → treat as miss, discard all results.
+    # This is a hard code-level filter, not just a prompt suggestion.
+    # Low-similarity chunks injected into context cause the model to fabricate
+    # false depth (e.g. XPEV revenue question → "AI supercycle value chain").
+    _RAG_SIMILARITY_FLOOR = 0.5
+
     def _handle_rag_search(self, arguments: dict[str, Any]) -> dict[str, Any]:
         """Search the RAG knowledge base."""
         if self._rag_service is None:
@@ -458,6 +466,19 @@ class FinancialPlugin(Plugin):
             return {"success": False, "error": "invalid_input", "message": "query is required"}
         where = {"chunk_type": chunk_filter} if chunk_filter else None
         results = self._rag_service.search(query, top_k=min(top_k, 20), where=where)
+
+        # ★ Hard similarity floor: top-1 < 0.5 → no relevant match, discard all
+        top_similarity = results[0]["similarity"] if results else 0.0
+        if top_similarity < self._RAG_SIMILARITY_FLOOR:
+            return {
+                "success": True, "query": query,
+                "results_count": 0, "results": [],
+                "formatted_context": "",
+                "reason": "no_relevant_match",
+                "top_similarity": round(top_similarity, 4),
+                "threshold": self._RAG_SIMILARITY_FLOOR,
+            }
+
         formatted = self._rag_service.format_context(results, max_results=top_k)
         return {
             "success": True, "query": query, "results_count": len(results),
@@ -476,11 +497,31 @@ class FinancialPlugin(Plugin):
             "formatted_context": formatted,
         }
 
-    def _handle_rag_status(self) -> dict[str, Any]:
-        """Return RAG system status."""
+    def _handle_rag_status(self, request_context: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Return RAG system status, cached per (user, session) with TTL.
+
+        rag.status is expensive (reads chunk_count) yet its result is nearly 
+        invariant within a session. Cache by (user_id, session_id) for isolation;
+        TTL ensures stale cache after index rebuild or service restart.
+        """
         if self._rag_service is None:
             return {"success": True, "available": False, "message": "RAG not configured"}
-        return {"success": True, **self._rag_service.status}
+
+        import time
+        user_id = str(request_context.get("user_id", "")) if request_context else ""
+        session_id = str(request_context.get("session_id", "")) if request_context else ""
+        cache_key = (user_id, session_id)
+
+        if cache_key[0] and cache_key[1] and cache_key in self._rag_status_cache:
+            cached_at, cached = self._rag_status_cache[cache_key]
+            if time.time() - cached_at < self._RAG_STATUS_CACHE_TTL:
+                if cached.get("available") and cached.get("chunks", 0) > 0:
+                    return {"success": True, **cached}
+
+        status = dict(self._rag_service.status)
+        if cache_key[0] and cache_key[1]:
+            self._rag_status_cache[cache_key] = (time.time(), status)
+        return {"success": True, **status}
 
     def _handle_trace_query(self, arguments: dict[str, Any]) -> dict[str, Any]:
         """Query trace database for conversation history."""

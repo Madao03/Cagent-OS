@@ -1175,7 +1175,7 @@ class AgentRuntime:
                 ToolRequest(
                     capability_id=capability_id,
                     arguments=arguments,
-                    context={"user_id": user_id},
+                    context={"user_id": user_id, "session_id": conversation_id},
                 )
             )
 

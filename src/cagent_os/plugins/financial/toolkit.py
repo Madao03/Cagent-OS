@@ -15,6 +15,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import re
 import threading
 import time
@@ -350,42 +351,308 @@ class FinancialToolkit:
 
         providers_used: list[str] = []
         providers_failed: dict[str, str] = {}
+        combined: list[dict[str, Any]] = []
 
-        # Try MCP market news first (fin-skill)
-        mcp_results: list[dict[str, Any]] = []
-        if self.bridge_available():
-            result = self._call_mcp("get_market_news", {"limit": num_results})
+        # ── Tier 1: Tavily (high-quality semantic search, paid API) ──
+        if len(combined) < num_results:
+            tavily_results = self._search_tavily(normalized, limit=num_results)
+            if tavily_results:
+                combined.extend(tavily_results)
+                providers_used.append("tavily")
+            else:
+                providers_failed["tavily"] = "no results or not configured"
+
+        # ── Tier 2: fin-skill MCP market news (free, no API key) ──
+        if len(combined) < num_results and self.bridge_available():
+            result = self._call_mcp("get_market_news", {"limit": num_results - len(combined)})
             data = self._parse_mcp_result(result)
+            mcp_results: list[dict[str, Any]] = []
             if isinstance(data, dict):
                 mcp_results = data.get("articles", data.get("news", data.get("results", [])))
             elif isinstance(data, list):
                 mcp_results = data
             if mcp_results:
+                for item in mcp_results[:num_results - len(combined)]:
+                    if isinstance(item, dict):
+                        combined.append({
+                            "title": item.get("title", ""),
+                            "url": item.get("url", item.get("link", "")),
+                            "snippet": item.get("summary", item.get("snippet", item.get("description", ""))),
+                        })
                 providers_used.append("fin_skill_market_news")
             else:
                 providers_failed["fin_skill_market_news"] = "no results"
-        else:
+        elif len(combined) >= num_results:
+            pass  # already satisfied by Tier 1
+        elif not self.bridge_available():
             providers_failed["fin_skill_market_news"] = "bridge unavailable"
 
-        # Fallback to DuckDuckGo web search if MCP produced no results
-        ddg_results: list[dict[str, Any]] = []
-        if len(mcp_results) < num_results:
-            ddg_results = self._search_ddg(normalized, limit=num_results - len(mcp_results))
+        # ── Tier 3: Perplexity (AI-powered search, paid API) ──
+        if len(combined) < num_results:
+            pplx_results = self._search_perplexity(normalized, limit=num_results - len(combined))
+            if pplx_results:
+                combined.extend(pplx_results)
+                providers_used.append("perplexity")
+            else:
+                providers_failed["perplexity"] = "no results or not configured"
+
+        # ── Tier 3b: Google CSE (100 free queries/day) ──
+        if len(combined) < num_results:
+            google_results = self._search_google_cse(normalized, limit=num_results - len(combined))
+            if google_results:
+                combined.extend(google_results)
+                providers_used.append("google_cse")
+            else:
+                providers_failed["google_cse"] = "no results or not configured"
+
+        # ── Tier 3c: SerpAPI (Google scrape, 250 free queries/month) ──
+        if len(combined) < num_results:
+            serp_results = self._search_serpapi(normalized, limit=num_results - len(combined))
+            if serp_results:
+                combined.extend(serp_results)
+                providers_used.append("serpapi")
+            else:
+                providers_failed["serpapi"] = "no results or not configured"
+
+        # ── Tier 3d: AnySearch (unified search, supplementary) ──
+        if len(combined) < num_results:
+            any_results = self._search_anysearch(normalized, limit=num_results - len(combined))
+            if any_results:
+                combined.extend(any_results)
+                providers_used.append("anysearch")
+            else:
+                providers_failed["anysearch"] = "no results or not configured"
+
+        # ── Tier 4: DuckDuckGo (free fallback) ──
+        if len(combined) < num_results:
+            ddg_results = self._search_ddg(normalized, limit=num_results - len(combined))
             if ddg_results:
+                combined.extend(ddg_results)
                 providers_used.append("duckduckgo_web")
             else:
                 providers_failed["duckduckgo_web"] = "no results"
-
-        combined = (mcp_results + ddg_results)[:num_results]
         return {
             "success": True if combined else False,
             "query": normalized,
-            "results": combined,
+            "results": combined[:num_results],
             "providers_used": providers_used,
             "providers_failed": providers_failed,
             "provider_params": provider_params or {},
             "execution_time": round(time.perf_counter() - started, 4),
         }
+
+    def _search_tavily(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
+        """High-quality search via Tavily API. Returns empty list if no key or error."""
+        api_key = os.environ.get("TAVILY_API_KEY", "").strip()
+        if not api_key:
+            return []
+        results: list[dict[str, Any]] = []
+        proxy = self._settings.effective_proxy if self._settings else ""
+        proxies = {"http": proxy, "https": proxy} if proxy else None
+        try:
+            resp = requests.post(
+                "https://api.tavily.com/search",
+                json={
+                    "api_key": api_key,
+                    "query": query,
+                    "max_results": limit,
+                    "search_depth": "basic",
+                    "include_answer": False,
+                },
+                proxies=proxies,
+                timeout=10,
+            )
+            if resp.status_code != 200:
+                logger.warning("Tavily search HTTP %d: %s", resp.status_code, resp.text[:200])
+                return results
+            data = resp.json()
+            for item in data.get("results", []):
+                results.append({
+                    "title": item.get("title", ""),
+                    "url": item.get("url", ""),
+                    "snippet": item.get("content", "")[:500],
+                })
+        except Exception:
+            logger.debug("Tavily search failed for query: %s", query, exc_info=True)
+        return results
+
+    def _search_perplexity(self, query: str, limit: int = 5) -> list[dict[str, Any]]:
+        """AI-powered search via Perplexity Sonar API. Returns empty list if no key or error.
+
+        Uses the chat/completions endpoint with model 'sonar' which returns
+        an AI-synthesized answer + citation URLs.
+        """
+        api_key = os.environ.get("PERPLEXITY_API_KEY", "").strip()
+        if not api_key:
+            return []
+        results: list[dict[str, Any]] = []
+        proxy = self._settings.effective_proxy if self._settings else ""
+        proxies = {"http": proxy, "https": proxy} if proxy else None
+        try:
+            resp = requests.post(
+                "https://api.perplexity.ai/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": "sonar",
+                    "messages": [
+                        {"role": "system", "content": "You are a financial research assistant. Provide factual, concise answers with sources. Always respond in the same language as the query."},
+                        {"role": "user", "content": query},
+                    ],
+                    "max_tokens": 1024,
+                },
+                proxies=proxies,
+                timeout=15,
+            )
+            if resp.status_code != 200:
+                logger.warning("Perplexity search HTTP %d: %s", resp.status_code, resp.text[:200])
+                return results
+            data = resp.json()
+            # Extract AI answer
+            answer = ""
+            choices = data.get("choices", [])
+            if choices:
+                answer = choices[0].get("message", {}).get("content", "")
+            # Extract citations (Perplexity returns them at top level)
+            citations = data.get("citations", [])
+            # Build results: if we have citations, use them; otherwise wrap answer as single result
+            if citations:
+                for url in citations[:limit]:
+                    results.append({
+                        "title": url.split("/")[-1][:80] if "/" in url else url[:80],
+                        "url": url,
+                        "snippet": answer[:500] if not results else "",
+                    })
+            elif answer:
+                # No citations but got an answer — wrap as a single result
+                results.append({
+                    "title": "Perplexity AI Answer",
+                    "url": "https://www.perplexity.ai",
+                    "snippet": answer[:500],
+                })
+        except Exception:
+            logger.debug("Perplexity search failed for query: %s", query, exc_info=True)
+        return results
+
+    def _search_google_cse(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
+        """Search via Google Custom Search Engine API. 100 free queries/day.
+
+        Requires GOOGLE_API_KEY + SEARCH_ENGINE_ID env vars.
+        Create a CSE at https://programmablesearchengine.google.com/ and
+        enable "Search the entire web" for general results.
+        """
+        api_key = os.environ.get("GOOGLE_API_KEY", "").strip()
+        cx = os.environ.get("SEARCH_ENGINE_ID", "").strip()
+        if not api_key or not cx:
+            return []
+        results: list[dict[str, Any]] = []
+        proxy = self._settings.effective_proxy if self._settings else ""
+        proxies = {"http": proxy, "https": proxy} if proxy else None
+        try:
+            resp = requests.get(
+                "https://www.googleapis.com/customsearch/v1",
+                params={
+                    "key": api_key,
+                    "cx": cx,
+                    "q": query,
+                    "num": min(limit, 10),  # Google CSE max 10 per request
+                },
+                proxies=proxies,
+                timeout=8,
+            )
+            if resp.status_code != 200:
+                logger.warning("Google CSE search HTTP %d: %s", resp.status_code, resp.text[:200])
+                return results
+            data = resp.json()
+            for item in data.get("items", []):
+                results.append({
+                    "title": item.get("title", ""),
+                    "url": item.get("link", ""),
+                    "snippet": item.get("snippet", "")[:300],
+                })
+        except Exception:
+            logger.debug("Google CSE search failed for query: %s", query, exc_info=True)
+        return results
+
+    def _search_serpapi(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
+        """Search via SerpAPI (Google results scrape). 250 free queries/month.
+
+        Requires SERPAPI_KEY env var. Returns organic_results from Google.
+        """
+        api_key = os.environ.get("SERPAPI_KEY", "").strip()
+        if not api_key:
+            return []
+        results: list[dict[str, Any]] = []
+        proxy = self._settings.effective_proxy if self._settings else ""
+        proxies = {"http": proxy, "https": proxy} if proxy else None
+        try:
+            resp = requests.get(
+                "https://serpapi.com/search",
+                params={
+                    "engine": "google",
+                    "api_key": api_key,
+                    "q": query,
+                    "num": min(limit, 10),
+                },
+                proxies=proxies,
+                timeout=10,
+            )
+            if resp.status_code != 200:
+                logger.warning("SerpAPI search HTTP %d: %s", resp.status_code, resp.text[:200])
+                return results
+            data = resp.json()
+            for item in data.get("organic_results", []):
+                results.append({
+                    "title": item.get("title", ""),
+                    "url": item.get("link", ""),
+                    "snippet": item.get("snippet", "")[:300],
+                })
+        except Exception:
+            logger.debug("SerpAPI search failed for query: %s", query, exc_info=True)
+        return results
+
+    def _search_anysearch(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
+        """Search via AnySearch API. Supplementary provider for cross-check.
+
+        Requires ANYSEARCH_API_KEY env var. Free anonymous tier available.
+        """
+        api_key = os.environ.get("ANYSEARCH_API_KEY", "").strip()
+        results: list[dict[str, Any]] = []
+        proxy = self._settings.effective_proxy if self._settings else ""
+        proxies = {"http": proxy, "https": proxy} if proxy else None
+        try:
+            headers = {"Content-Type": "application/json"}
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
+            resp = requests.post(
+                "https://api.anysearch.com/v1/search",
+                headers=headers,
+                json={
+                    "query": query,
+                    "max_results": limit,
+                },
+                proxies=proxies,
+                timeout=10,
+            )
+            if resp.status_code != 200:
+                logger.warning("AnySearch HTTP %d: %s", resp.status_code, resp.text[:200])
+                return results
+            data = resp.json()
+            # Response format may vary — try common keys
+            items = data.get("results", data.get("items", data.get("data", [])))
+            if isinstance(items, list):
+                for item in items:
+                    if isinstance(item, dict):
+                        results.append({
+                            "title": item.get("title", item.get("name", "")),
+                            "url": item.get("url", item.get("link", "")),
+                            "snippet": item.get("snippet", item.get("content", item.get("description", "")))[:300],
+                        })
+        except Exception:
+            logger.debug("AnySearch failed for query: %s", query, exc_info=True)
+        return results
 
     def _search_ddg(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
         """Fallback web search via DuckDuckGo HTML (no API key required)."""

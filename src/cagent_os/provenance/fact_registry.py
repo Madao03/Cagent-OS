@@ -239,6 +239,7 @@ class FactRegistry:
         "financial.rag.search", "financial.websearch",
         "web.fetch", "web.fetch_weixin",
         "panews.search", "panews.briefing", "panews.article", "panews.trending",
+        "docs.read",
     }
 
     def _extract_from_text(
@@ -267,6 +268,19 @@ class FactRegistry:
         url = arguments.get("url", "")
         title = arguments.get("title", "") or arguments.get("query", "")
 
+        # ★ Knowledge base sources: curated content with article-level provenance
+        source_tier = ""
+        published_at = ""
+        if capability_id == "docs.read":
+            source_tier = "curated"
+            # File path as citation URL
+            file_path = arguments.get("source", "")
+            url = file_path
+            title = arguments.get("title", "") or file_path
+            published_at = arguments.get("published_at", "") or arguments.get("date", "")
+        elif "rag.search" in capability_id:
+            source_tier = "curated"
+
         # Register the text source as a citation container.
         # value = the full text (for verbatim checking by the checker)
         return [Fact(
@@ -277,6 +291,8 @@ class FactRegistry:
             source=source,
             capability=capability_id,
             url=url,
+            source_tier=source_tier,
+            published_at=published_at,
             confidence="medium",
             fetched_at=datetime.now(timezone.utc).isoformat(),
         )]
@@ -468,6 +484,50 @@ class FactRegistry:
                                     **{k: v for k, v in item_common.items() if v is not None and v != ""},
                                 )
                                 facts.append(fact)
+                            # ★ String values in list items from text-source capabilities
+                            elif isinstance(item_val, str) and capability_id in self._TEXT_CAPABILITIES:
+                                if item_key in ("content", "text", "text_preview", "snippet", "formatted_context", "body"):
+                                    cit_url = item.get("url", "") or item.get("source", "")
+                                    cit_title = item.get("title", "")
+                                    cit_date = item.get("date", "") or item.get("published_at", "")
+                                    facts.append(Fact(
+                                        id=self.next_id(),
+                                        kind="verified_citation",
+                                        value=item_val[:5000],
+                                        display=cit_title or source,
+                                        source=source,
+                                        capability=capability_id,
+                                        url=cit_url,
+                                        source_tier="curated" if source == "knowledge_base" else "",
+                                        published_at=cit_date,
+                                        confidence="medium",
+                                        fetched_at=datetime.now(timezone.utc).isoformat(),
+                                    ))
+
+        # ★ String values from text-source capabilities → verified_citation facts.
+        # Covers: docs.read content, RAG formatted_context, websearch snippets.
+        # (String values in nested list items are handled separately above.)
+        for key, value in data.items():
+            if key in META_FIELDS or _is_pipeline_noise(key):
+                continue
+            if isinstance(value, str) and capability_id in self._TEXT_CAPABILITIES:
+                if key in ("content", "text", "text_preview", "snippet", "formatted_context", "body"):
+                    cit_url = data.get("url", "") or data.get("source", "") or arguments.get("url", "")
+                    cit_title = data.get("title", "") or arguments.get("title", "")
+                    cit_date = data.get("date", "") or data.get("published_at", "") or arguments.get("published_at", "")
+                    facts.append(Fact(
+                        id=self.next_id(),
+                        kind="verified_citation",
+                        value=value[:5000],
+                        display=cit_title or source,
+                        source=source,
+                        capability=capability_id,
+                        url=cit_url,
+                        source_tier="curated" if source == "knowledge_base" else "",
+                        published_at=cit_date,
+                        confidence="medium",
+                        fetched_at=datetime.now(timezone.utc).isoformat(),
+                    ))
 
         # Also register string values that look like they carry data (urls, etc.)
         url = data.get("url") or data.get("source_url")
@@ -525,6 +585,8 @@ class FactRegistry:
             return "PANews"
         if "websearch" in capability_id or "web.fetch" in capability_id:
             return "web"
+        if "rag.search" in capability_id or "docs.read" in capability_id:
+            return "knowledge_base"
         if "quote" in capability_id:
             return "yfinance"
         return capability_id.split(".")[0] if "." in capability_id else "unknown"
