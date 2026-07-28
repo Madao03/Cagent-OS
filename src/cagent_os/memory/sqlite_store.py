@@ -1,15 +1,26 @@
 """SqliteMemoryStore — async SQLite-backed cold memory.
 
-Tables:
-  - user_facts: key-value facts per user
-  - investment_theses: ticker-level thesis history
+Tables (Phase A — Hermes-inspired two-layer markdown memory):
+  - user_facts: key-value facts per user (structured)
+  - investment_theses: ticker-level thesis history (structured)
   - contradiction_log: detected contradictions between old and new facts
+  - agent_notes:    Hermes-style MEMORY.md (≤2000 chars, single-row per user)
+  - user_profile:   Hermes-style USER.md   (≤1500 chars, single-row per user)
+
+Design notes:
+  - agent_notes and user_profile are "single-row per user" — every update
+    replaces the entire body. This matches Hermes's "one markdown file"
+    model while keeping SQLite for multi-user concurrency.
+  - Character caps force the LLM to consolidate rather than hoard.
+    On overflow, update returns the full current content + a "please
+    consolidate" instruction instead of raising.
 """
 
 from __future__ import annotations
 
 import json
 import logging
+from dataclasses import dataclass
 from datetime import datetime
 
 import aiosqlite
@@ -22,6 +33,47 @@ from cagent_os.memory.api import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Character caps (Hermes defaults). Override per-call if needed.
+AGENT_NOTES_CHAR_LIMIT = 2000
+USER_PROFILE_CHAR_LIMIT = 1500
+
+
+@dataclass(frozen=True)
+class MarkdownMemory:
+    """One of the two markdown memory files (agent_notes or user_profile)."""
+    user_id: str
+    body: str
+    updated_at: datetime
+    char_limit: int
+
+    @property
+    def chars_used(self) -> int:
+        return len(self.body)
+
+    @property
+    def remaining(self) -> int:
+        return max(0, self.char_limit - len(self.body))
+
+
+class MemoryOverflow(Exception):
+    """Raised when content exceeds char_limit. Caller should return a
+    'consolidate' instruction to the LLM instead of writing.
+
+    Attrs:
+        current_body: what's currently stored
+        attempted_body: what the LLM tried to write
+        char_limit: the cap that was exceeded
+    """
+
+    def __init__(self, current_body: str, attempted_body: str, char_limit: int):
+        self.current_body = current_body
+        self.attempted_body = attempted_body
+        self.char_limit = char_limit
+        super().__init__(
+            f"Memory body exceeds limit ({len(attempted_body)}/{char_limit} chars). "
+            f"Consolidate before writing."
+        )
 
 
 class SqliteMemoryStore(MemoryAPI):
@@ -58,6 +110,17 @@ class SqliteMemoryStore(MemoryAPI):
                 new_fact TEXT NOT NULL,
                 detected_at TEXT NOT NULL,
                 resolved INTEGER DEFAULT 0
+            );
+            -- Phase A: Hermes-style markdown memory (single row per user)
+            CREATE TABLE IF NOT EXISTS agent_notes (
+                user_id TEXT PRIMARY KEY,
+                body TEXT NOT NULL DEFAULT '',
+                updated_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS user_profile (
+                user_id TEXT PRIMARY KEY,
+                body TEXT NOT NULL DEFAULT '',
+                updated_at TEXT NOT NULL
             );
         """)
         await self._db.commit()
@@ -146,10 +209,99 @@ class SqliteMemoryStore(MemoryAPI):
         await self._db.commit()
 
     async def get_hot_memory_prompt(self, user_id: str) -> str:
-        """Return ≤500-char hot memory string for system prompt injection."""
+        """Return ≤500-char hot memory string for system prompt injection.
+
+        Phase A: prefer the two markdown tables (agent_notes, user_profile).
+        Fall back to structured user_facts if markdown tables are empty
+        (backward compat with pre-Phase-A data).
+        """
+        # 1. Try agent_notes + user_profile (Hermes-style)
+        notes = await self.get_agent_notes(user_id)
+        profile = await self.get_user_profile(user_id)
+        parts = []
+        if profile.body:
+            parts.append(f"[用户档案]\n{profile.body}")
+        if notes.body:
+            parts.append(f"[Agent 笔记]\n{notes.body}")
+        if parts:
+            return "\n\n".join(parts)[:1500]  # generous cap for hot prompt
+
+        # 2. Fallback: structured facts (legacy)
         facts = await self.get_user_facts(user_id)
         if not facts:
             return ""
         lines = [f"{f.key}: {f.value}" for f in facts]
         prompt = "; ".join(lines)
         return prompt[:500]
+
+    # ── Phase A: Hermes-style markdown memory (single-row per user) ──
+
+    async def get_agent_notes(self, user_id: str) -> MarkdownMemory:
+        """Return the user's agent_notes (MEMORY.md equivalent)."""
+        if not self._db:
+            return MarkdownMemory(user_id, "", datetime.utcnow(), AGENT_NOTES_CHAR_LIMIT)
+        cursor = await self._db.execute(
+            "SELECT body, updated_at FROM agent_notes WHERE user_id = ?",
+            (user_id,),
+        )
+        row = await cursor.fetchone()
+        if row is None:
+            return MarkdownMemory(user_id, "", datetime.utcnow(), AGENT_NOTES_CHAR_LIMIT)
+        return MarkdownMemory(
+            user_id=user_id,
+            body=row[0] or "",
+            updated_at=datetime.fromisoformat(row[1]),
+            char_limit=AGENT_NOTES_CHAR_LIMIT,
+        )
+
+    async def update_agent_notes(self, user_id: str, body: str) -> MarkdownMemory:
+        """Replace the entire agent_notes body. Raises MemoryOverflow on cap exceed."""
+        if len(body) > AGENT_NOTES_CHAR_LIMIT:
+            current = await self.get_agent_notes(user_id)
+            raise MemoryOverflow(current.body, body, AGENT_NOTES_CHAR_LIMIT)
+        now = datetime.utcnow().isoformat()
+        await self._db.execute(
+            """
+            INSERT INTO agent_notes (user_id, body, updated_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET body=excluded.body, updated_at=excluded.updated_at
+            """,
+            (user_id, body, now),
+        )
+        await self._db.commit()
+        return MarkdownMemory(user_id, body, datetime.fromisoformat(now), AGENT_NOTES_CHAR_LIMIT)
+
+    async def get_user_profile(self, user_id: str) -> MarkdownMemory:
+        """Return the user's user_profile (USER.md equivalent)."""
+        if not self._db:
+            return MarkdownMemory(user_id, "", datetime.utcnow(), USER_PROFILE_CHAR_LIMIT)
+        cursor = await self._db.execute(
+            "SELECT body, updated_at FROM user_profile WHERE user_id = ?",
+            (user_id,),
+        )
+        row = await cursor.fetchone()
+        if row is None:
+            return MarkdownMemory(user_id, "", datetime.utcnow(), USER_PROFILE_CHAR_LIMIT)
+        return MarkdownMemory(
+            user_id=user_id,
+            body=row[0] or "",
+            updated_at=datetime.fromisoformat(row[1]),
+            char_limit=USER_PROFILE_CHAR_LIMIT,
+        )
+
+    async def update_user_profile(self, user_id: str, body: str) -> MarkdownMemory:
+        """Replace the entire user_profile body. Raises MemoryOverflow on cap exceed."""
+        if len(body) > USER_PROFILE_CHAR_LIMIT:
+            current = await self.get_user_profile(user_id)
+            raise MemoryOverflow(current.body, body, USER_PROFILE_CHAR_LIMIT)
+        now = datetime.utcnow().isoformat()
+        await self._db.execute(
+            """
+            INSERT INTO user_profile (user_id, body, updated_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET body=excluded.body, updated_at=excluded.updated_at
+            """,
+            (user_id, body, now),
+        )
+        await self._db.commit()
+        return MarkdownMemory(user_id, body, datetime.fromisoformat(now), USER_PROFILE_CHAR_LIMIT)

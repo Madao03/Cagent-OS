@@ -35,7 +35,31 @@ class WebFetcher:
             if jina_content:
                 return jina_content
 
-        response = self._session.get(url, timeout=10)
+        # ★ SSRF redirect protection: disable auto-redirect, validate each hop.
+        # Initial URL is already validated by _is_url_safe in plugin.py,
+        # but 301/302 to internal IP would bypass that. Here we follow
+        # redirects manually, re-validating each Location header.
+        from cagent_os.plugins.web.plugin import _is_url_safe
+
+        current_url = url
+        for _ in range(5):  # max 5 redirects
+            response = self._session.get(current_url, timeout=10, allow_redirects=False)
+            if response.status_code in (301, 302, 303, 307, 308):
+                location = response.headers.get("location", "")
+                if not location:
+                    break
+                # Resolve relative redirects
+                from urllib.parse import urljoin
+                location = urljoin(current_url, location)
+                # ★ Validate redirect target
+                safe, reason = _is_url_safe(location)
+                if not safe:
+                    logger.warning("SSRF redirect blocked: %s → %s (%s)", current_url[:60], location[:60], reason)
+                    raise ValueError(f"Redirect to blocked URL: {reason}")
+                current_url = location
+                continue
+            break
+
         response.raise_for_status()
         content_type = response.headers.get("content-type", "")
         if "html" in content_type:

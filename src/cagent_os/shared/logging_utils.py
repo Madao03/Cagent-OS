@@ -22,11 +22,17 @@ def configure_logging(*, debug: bool, log_file: str | Path | None = None) -> Non
     )
 
     # Console handler (always)
+    # In non-debug mode, keep console at WARNING to avoid interleaving stderr
+    # with stdout (print/input), which corrupts PowerShell's cursor on Windows.
     if not any(isinstance(h, logging.StreamHandler) for h in root_logger.handlers):
         console = logging.StreamHandler()
         console.setFormatter(fmt)
-        console.setLevel(level)
+        console.setLevel(logging.DEBUG if debug else logging.WARNING)
         root_logger.addHandler(console)
+
+    # Silence noisy third-party loggers on console (file still captures all)
+    for noisy in ("httpx", "httpcore", "openai", "urllib3"):
+        logging.getLogger(noisy).setLevel(logging.WARNING)
 
     # File handler (persistent, tail-able from another terminal)
     log_path = Path(log_file) if log_file else _LOG_FILE

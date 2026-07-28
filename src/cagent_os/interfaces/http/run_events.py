@@ -89,6 +89,12 @@ def project_stream_payload(event: JournalEntry, *, conversation_id: str) -> dict
     elif event.type == "run.completed":
         payload["phase"] = "done"
         payload["summary"] = "Run completed."
+    elif event.type == "run.provenance":
+        payload["phase"] = "provenance"
+        payload["summary"] = "Provenance data available."
+        # Pass through the full provenance data for frontend rendering
+        payload["provenance"] = _json_safe(event.data)
+        payload["category"] = "provenance"
     elif event.type == "run.failed":
         payload["category"] = "error"
         payload["phase"] = "error"

@@ -79,9 +79,16 @@ class TranscriptReplayer:
                 if call_id is not None and call_id not in assistant_tool_ids:
                     idx += 1
                     continue
+                content = self._serialize_content(ev.data.get("result"))
+                # ★ Append fact_refs so the LLM can reference fact_ids in
+                # derivation declarations (P1 derived chain).
+                fact_refs = ev.data.get("_fact_refs")
+                if fact_refs and isinstance(fact_refs, list):
+                    ref_lines = "\n".join(f"  {r}" for r in fact_refs)
+                    content = f"{content}\n\n_fact_refs:\n{ref_lines}"
                 transcript.append(ChatMessage(
                     role="tool",
-                    content=self._serialize_content(ev.data.get("result")),
+                    content=content,
                     tool_call_id=call_id,
                 ))
                 idx += 1

@@ -67,6 +67,121 @@ class SqliteConversationRepository(ConversationRepository, EventStore):
         ).fetchall()
         return [self._deserialize_event(row[0]) for row in rows]
 
+    def list_conversations(
+        self,
+        *,
+        principal_id: str | None = None,
+        limit: int = 50,
+    ) -> list[dict]:
+        """List conversations with metadata for sidebar rendering.
+
+        Returns a list of dicts:
+          {
+            "conversation_id": str,
+            "principal_id": str,
+            "user_id": str,
+            "created_at": str (ISO),     # from first event
+            "last_activity_at": str (ISO), # from latest event
+            "last_user_message": str,      # preview of last user msg
+            "first_user_message": str,     # first user msg (sidebar title)
+            "event_count": int,
+          }
+
+        Args:
+            principal_id: filter by principal (user identity). When None,
+                returns all conversations.
+            limit: cap number of results (most recent first).
+        """
+        # We join conversations with a few aggregate stats from events.
+        # `event_json LIKE '%"type":"message.user_added"%'` would be
+        # expensive — instead we pull the latest user message per conv
+        # via a correlated subquery. Keep it simple for MVP.
+        if principal_id is not None:
+            rows = self._conn.execute(
+                """
+                SELECT c.conversation_id, c.principal_id, c.user_id,
+                       (SELECT event_json FROM events e
+                        WHERE e.conversation_id = c.conversation_id
+                        ORDER BY e.id ASC LIMIT 1) AS first_event,
+                       (SELECT event_json FROM events e
+                        WHERE e.conversation_id = c.conversation_id
+                        ORDER BY e.id DESC LIMIT 1) AS last_event,
+                       (SELECT COUNT(*) FROM events e
+                        WHERE e.conversation_id = c.conversation_id) AS event_count,
+                       (SELECT event_json FROM events e
+                        WHERE e.conversation_id = c.conversation_id
+                          AND e.event_json LIKE '%"message.user_added"%'
+                        ORDER BY e.id DESC LIMIT 1) AS last_user_evt,
+                       (SELECT event_json FROM events e
+                        WHERE e.conversation_id = c.conversation_id
+                          AND e.event_json LIKE '%"message.user_added"%'
+                        ORDER BY e.id ASC LIMIT 1) AS first_user_evt
+                FROM conversations c
+                WHERE c.principal_id = ?
+                ORDER BY (SELECT MAX(id) FROM events e
+                         WHERE e.conversation_id = c.conversation_id) DESC
+                LIMIT ?
+                """,
+                (principal_id, limit),
+            ).fetchall()
+        else:
+            rows = self._conn.execute(
+                """
+                SELECT c.conversation_id, c.principal_id, c.user_id,
+                       (SELECT event_json FROM events e
+                        WHERE e.conversation_id = c.conversation_id
+                        ORDER BY e.id ASC LIMIT 1) AS first_event,
+                       (SELECT event_json FROM events e
+                        WHERE e.conversation_id = c.conversation_id
+                        ORDER BY e.id DESC LIMIT 1) AS last_event,
+                       (SELECT COUNT(*) FROM events e
+                        WHERE e.conversation_id = c.conversation_id) AS event_count,
+                       (SELECT event_json FROM events e
+                        WHERE e.conversation_id = c.conversation_id
+                          AND e.event_json LIKE '%"message.user_added"%'
+                        ORDER BY e.id DESC LIMIT 1) AS last_user_evt,
+                       (SELECT event_json FROM events e
+                        WHERE e.conversation_id = c.conversation_id
+                          AND e.event_json LIKE '%"message.user_added"%'
+                        ORDER BY e.id ASC LIMIT 1) AS first_user_evt
+                FROM conversations c
+                ORDER BY (SELECT MAX(id) FROM events e
+                         WHERE e.conversation_id = c.conversation_id) DESC
+                LIMIT ?
+                """,
+                (limit,),
+            ).fetchall()
+
+        results: list[dict] = []
+        for row in rows:
+            conv_id, p_id, u_id, first_evt, last_evt, evt_count, last_user_evt, first_user_evt = row
+            first_data = json.loads(first_evt) if first_evt else {}
+            last_data = json.loads(last_evt) if last_evt else {}
+            last_user_data = json.loads(last_user_evt) if last_user_evt else {}
+            first_user_data = json.loads(first_user_evt) if first_user_evt else {}
+            # Pull timestamps from event data if present; fall back to ""
+            created_at = first_data.get("data", {}).get("timestamp", "")
+            last_activity_at = last_data.get("data", {}).get("timestamp", "")
+            last_user_msg = (last_user_data.get("content") or "").strip()
+            first_user_msg = (first_user_data.get("content") or "").strip()
+            # Truncate for preview
+            if len(last_user_msg) > 80:
+                last_user_msg = last_user_msg[:77] + "..."
+            if len(first_user_msg) > 80:
+                first_user_msg = first_user_msg[:77] + "..."
+
+            results.append({
+                "conversation_id": conv_id,
+                "principal_id": p_id,
+                "user_id": u_id,
+                "created_at": created_at,
+                "last_activity_at": last_activity_at,
+                "last_user_message": last_user_msg,
+                "first_user_message": first_user_msg,
+                "event_count": evt_count,
+            })
+        return results
+
     def close(self) -> None:
         self._conn.close()
 

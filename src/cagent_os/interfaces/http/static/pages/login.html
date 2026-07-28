@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CagentOS · 登录</title>
+  <style>
+    :root {
+      --bg-base-default: #0d1117;
+      --bg-overlay-l1: #161b22;
+      --bg-overlay-l2: #1c2128;
+      --bg-brand: #2f81f7;
+      --text-default: #e6edf3;
+      --text-secondary: #9198a1;
+      --text-tertiary: #6e7681;
+      --border-neutral-l1: #30363d;
+      --status-error-default: #f85149;
+      --status-success-default: #2ea043;
+      --radius-md: 6px;
+      --radius-lg: 8px;
+      --spacer-12: 12px;
+      --spacer-16: 16px;
+      --spacer-24: 24px;
+      --spacer-32: 32px;
+      --spacer-40: 40px;
+      --font-family-default: "SF Pro Text", "PingFang SC", system-ui, sans-serif;
+      --font-family-heading: "SF Pro", "PingFang SC", system-ui, sans-serif;
+    }
+    html.light {
+      --bg-base-default: #ffffff;
+      --bg-overlay-l1: #f6f8fa;
+      --bg-overlay-l2: #eaeef2;
+      --text-default: #1f2328;
+      --text-secondary: #59636e;
+      --text-tertiary: #818b98;
+      --border-neutral-l1: #d1d9e0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-family-default);
+      background: var(--bg-base-default);
+      color: var(--text-default);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--spacer-24);
+    }
+    .login-card {
+      width: 100%;
+      max-width: 400px;
+      background: var(--bg-overlay-l1);
+      border: 1px solid var(--border-neutral-l1);
+      border-radius: var(--radius-lg);
+      padding: var(--spacer-40) var(--spacer-32);
+    }
+    .login-logo {
+      text-align: center;
+      margin-bottom: var(--spacer-32);
+    }
+    .login-logo-icon {
+      display: inline-block;
+      width: 48px;
+      height: 48px;
+      background: var(--bg-brand);
+      border-radius: var(--radius-md);
+      vertical-align: middle;
+    }
+    .login-logo-title {
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: var(--spacer-12);
+      font-family: var(--font-family-heading);
+      font-size: 22px;
+      font-weight: 600;
+    }
+    .login-logo-subtitle {
+      margin-top: var(--spacer-12);
+      font-size: 13px;
+      color: var(--text-tertiary);
+      text-align: center;
+    }
+    .login-tabs {
+      display: flex;
+      margin-bottom: var(--spacer-24);
+      border-bottom: 1px solid var(--border-neutral-l1);
+    }
+    .login-tab {
+      flex: 1;
+      padding: var(--spacer-12);
+      text-align: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 14px;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .login-tab.active {
+      color: var(--text-default);
+      border-bottom-color: var(--bg-brand);
+    }
+    .login-field {
+      margin-bottom: var(--spacer-16);
+    }
+    .login-label {
+      display: block;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .login-input {
+      width: 100%;
+      padding: 10px var(--spacer-12);
+      background: var(--bg-base-default);
+      border: 1px solid var(--border-neutral-l1);
+      border-radius: var(--radius-md);
+      color: var(--text-default);
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .login-input:focus {
+      outline: none;
+      border-color: var(--bg-brand);
+    }
+    .login-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--bg-brand);
+      color: white;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: var(--spacer-12);
+    }
+    .login-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .login-error {
+      color: var(--status-error-default);
+      font-size: 13px;
+      margin-top: var(--spacer-12);
+      min-height: 18px;
+    }
+    .login-success {
+      color: var(--status-success-default);
+      font-size: 13px;
+      margin-top: var(--spacer-12);
+      min-height: 18px;
+    }
+    .login-hint {
+      text-align: center;
+      margin-top: var(--spacer-24);
+      font-size: 12px;
+      color: var(--text-tertiary);
+      line-height: 1.6;
+    }
+    .login-hint code {
+      background: var(--bg-overlay-l2);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="login-logo">
+      <span class="login-logo-icon"></span>
+      <span class="login-logo-title">CagentOS</span>
+      <div class="login-logo-subtitle">金融投研 Agent 工作台 · 内测</div>
+    </div>
+
+    <div class="login-tabs">
+      <div class="login-tab active" id="tab-register" onclick="switchTab('register')">注册(邀请码)</div>
+      <div class="login-tab" id="tab-login" onclick="switchTab('login')">登录</div>
+    </div>
+
+    <form id="form" onsubmit="handleSubmit(event)">
+      <!-- Register fields -->
+      <div class="login-field" id="invitation-field">
+        <label class="login-label">邀请码 *</label>
+        <input class="login-input" type="text" id="invitation_code"
+               placeholder="8 位邀请码,如 CNWA56TJ"
+               autocomplete="off" maxlength="20"
+               style="text-transform: uppercase;">
+      </div>
+
+      <!-- Common: username -->
+      <div class="login-field">
+        <label class="login-label">用户名 *</label>
+        <input class="login-input" type="text" id="username"
+               placeholder="3-30 位字母/数字/_-."
+               autocomplete="username" required>
+      </div>
+
+      <!-- Common: PIN (required for both register and login) -->
+      <div class="login-field">
+        <label class="login-label">PIN 码 * <span style="color: var(--text-tertiary); font-size: 11px;">(4-6 位数字)</span></label>
+        <input class="login-input" type="password" id="pin"
+               placeholder="如 1234"
+               inputmode="numeric" pattern="[0-9]*" maxlength="6"
+               autocomplete="current-pin" required>
+      </div>
+
+      <button class="login-btn" type="submit" id="submit-btn">注册并进入</button>
+      <div class="login-error" id="error"></div>
+      <div class="login-success" id="success"></div>
+    </form>
+
+    <div class="login-hint">
+      内测阶段凭邀请码 + 用户名 + PIN 码注册<br>
+      <span style="opacity: 0.7">Token 有效期 30 天,过期后用用户名 + PIN 重新登录</span>
+    </div>
+  </div>
+
+  <script src="/static/assets/js/auth.js"></script>
+  <script>
+    let mode = "register";  // default: 注册
+
+    function switchTab(newMode) {
+      mode = newMode;
+      document.getElementById("tab-register").classList.toggle("active", newMode === "register");
+      document.getElementById("tab-login").classList.toggle("active", newMode === "login");
+      // Hide invitation field on login mode
+      document.getElementById("invitation-field").style.display = newMode === "register" ? "block" : "none";
+      document.getElementById("invitation_code").required = newMode === "register";
+      document.getElementById("submit-btn").textContent = newMode === "register" ? "注册并进入" : "登录";
+      document.getElementById("error").textContent = "";
+      document.getElementById("success").textContent = "";
+    }
+
+    async function handleSubmit(e) {
+      e.preventDefault();
+      const btn = document.getElementById("submit-btn");
+      const errEl = document.getElementById("error");
+      const succEl = document.getElementById("success");
+      errEl.textContent = "";
+      succEl.textContent = "";
+      btn.disabled = true;
+      btn.textContent = mode === "register" ? "注册中…" : "登录中…";
+
+      const username = document.getElementById("username").value.trim();
+      const pin = document.getElementById("pin").value.trim();
+      const invitation_code = document.getElementById("invitation_code").value.trim().toUpperCase();
+
+      const body = { username, pin };
+      if (mode === "register") body.invitation_code = invitation_code;
+
+      const endpoint = mode === "register"
+        ? "/api/v1/auth/register"
+        : "/api/v1/auth/login";
+
+      try {
+        const resp = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          errEl.textContent = data.detail || `Error ${resp.status}`;
+          btn.disabled = false;
+          btn.textContent = mode === "register" ? "注册并进入" : "登录";
+          return;
+        }
+        // Success: store token + user, redirect
+        Auth.setToken(data.token);
+        Auth.setCachedUser(data.user);
+        succEl.textContent = `${mode === "register" ? "注册" : "登录"}成功,正在跳转…`;
+        const params = new URLSearchParams(window.location.search);
+        const next = params.get("next") || "/";
+        setTimeout(() => { window.location.href = next; }, 300);
+      } catch (err) {
+        errEl.textContent = String(err);
+        btn.disabled = false;
+        btn.textContent = mode === "register" ? "注册并进入" : "登录";
+      }
+    }
+
+    // If already logged in, redirect to app
+    (async function checkExistingSession() {
+      const token = Auth.getToken();
+      if (!token) return;
+      const user = await Auth.fetchCurrentUser();
+      if (user) {
+        const params = new URLSearchParams(window.location.search);
+        window.location.href = params.get("next") || "/";
+      } else {
+        Auth.clearToken();
+      }
+    })();
+  </script>
+</body>
+</html>

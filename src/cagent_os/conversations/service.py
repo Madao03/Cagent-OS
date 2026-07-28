@@ -27,9 +27,18 @@ class ConversationService:
         user_prompt_preferences: UserPersona | None = None,
         session_prompt_overrides: SessionOverrides | None = None,
         memory_context: MemorySnapshot | None = None,
+        conversation_id: str | None = None,
     ) -> SessionSnapshot:
+        """Create a new conversation record.
+
+        Args:
+            conversation_id: optional explicit ID. When omitted, a new
+                UUID is generated. Used by the HTTP layer to register
+                client-generated IDs (e.g. "web-<uuid>") so the same ID
+                sent in POST /messages can be found in the repository.
+        """
         record = SessionSnapshot(
-            conversation_id=new_conversation_id(),
+            conversation_id=conversation_id or new_conversation_id(),
             principal_id=principal_id,
             user_id=user_id,
             user_skill_snapshot=user_skill_snapshot,

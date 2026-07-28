@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import datetime
 import hashlib
+import ipaddress
 import logging
 import os
 import re
+import socket
 import subprocess
 from collections.abc import Callable
 from pathlib import Path
+from urllib.parse import urlparse
 
 from cagent_os.plugins.contracts import ToolRequest, ToolResult, ToolTrustLevel
 from cagent_os.plugins.manifests import ToolSpec, PluginSpec
@@ -16,6 +19,54 @@ from cagent_os.plugins.plugin import Plugin
 from cagent_os.plugins.web.fetcher import WebFetcher
 
 logger = logging.getLogger(__name__)
+
+# ── SSRF Protection ────────────────────────────────────────────
+# Blocks all private/loopback/link-local IPs BEFORE any fetch path.
+# This gate runs at the entry point (_handle_fetch), covering all
+# three degradation tiers: Jina → HTTP → Playwright.
+
+_ALLOWED_SCHEMES = {"http", "https"}
+
+
+def _is_url_safe(url: str) -> tuple[bool, str]:
+    """Validate URL against SSRF attacks.
+
+    Checks:
+    1. Scheme is http/https only
+    2. Resolved IP is not private/loopback/link-local/reserved
+    3. No DNS rebinding (hostname resolved at check time)
+
+    Returns (is_safe, reason).
+    """
+    try:
+        parsed = urlparse(url)
+    except Exception:
+        return False, "invalid URL format"
+
+    if parsed.scheme not in _ALLOWED_SCHEMES:
+        return False, f"scheme '{parsed.scheme}' not allowed (only http/https)"
+
+    hostname = parsed.hostname
+    if not hostname:
+        return False, "no hostname in URL"
+
+    # Resolve hostname to IP(s) — check ALL resolved addresses
+    try:
+        infos = socket.getaddrinfo(hostname, None)
+    except socket.gaierror:
+        return False, f"DNS resolution failed for {hostname}"
+
+    for info in infos:
+        ip_str = info[4][0]
+        try:
+            ip = ipaddress.ip_address(ip_str)
+        except ValueError:
+            continue
+
+        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast or ip.is_unspecified:
+            return False, f"hostname {hostname} resolves to blocked IP {ip} (private/loopback/reserved)"
+
+    return True, "ok"
 
 # -- Playwright scripts paths (in WSL) ----------------------------------
 # Configurable via environment variables; defaults work for local dev.
@@ -138,6 +189,17 @@ class WebPlugin(Plugin):
         url = str(request.arguments.get("url", ""))
         browser_mode = bool(request.arguments.get("browser_mode", False))
 
+        # ★ SSRF gate — runs BEFORE any fetch path (Jina/HTTP/Playwright).
+        # Blocks localhost, private IPs, link-local, cloud metadata endpoints.
+        is_safe, reason = _is_url_safe(url)
+        if not is_safe:
+            logger.warning("SSRF blocked: %s — %s", url[:80], reason)
+            return ToolResult(
+                status="error",
+                error_code="ssrf_blocked",
+                content={"message": f"URL blocked by SSRF protection: {reason}", "url": url[:200]},
+            )
+
         # Fast path: HTTP (unless browser_mode is explicitly requested)
         if not browser_mode:
             try:
@@ -158,6 +220,7 @@ class WebPlugin(Plugin):
             check = subprocess.run(
                 ["wsl", "--", "echo", "ok"],
                 capture_output=True, text=True, encoding="utf-8", timeout=5,
+                stdin=subprocess.DEVNULL,
             )
             if check.returncode != 0 or "ok" not in check.stdout:
                 return ToolResult(
@@ -190,12 +253,14 @@ class WebPlugin(Plugin):
             try:
                 result = subprocess.run(
                     cmd, capture_output=True, text=True, encoding="utf-8", timeout=90,
+                    stdin=subprocess.DEVNULL,
                 )
             except subprocess.TimeoutExpired:
                 _wsl_kill(f"browser_{url_hash}")
                 subprocess.run(
                     ["wsl", "--", "rm", "-rf", wsl_tmp],
                     capture_output=True, text=True, encoding="utf-8", timeout=10,
+                    stdin=subprocess.DEVNULL,
                 )
                 return ToolResult(
                     status="error",
@@ -256,12 +321,14 @@ class WebPlugin(Plugin):
         _cp = subprocess.run(
             ["wsl", "--", "cp", "-r", f"{wsl_tmp}/.", win_target + "/"],
             capture_output=True, text=True, encoding="utf-8", timeout=15,
+            stdin=subprocess.DEVNULL,
         )
         if _cp.returncode != 0:
             logger.warning("WSL cp failed for browser fetch: %s", _cp.stderr[:200])
         subprocess.run(
             ["wsl", "--", "rm", "-rf", wsl_tmp],
             capture_output=True, text=True, encoding="utf-8", timeout=10,
+            stdin=subprocess.DEVNULL,
         )
 
         # Count saved images
@@ -292,11 +359,21 @@ class WebPlugin(Plugin):
                 error_code="invalid_url",
                 content={"message": "url is required"},
             )
+        # ★ SSRF gate (same as _handle_fetch)
+        is_safe, reason = _is_url_safe(url)
+        if not is_safe:
+            logger.warning("SSRF blocked (weixin): %s — %s", url[:80], reason)
+            return ToolResult(
+                status="error",
+                error_code="ssrf_blocked",
+                content={"message": f"URL blocked by SSRF protection: {reason}"},
+            )
         # Verify WSL is available
         try:
             check = subprocess.run(
                 ["wsl", "--", "echo", "ok"],
                 capture_output=True, text=True, encoding="utf-8", timeout=5,
+                stdin=subprocess.DEVNULL,
             )
             if check.returncode != 0 or "ok" not in check.stdout:
                 return ToolResult(
@@ -334,12 +411,14 @@ class WebPlugin(Plugin):
             try:
                 result = subprocess.run(
                     cmd, capture_output=True, text=True, encoding="utf-8", timeout=60,
+                    stdin=subprocess.DEVNULL,
                 )
             except subprocess.TimeoutExpired:
                 _wsl_kill(f"weixin_{url_hash}")
                 subprocess.run(
                     ["wsl", "--", "rm", "-rf", wsl_tmp],
                     capture_output=True, text=True, encoding="utf-8", timeout=10,
+                    stdin=subprocess.DEVNULL,
                 )
                 return ToolResult(
                     status="error",
@@ -398,12 +477,14 @@ class WebPlugin(Plugin):
         _cp = subprocess.run(
             ["wsl", "--", "cp", "-r", f"{wsl_tmp}/.", win_target + "/"],
             capture_output=True, text=True, encoding="utf-8", timeout=15,
+            stdin=subprocess.DEVNULL,
         )
         if _cp.returncode != 0:
             logger.warning("WSL cp failed: %s", _cp.stderr[:200])
         subprocess.run(
             ["wsl", "--", "rm", "-rf", wsl_tmp],
             capture_output=True, text=True, encoding="utf-8", timeout=10,
+            stdin=subprocess.DEVNULL,
         )
 
         # Count saved images
@@ -636,6 +717,7 @@ def _wsl_kill(pattern: str) -> None:
         subprocess.run(
             ["wsl", "--", "pkill", "-f", pattern],
             capture_output=True, text=True, encoding="utf-8", timeout=5,
+            stdin=subprocess.DEVNULL,
         )
     except Exception:
         pass  # best-effort cleanup

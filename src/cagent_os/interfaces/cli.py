@@ -92,6 +92,8 @@ def build_registry(
                 shared_skills_dir=settings.shared_skills_dir,
             )
         )
+    from cagent_os.plugins.crypto.plugin import CryptoPlugin
+    registry.register_plugin(CryptoPlugin())
     return registry, toolkit
 
 
@@ -199,6 +201,7 @@ def _run_repl(
     turn = 1
     while True:
         try:
+            sys.stdout.flush()
             user_input = input(f"  [{turn}] > ").strip()
         except (EOFError, KeyboardInterrupt):
             print("\nGoodbye.")

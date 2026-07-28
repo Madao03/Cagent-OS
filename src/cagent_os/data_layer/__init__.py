@@ -50,21 +50,29 @@ class DataLayer:
     # ------------------------------------------------------------------
 
     async def health_check_all(self) -> dict[str, DataSourceHealth]:
-        results: dict[str, DataSourceHealth] = {}
-        for name, adapter in self._adapters.items():
+        """Run health checks for all registered adapters concurrently."""
+
+        async def _check_one(name: str, adapter: DataSourceAdapter) -> tuple[str, DataSourceHealth]:
             try:
-                results[name] = await asyncio.wait_for(
+                result = await asyncio.wait_for(
                     adapter.health_check(), timeout=8,
                 )
+                return name, result
             except asyncio.TimeoutError:
-                results[name] = DataSourceHealth(
+                logger.warning("Health check timed out for %s", name)
+                return name, DataSourceHealth(
                     available=False, error_message="health check timed out after 8s",
                 )
-                logger.warning("Health check timed out for %s", name)
             except Exception as exc:
-                results[name] = DataSourceHealth(available=False, error_message=str(exc))
                 logger.warning("Health check failed for %s: %s", name, exc)
-        return results
+                return name, DataSourceHealth(available=False, error_message=str(exc))
+
+        tasks = [
+            _check_one(name, adapter)
+            for name, adapter in self._adapters.items()
+        ]
+        results_list = await asyncio.gather(*tasks)
+        return dict(results_list)
 
     # ------------------------------------------------------------------
     # Fetch

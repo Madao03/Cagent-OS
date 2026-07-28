@@ -1,0 +1,304 @@
+<style id="app-shell-style">
+  /* =========================================================================
+     CagentOS App Shell — shared sidebar + topbar partial
+     Light mode only. All values reference the TRAE Work design-library CSS
+     variables inlined into each leaf page's <head> via fill-html-head.mjs.
+     This <style> lives in <body>; it only owns shell-layout rules and must
+     not redefine base tokens or component classes.
+     ========================================================================= */
+
+  /* ---- Shell layout root ------------------------------------------------ */
+  .app-shell {
+    display: flex;
+    height: 100vh;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--bg-base-default);
+  }
+
+  /* ---- Sidebar ---------------------------------------------------------- */
+  .app-sidebar {
+    width: 220px;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-base-secondary);
+    border-right: 1px solid var(--border-neutral-l1);
+  }
+
+  .app-sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: var(--spacer-12);
+    padding: var(--spacer-16);
+  }
+
+  .app-sidebar-logo .sidebar-logo-icon {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    color: var(--bg-brand);
+    background-color: currentColor;
+  }
+
+  .app-sidebar-logo-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .app-sidebar-logo-text .logo-title {
+    font-family: var(--font-family-heading);
+    font-size: var(--heading-sm-font-size);
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--text-default);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .app-sidebar-logo-text .logo-subtitle {
+    font-family: var(--font-family-default);
+    font-size: var(--body-sm-font-size);
+    line-height: 1.4;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .app-sidebar-nav {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: var(--spacer-8) var(--spacer-8);
+  }
+
+  .sidebar-nav-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacer-8);
+    padding: var(--spacer-8) var(--spacer-12);
+    margin-bottom: var(--spacer-4);
+    border-radius: var(--radius-6);
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-family: var(--font-family-default);
+    font-size: var(--body-base-font-size);
+    line-height: 1.4;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  .sidebar-nav-item .sidebar-nav-icon {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: var(--icon-default);
+    background-color: currentColor;
+  }
+
+  .sidebar-nav-item .sidebar-nav-label {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sidebar-nav-item:hover {
+    background: var(--bg-overlay-l1);
+    color: var(--text-default);
+  }
+
+  .sidebar-nav-item.active {
+    background: var(--bg-brand-surface-l1);
+    color: var(--text-default);
+    font-weight: 500;
+  }
+
+  .sidebar-nav-item.active .sidebar-nav-icon {
+    color: var(--icon-brand);
+  }
+
+  /* ---- Sidebar status footer ------------------------------------------- */
+  .app-sidebar-footer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacer-8);
+    padding: var(--spacer-12) var(--spacer-16);
+    border-top: 1px solid var(--border-neutral-l1);
+  }
+
+  .sidebar-status-row {
+    display: flex;
+    align-items: center;
+    gap: var(--spacer-8);
+    font-family: var(--font-family-default);
+    font-size: var(--body-sm-font-size);
+    line-height: 1.4;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+  }
+
+  .sidebar-status-dot {
+    width: 8px;
+    height: 8px;
+    flex-shrink: 0;
+    border-radius: var(--radius-full);
+  }
+
+  .sidebar-status-dot.is-success {
+    background: var(--status-success-default);
+  }
+
+  .sidebar-status-dot.is-alert {
+    background: var(--status-alert-default);
+  }
+
+  .sidebar-version {
+    margin-top: var(--spacer-4);
+    font-family: var(--font-family-mono);
+    font-size: var(--body-sm-font-size);
+    color: var(--text-quaternary);
+    white-space: nowrap;
+  }
+
+  /* ---- Main column (clears the fixed sidebar) -------------------------- */
+  .app-main {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    margin-left: 220px;
+  }
+
+  /* ---- Topbar ----------------------------------------------------------- */
+  .app-topbar {
+    height: 56px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacer-16);
+    background: var(--bg-base-default);
+    border-bottom: 1px solid var(--border-neutral-l1);
+  }
+
+  .app-topbar-left {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    padding-left: var(--spacer-24);
+  }
+
+  .app-page-title {
+    margin: 0;
+    font-family: var(--font-family-heading);
+    font-size: var(--heading-sm-font-size);
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--text-default);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .app-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacer-12);
+    flex-shrink: 0;
+    padding-right: var(--spacer-24);
+  }
+
+  /* Ensure the topbar avatar matches the 32px spec regardless of the
+     default .ds-avatar size shipped by components.css. */
+  .app-topbar-right .ds-avatar {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+  }
+
+  /* ---- Primary scroll region (filled by each leaf page) ---------------- */
+  .app-content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: var(--spacer-24);
+    background: var(--bg-base-default);
+  }
+</style>
+
+<!--
+  CagentOS app-shell partial.
+  Include this fragment once near the top of each leaf page's <body>.
+  The leaf page then:
+    1. Adds class "active" to the matching .sidebar-nav-item
+       (by data-nav-key: chat | brief | knowledge).
+    2. Replaces the text inside <h1 class="app-page-title"> with its own title.
+    3. Injects its page-specific markup inside <main class="app-content">
+       below, then closes the shell with: </main> </div> </div>
+-->
+<div class="app-shell" data-viewport-mode="app-shell">
+  <aside class="app-sidebar" data-dom-id="app-sidebar">
+    <div class="app-sidebar-logo">
+      <span data-icon="agent" class="sidebar-logo-icon" aria-hidden="true"></span>
+      <span class="app-sidebar-logo-text">
+        <span class="logo-title">CagentOS</span>
+        <span class="logo-subtitle">投研工作台</span>
+      </span>
+    </div>
+
+    <nav class="app-sidebar-nav" data-dom-id="sidebar-nav" aria-label="主导航">
+      <a class="sidebar-nav-item" data-dom-id="nav-chat" data-nav-key="chat" href="#">
+        <span data-icon="chat" class="sidebar-nav-icon" aria-hidden="true"></span>
+        <span class="sidebar-nav-label">对话面板</span>
+      </a>
+      <a class="sidebar-nav-item" data-dom-id="nav-brief" data-nav-key="brief" href="#">
+        <span data-icon="calendar" class="sidebar-nav-icon" aria-hidden="true"></span>
+        <span class="sidebar-nav-label">每日简报</span>
+      </a>
+      <a class="sidebar-nav-item" data-dom-id="nav-knowledge" data-nav-key="knowledge" href="#">
+        <span data-icon="doc" class="sidebar-nav-icon" aria-hidden="true"></span>
+        <span class="sidebar-nav-label">知识库</span>
+      </a>
+    </nav>
+
+    <div class="app-sidebar-footer" data-dom-id="sidebar-status">
+      <div class="sidebar-status-row">
+        <span class="sidebar-status-dot is-success" aria-hidden="true"></span>
+        <span>4 Agents 在线</span>
+      </div>
+      <div class="sidebar-status-row">
+        <span class="sidebar-status-dot is-success" aria-hidden="true"></span>
+        <span>5 数据源 正常</span>
+      </div>
+      <div class="sidebar-status-row">
+        <span class="sidebar-status-dot is-alert" aria-hidden="true"></span>
+        <span>1 方差告警</span>
+      </div>
+      <div class="sidebar-version">v0.5.0 · Phase 4c</div>
+    </div>
+  </aside>
+
+  <div class="app-main">
+    <header class="app-topbar">
+      <div class="app-topbar-left">
+        <h1 class="app-page-title" data-dom-id="page-title">对话面板</h1>
+      </div>
+      <div class="app-topbar-right">
+        <span class="ds-tag ds-tag-primary">Model: gpt-4o</span>
+        <span class="ds-tag">RAG: 1,247 chunks</span>
+        <span class="ds-avatar" aria-label="用户头像">A</span>
+      </div>
+    </header>
+
+    <main class="app-content" data-scroll-region="primary">
