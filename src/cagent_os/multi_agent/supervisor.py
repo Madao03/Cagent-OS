@@ -21,6 +21,7 @@ enabling per-agent trace spans in Phase 4d (Langfuse).
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import re
 from dataclasses import dataclass, field
@@ -29,6 +30,7 @@ from typing import Any, Callable, Awaitable
 
 from cagent_os.multi_agent.schemas import (
     AnalysisReport,
+    DataCitation,
     DataSourceItem,
     DecisionSummary,
     RawDataDump,
@@ -278,13 +280,18 @@ class Supervisor:
                     self._config.agent_runner(query),
                     timeout=self._config.timeout_seconds,
                 )
-                # Parse key sections from the agent's markdown output
-                thesis, risks, catalysts = self._parse_analysis_output(raw_output, query, ticker)
+                # Parse key sections from the agent's markdown output.
+                # Returns 5-tuple: thesis, risks, catalysts, valuation, citations
+                thesis, risks, catalysts, valuation, citations = self._parse_analysis_output(
+                    raw_output, query, ticker,
+                )
                 return AnalysisReport(
                     ticker=ticker,
                     thesis=thesis,
                     risks=risks,
                     catalysts=catalysts,
+                    valuation=valuation,
+                    data_citations=citations,
                     generated_at=datetime.now(timezone.utc),
                 )
             except asyncio.TimeoutError:
@@ -445,18 +452,134 @@ class Supervisor:
 
     # ── Helpers ──
 
+    # Pre-compiled regex for the trailing hidden JSON block
+    # Tolerant to whitespace/newlines inside the HTML comment
+    _ANALYSIS_JSON_RE = re.compile(
+        r"<!--\s*ANALYSIS_JSON\s*:\s*(\{.*?\})\s*-->",
+        re.DOTALL,
+    )
+
+    @staticmethod
+    def _extract_trailing_json(raw_output: str) -> dict | None:
+        """Extract the hidden `<!-- ANALYSIS_JSON: {...} -->` block from the end of output.
+
+        Returns the parsed dict on success, None when the block is absent
+        or the JSON is malformed.
+        """
+        if not raw_output:
+            return None
+        match = Supervisor._ANALYSIS_JSON_RE.search(raw_output)
+        if not match:
+            return None
+        raw_json = match.group(1)
+        # Strip trailing commas (common LLM error) before parsing
+        cleaned = re.sub(r",\s*([}\]])", r"\1", raw_json)
+        try:
+            data = json.loads(cleaned)
+            if isinstance(data, dict):
+                return data
+        except json.JSONDecodeError as exc:
+            logger.warning(
+                "ANALYSIS_JSON block present but unparseable: %s; falling back to regex",
+                exc,
+            )
+        return None
+
     @staticmethod
     def _parse_analysis_output(
         raw_output: str,
         query: str,
         ticker: str,
-    ) -> tuple[str, list[str], list[str]]:
-        """Parse the agent's raw markdown output into structured thesis/risks/catalysts.
+    ) -> tuple[str, list[str], list[str], ValuationMetrics, list[DataCitation]]:
+        """Parse Researcher raw output into structured AnalysisReport fields.
 
-        Uses section headings and bullet points to extract structured data.
-        Falls back gracefully when sections are missing.
+        Strategy:
+          1. Try to extract trailing `<!-- ANALYSIS_JSON: {...} -->` block.
+             If present and parseable, use it as the source of truth.
+          2. Otherwise, fall back to regex heuristics on markdown headings.
+
+        Returns:
+          (thesis, risks, catalysts, valuation, citations)
         """
-        # Extract thesis: first substantial paragraph after "分析" or "结论" heading
+        # Default values
+        thesis = ""
+        risks: list[str] = []
+        catalysts: list[str] = []
+        valuation = ValuationMetrics()
+        citations: list[DataCitation] = []
+
+        # ── Path 1: structured JSON block ──
+        structured = Supervisor._extract_trailing_json(raw_output)
+        if structured:
+            thesis = str(structured.get("thesis", "")).strip() or raw_output[:300]
+            raw_risks = structured.get("risks", [])
+            if isinstance(raw_risks, list):
+                risks = [str(r).strip()[:200] for r in raw_risks if str(r).strip()]
+            raw_catalysts = structured.get("catalysts", [])
+            if isinstance(raw_catalysts, list):
+                catalysts = [str(c).strip()[:200] for c in raw_catalysts if str(c).strip()]
+
+            # Valuation
+            def _num(key: str) -> float | None:
+                v = structured.get(key)
+                if v is None or v == "":
+                    return None
+                try:
+                    return float(v)
+                except (TypeError, ValueError):
+                    return None
+
+            valuation = ValuationMetrics(
+                fwd_pe=_num("pe_forward"),
+                fwd_ps=_num("pe_ttm"),  # map pe_ttm to fwd_ps slot? no — see below
+                ev_ebitda=_num("ev_ebitda"),
+                pb=_num("pb"),
+            )
+            # Override: we want pe_ttm in its own field, but ValuationMetrics
+            # only exposes fwd_pe/fwd_ps/ev_ebitda/pb. Put pe_ttm in notes.
+            pe_ttm = _num("pe_ttm")
+            if pe_ttm is not None:
+                valuation.notes = (valuation.notes + f" P/E (TTM): {pe_ttm}").strip()
+            dcf = _num("dcf_implied_value")
+            if dcf is not None:
+                valuation.notes = (valuation.notes + f" DCF implied: ${dcf}").strip()
+
+            # Citations
+            raw_cits = structured.get("citations", [])
+            if isinstance(raw_cits, list):
+                for c in raw_cits:
+                    if not isinstance(c, dict):
+                        continue
+                    try:
+                        citations.append(DataCitation(
+                            metric=str(c.get("metric", "")),
+                            value=float(c.get("value", 0) or 0),
+                            source=str(c.get("source", "")),
+                            confidence=float(c.get("confidence", 0.8)),
+                        ))
+                    except (TypeError, ValueError):
+                        continue
+
+            logger.info(
+                "Researcher output parsed via JSON block: thesis_len=%d risks=%d citations=%d",
+                len(thesis), len(risks), len(citations),
+            )
+            return thesis, risks, catalysts, valuation, citations
+
+        # ── Path 2: regex fallback (pre-existing logic, lightly tightened) ──
+        logger.info("Researcher output: JSON block not found, using regex fallback")
+        thesis, risks, catalysts = Supervisor._parse_markdown_sections(raw_output)
+        return thesis, risks, catalysts, valuation, citations
+
+    @staticmethod
+    def _parse_markdown_sections(
+        raw_output: str,
+    ) -> tuple[str, list[str], list[str]]:
+        """Fallback parser: extract thesis/risks/catalysts from markdown headings.
+
+        This is the original parser logic — kept for resilience when the LLM
+        fails to emit the hidden JSON block.
+        """
         thesis = ""
         risks: list[str] = []
         catalysts: list[str] = []

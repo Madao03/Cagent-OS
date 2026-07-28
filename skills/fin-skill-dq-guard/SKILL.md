@@ -119,3 +119,45 @@ category: research
 3. **股数验真**：用 `market_cap / price = implied_shares` 反算，偏差 > 2% → 分拆调整 bug
 4. 对 banks: get_financials 的 revenue=null 是正常现象，用 get_financials_raw 取银行专有字段
 5. 商品行情双源对照：金十 MCP vs get_asset_klines
+
+---
+
+## ★ 归母/少数股东比例断言
+
+> **当同时存在净利润与归母净利润时，必须验证比例方向。方向说反 = 结论可能完全错误。**
+
+### 触发条件
+
+输出中出现净利润（net_income）和归母净利润（attributable_net_income），且两者同时存在数值时。
+
+### 断言规则
+
+```
+① 比例之和为 1（容差 0.01）:
+     minority_ratio = (net_income − attributable_net_income) / net_income
+     attributable_ratio = attributable_net_income / net_income
+     → minority_ratio + attributable_ratio 必须 ≈ 1.00
+
+② 文本一致性（容差 2pp）:
+     输出文本中若出现「X% 归属少数股东」或「归母占 X%」的表述，
+     须与计算值一致。
+     不一致 → flag「归母/少数股东比例方向可疑」
+
+③ 少数股东过半警报:
+     minority_ratio > 0.5 时额外 flag:
+     「过半利润归属少数股东，PE/EPS 分母须使用归母口径」
+     → 用总净利算 PE 会系统性低估估值
+```
+
+### 为什么必须断言
+
+少数股东占比过半时（如 CXMT 2025 年净利 71.4 亿 → 归母仅 18.75 亿 → 73.7% 归少数股东），
+用总净利算 PE 会低估约 4 倍。**把「25% 归少数股东」说成「25% 归母公司」之类方向错误，
+会导致 PE 估值严重失真。**
+
+### A股特别注意
+
+A股「净利润」≠「归母净利润」：
+- 「归母净利润」在利润表单独一行
+- ashare.report 返回的「净利润」是合并口径
+- 必须在输出中显式标注用的是哪个口径

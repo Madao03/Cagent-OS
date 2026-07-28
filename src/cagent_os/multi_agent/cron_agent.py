@@ -142,7 +142,16 @@ class CronAgent:
 
         try:
             # Step 1: Run Supervisor pipeline
-            config = SupervisorConfig(timeout_seconds=300)
+            # Inject default agent_runner so Researcher invokes the real
+            # AgentRuntime (LLM + skills) instead of the template fallback.
+            # build_default_runner() returns None when dependencies are
+            # missing (e.g. no LLM API key) — Supervisor will then fall
+            # back to template analysis gracefully.
+            from cagent_os.multi_agent.agent_runner import build_default_runner
+            config = SupervisorConfig(
+                timeout_seconds=300,
+                agent_runner=build_default_runner(),
+            )
             supervisor = Supervisor(config=config)
             result = await supervisor.run(template.query)
 
