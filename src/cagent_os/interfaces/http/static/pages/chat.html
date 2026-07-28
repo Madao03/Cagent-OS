@@ -1638,13 +1638,33 @@ pre {
     overflow-wrap: break-word;
     word-break: break-word;
   }
-  .chat-md-heading {
-    margin: 0 0 var(--spacer-12);
+  .chat-md-h1 {
+    margin: var(--spacer-16) 0 var(--spacer-10);
     font-family: var(--font-family-heading);
-    font-size: var(--heading-sm-font-size);
+    font-size: var(--heading-md-font-size, 18px);
+    line-height: 1.35;
+    font-weight: 700;
+    color: var(--text-default);
+    padding-bottom: var(--spacer-8);
+    border-bottom: 1px solid var(--border-neutral-l1);
+  }
+  .chat-md-h2 {
+    margin: var(--spacer-14) 0 var(--spacer-8);
+    font-family: var(--font-family-heading);
+    font-size: var(--heading-sm-font-size, 15px);
     line-height: 1.3;
     font-weight: 600;
     color: var(--text-default);
+  }
+  .chat-md-h3 {
+    margin: var(--spacer-10) 0 var(--spacer-6);
+    font-family: var(--font-family-heading);
+    font-size: var(--heading-xs-font-size, 13px);
+    line-height: 1.25;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
   }
   .chat-md-p {
     margin: 0 0 var(--spacer-8);
@@ -1706,6 +1726,52 @@ pre {
     white-space: nowrap;
   }
   .chat-md-table td.num strong { color: var(--text-default); }
+
+  /* ── Horizontal rule ── */
+  .chat-md-hr {
+    border: none;
+    border-top: 1px solid var(--border-neutral-l2);
+    margin: var(--spacer-16) 0;
+  }
+
+  /* ── Blockquote ── */
+  .chat-md-blockquote {
+    margin: var(--spacer-12) 0;
+    padding: var(--spacer-8) var(--spacer-16);
+    border-left: 3px solid var(--bg-brand);
+    background: var(--bg-overlay-l1);
+    border-radius: 0 var(--radius-6) var(--radius-6) 0;
+    color: var(--text-secondary);
+  }
+  .chat-md-blockquote p {
+    margin: var(--spacer-4) 0;
+    font-style: italic;
+  }
+  .chat-md-blockquote p:first-child { margin-top: 0; }
+  .chat-md-blockquote p:last-child { margin-bottom: 0; }
+
+  /* ── Ordered list ── */
+  .chat-md-ol {
+    margin: var(--spacer-8) 0;
+    padding-left: var(--spacer-24);
+  }
+  .chat-md-ol li {
+    margin-bottom: var(--spacer-4);
+    font-size: var(--body-base-font-size);
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+  .chat-md-ol li:last-child { margin-bottom: 0; }
+
+  /* ── Inline link ── */
+  .chat-md-link {
+    color: var(--bg-brand);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .chat-md-link:hover {
+    color: var(--bg-brand-hover);
+  }
 
   .chat-md-tags {
     display: flex;

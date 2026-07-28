@@ -1039,6 +1039,15 @@ pre {
     <style>
       .no-scrollbar::-webkit-scrollbar { display: none; }
       .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+      /* ── Global scrollbar (match chat panel) ── */
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(115, 115, 115, 0.28); border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(115, 115, 115, 0.45); }
+      html.dark ::-webkit-scrollbar-thumb { background: rgba(200, 200, 200, 0.18); }
+      html.dark ::-webkit-scrollbar-thumb:hover { background: rgba(200, 200, 200, 0.30); }
+
       [data-icon] {
         display: inline-flex;
         align-items: center;

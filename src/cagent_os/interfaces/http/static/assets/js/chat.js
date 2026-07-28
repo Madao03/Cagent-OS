@@ -236,7 +236,9 @@
 
   function _processInline(line) {
     return line
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="chat-md-link">$1</a>')
       .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\~\~(.+?)\~\~/g, "<del>$1</del>")
       .replace(/`([^`]+)`/g, "<code>$1</code>");
   }
 
@@ -343,50 +345,65 @@
     let html = "";
     let inCode = false;
     let inUl = false;
+    let inOl = false;
+    let inBq = false;
     const closeUl = () => { if (inUl) { html += "</ul>"; inUl = false; } };
+    const closeOl = () => { if (inOl) { html += "</ol>"; inOl = false; } };
+    const closeBq = () => { if (inBq) { html += "</blockquote>"; inBq = false; } };
+    const closeAllBlocks = () => { closeUl(); closeOl(); closeBq(); };
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
 
       // skip code-fenced block lines from pre-scan (they're not tables)
-      if (tableLineSet.has(i) && !inCode && !inUl) {
+      if (tableLineSet.has(i) && !inCode && !inUl && !inOl && !inBq) {
         const range = tableRanges.find(r => i === r.header);
-        if (range) {
-          closeUl();
-          html += _renderTable(lines, range.header, range.sep, range.end);
-        }
+        if (range) { html += _renderTable(lines, range.header, range.sep, range.end); }
         continue;
       }
 
       if (line.trim().startsWith("```")) {
         if (inCode) { html += "</code></pre>"; inCode = false; }
-        else { closeUl(); html += "<pre><code>"; inCode = true; }
+        else { closeAllBlocks(); html += "<pre><code>"; inCode = true; }
         continue;
       }
       if (inCode) { html += line + "\n"; continue; }
 
       const coded = _processInline(line);
+      const raw = line.trim();
 
       if (/^###\s+/.test(coded)) {
-        closeUl();
-        html += `<h3>${coded.replace(/^###\s+/, "")}</h3>`;
+        closeAllBlocks();
+        html += `<h3 class="chat-md-h3">${coded.replace(/^###\s+/, "")}</h3>`;
       } else if (/^##\s+/.test(coded)) {
-        closeUl();
-        html += `<h3>${coded.replace(/^##\s+/, "")}</h3>`;
+        closeAllBlocks();
+        html += `<h2 class="chat-md-h2">${coded.replace(/^##\s+/, "")}</h2>`;
       } else if (/^#\s+/.test(coded)) {
-        closeUl();
-        html += `<h3>${coded.replace(/^#\s+/, "")}</h3>`;
+        closeAllBlocks();
+        html += `<h1 class="chat-md-h1">${coded.replace(/^#\s+/, "")}</h1>`;
+      } else if (/^(-{3,}|\*{3,})\s*$/.test(raw)) {
+        closeAllBlocks();
+        html += '<hr class="chat-md-hr">';
+      } else if (/^>\s?/.test(coded)) {
+        closeUl(); closeOl();
+        if (!inBq) { html += '<blockquote class="chat-md-blockquote">'; inBq = true; }
+        html += `<p>${coded.replace(/^>\s?/, "")}</p>`;
+      } else if (/^\d+\.\s+/.test(coded)) {
+        closeUl(); closeBq();
+        if (!inOl) { html += '<ol class="chat-md-ol">'; inOl = true; }
+        html += `<li>${coded.replace(/^\d+\.\s+/, "")}</li>`;
       } else if (/^\s*[-*]\s+/.test(coded)) {
+        closeOl(); closeBq();
         if (!inUl) { html += "<ul>"; inUl = true; }
         html += `<li>${coded.replace(/^\s*[-*]\s+/, "")}</li>`;
       } else if (coded.trim() === "") {
-        closeUl();
+        closeAllBlocks();
       } else {
-        closeUl();
+        closeAllBlocks();
         html += `<p>${coded}</p>`;
       }
     }
-    closeUl();
+    closeAllBlocks();
     if (inCode) html += "</code></pre>";
     return html;
   }
