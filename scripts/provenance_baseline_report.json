@@ -1,0 +1,208 @@
+{
+  "questions": [
+    {
+      "question": "小鹏 Q1 2026 营收同比怎么样？",
+      "elapsed_s": 113.2,
+      "output_chars": 1811,
+      "registry_facts": 5,
+      "traced_data": 0,
+      "traced_text_citation": 9,
+      "verified_citation": 9,
+      "derived": [],
+      "normalization": [],
+      "hallucination": [
+        "130.3 亿",
+        "(13.03B",
+        "-17.6%",
+        "-33.32%",
+        "17.8 亿",
+        "10.6 万",
+        "196",
+        "208 亿",
+        "110.0 亿",
+        "20.3 亿",
+        "158.1 亿",
+        "130.3",
+        "0.176)",
+        "41.2%",
+        "-23.5%",
+        "130.3 亿",
+        "-17.6%",
+        "110 亿",
+        "20.3 亿"
+      ],
+      "scanner_miss": [
+        "1.6"
+      ],
+      "sign_conflict": [],
+      "non_data": 12
+    },
+    {
+      "question": "MSTR 的 mNAV 现在是多少？",
+      "elapsed_s": 107.6,
+      "output_chars": 1497,
+      "registry_facts": 25,
+      "traced_data": 0,
+      "traced_text_citation": 22,
+      "verified_citation": 22,
+      "derived": [
+        "$6.75"
+      ],
+      "normalization": [],
+      "hallucination": [
+        "3.49亿",
+        "$6.75B",
+        "$15.48B",
+        "$15.48",
+        "78.3%",
+        "$65,667"
+      ],
+      "scanner_miss": [],
+      "sign_conflict": [],
+      "non_data": 16
+    },
+    {
+      "question": "腾讯 2025 Q3 营收是多少？",
+      "elapsed_s": 73.7,
+      "output_chars": 1801,
+      "registry_facts": 12,
+      "traced_data": 0,
+      "traced_text_citation": 0,
+      "verified_citation": 0,
+      "derived": [
+        "4.5%",
+        "4.5%",
+        "10%",
+        "10%"
+      ],
+      "normalization": [
+        "302614403"
+      ],
+      "hallucination": [
+        "1,928.69 亿",
+        "192,869",
+        "1,928.69 亿",
+        "1,671.93 亿",
+        "167,193",
+        "15%",
+        "15%",
+        "(192,869",
+        "184,504)",
+        "184,504",
+        "184,504",
+        "958.60 亿",
+        "16%",
+        "16%",
+        "428 亿",
+        "15%",
+        "15%",
+        "208 亿",
+        "43%",
+        "43%",
+        "323 亿",
+        "362.42 亿",
+        "21%",
+        "21%",
+        "581.74 亿"
+      ],
+      "scanner_miss": [
+        "192.9",
+        "95.9",
+        "42.8",
+        "20.8",
+        "32.3",
+        "36.2",
+        "58.2"
+      ],
+      "sign_conflict": [],
+      "non_data": 3
+    },
+    {
+      "question": "BTC 现在处于高估还是低估区间？用数据说话",
+      "elapsed_s": 160.2,
+      "output_chars": 2830,
+      "registry_facts": 171,
+      "traced_data": 19,
+      "traced_text_citation": 0,
+      "verified_citation": 0,
+      "derived": [
+        "23%",
+        "0.2309",
+        "23%",
+        "$53,457",
+        "$60K",
+        "$61K",
+        "0.8",
+        "1.5",
+        "2.5",
+        "3.5",
+        "0.8",
+        "0.9",
+        "$53,600",
+        "$53,457",
+        "$53,600",
+        "$52,000",
+        "$54,000",
+        "0.8",
+        "1.5",
+        "2.5",
+        "3.5",
+        "$52,000",
+        "$54,000",
+        "$60K",
+        "$61K",
+        "1.5",
+        "2.5"
+      ],
+      "normalization": [
+        "56.6%",
+        "200",
+        "200",
+        "200"
+      ],
+      "hallucination": [
+        "2,100 万"
+      ],
+      "scanner_miss": [
+        "21.5",
+        "21.5",
+        "21.5",
+        "200"
+      ],
+      "sign_conflict": [],
+      "non_data": 17
+    },
+    {
+      "question": "现在美国的联邦基金利率和 10 年期国债收益率分别是多少？",
+      "elapsed_s": 43.9,
+      "output_chars": 604,
+      "registry_facts": 6,
+      "traced_data": 8,
+      "traced_text_citation": 0,
+      "verified_citation": 0,
+      "derived": [],
+      "normalization": [],
+      "hallucination": [
+        "120",
+        "5.25",
+        "5.50%"
+      ],
+      "scanner_miss": [
+        "104"
+      ],
+      "sign_conflict": [],
+      "non_data": 14
+    }
+  ],
+  "totals": {
+    "traced_data": 27,
+    "traced_text_citation": 31,
+    "derived": 32,
+    "normalization": 5,
+    "scanner_miss": 13,
+    "hallucination": 54,
+    "sign_conflict": 0,
+    "non_data": 62,
+    "verified_citation": 31
+  }
+}

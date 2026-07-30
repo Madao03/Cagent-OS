@@ -1,0 +1,13 @@
+{
+  "ticker": "XPEV",
+  "accession": "0001193125-22-250567",
+  "form": "6-K",
+  "filing_date": "2022-09-26",
+  "document": "d404869dex991.htm",
+  "url": "https://www.sec.gov/Archives/edgar/data/1810997/000119312522250567/d404869dex991.htm",
+  "description": "HARD NEGATIVE: HKEX interim report filed BEFORE Q3 2022 quarter end. Contains full financial tables but is NOT an earnings release. Identified as false positive in S3 Phase 1 precision sweep.",
+  "is_hard_negative": true,
+  "failure_mode": "pre_quarter_end_filing",
+  "quarter_end": "2022-09-30",
+  "fetched_at": "2026-07-23T09:31:07.553648+00:00"
+}

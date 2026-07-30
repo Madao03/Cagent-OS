@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CagentOS · 偏好</title>
+<script>
+(function(){var h=document.documentElement;var s;try{s=localStorage.getItem('cagentos-theme')}catch(e){}var d;if(s==='light')d=false;else if(s==='dark')d=true;else d=!window.matchMedia('(prefers-color-scheme: light)').matches;if(d){h.classList.add('dark');h.classList.remove('light')}else{h.classList.remove('dark');h.classList.add('light')}})();
+</script>
+<style>
+:root {
+  --bg-base-default: #0d1117; --bg-overlay-l1: #161b22;
+  --bg-brand: #2f81f7; --bg-brand-hover: #388bfd;
+  --text-default: #e6edf3; --text-secondary: #9198a1; --text-tertiary: #6e7681;
+  --border-neutral-l1: #30363d;
+  --radius-md: 6px; --radius-lg: 8px;
+  --spacer-8: 8px; --spacer-12: 12px; --spacer-16: 16px; --spacer-24: 24px; --spacer-32: 32px; --spacer-48: 48px;
+  --font-family-default: "SF Pro Text", "PingFang SC", system-ui, sans-serif;
+  --font-family-heading: "SF Pro", "PingFang SC", system-ui, sans-serif;
+}
+html.light {
+  --bg-base-default: #ffffff; --bg-overlay-l1: #f6f8fa;
+  --text-default: #1f2328; --text-secondary: #59636e; --text-tertiary: #818b98;
+  --border-neutral-l1: #d1d9e0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-family-default);
+  background: var(--bg-base-default); color: var(--text-default);
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+}
+.card {
+  width: 100%; max-width: 520px; padding: var(--spacer-48) var(--spacer-32);
+}
+h1 {
+  font-family: var(--font-family-heading);
+  font-size: 22px; font-weight: 600; margin-bottom: var(--spacer-8);
+}
+.sub {
+  color: var(--text-tertiary); font-size: 13px; margin-bottom: var(--spacer-24);
+}
+textarea {
+  width: 100%; min-height: 100px; padding: var(--spacer-12);
+  background: var(--bg-overlay-l1); border: 1px solid var(--border-neutral-l1);
+  border-radius: var(--radius-lg); color: var(--text-default);
+  font-family: var(--font-family-default); font-size: 14px;
+  resize: vertical; line-height: 1.6;
+}
+textarea:focus { outline: none; border-color: var(--bg-brand); }
+.actions {
+  display: flex; gap: var(--spacer-12); margin-top: var(--spacer-16);
+}
+.btn {
+  padding: var(--spacer-10) var(--spacer-24); border-radius: var(--radius-md);
+  font-size: 14px; font-weight: 500; cursor: pointer; border: none;
+  font-family: var(--font-family-default); transition: background 0.15s;
+}
+.btn-primary { background: var(--bg-brand); color: #fff; }
+.btn-primary:hover { background: var(--bg-brand-hover); }
+.btn-secondary { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-neutral-l1); }
+.btn-secondary:hover { background: var(--bg-overlay-l1); }
+.status { font-size: 12px; color: var(--text-tertiary); margin-top: var(--spacer-8); }
+.status.ok { color: #2ea043; }
+.status.err { color: #f85149; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(115,115,115,0.28); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(115,115,115,0.45); }
+html.dark ::-webkit-scrollbar-thumb { background: rgba(200,200,200,0.18); }
+html.dark ::-webkit-scrollbar-thumb:hover { background: rgba(200,200,200,0.30); }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>你主要关注哪些？</h1>
+  <p class="sub">随便写，可跳过。这能帮我更快理解你的语境。</p>
+  <textarea id="input" placeholder="比如：A股半导体、美股科技、BTC/ETH、港股..."></textarea>
+  <p class="sub" style="margin-top:var(--spacer-4);">不会问你持仓或成本，也不会问投资偏好。</p>
+  <div class="actions">
+    <button class="btn btn-primary" id="saveBtn">保存并开始</button>
+    <button class="btn btn-secondary" id="skipBtn">跳过</button>
+  </div>
+  <div class="status" id="status"></div>
+</div>
+
+<script>
+var pendingQuery = sessionStorage.getItem("cagentos_pending_query") || "";
+
+function getToken() {
+  try { return localStorage.getItem("cagentos_jwt") || ""; } catch(e) { return ""; }
+}
+
+async function doSave() {
+  var text = document.getElementById("input").value.trim();
+  var statusEl = document.getElementById("status");
+  var btn = document.getElementById("saveBtn");
+  if (!text) { doSkip(); return; }
+  btn.disabled = true;
+  btn.textContent = "保存中...";
+
+  try {
+    var resp = await fetch("/api/v1/profile", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + getToken()
+      },
+      body: JSON.stringify({ raw_input: text })
+    });
+    if (resp.ok) {
+      sessionStorage.removeItem("cagentos_pending_query");
+      var dest = "/";
+      if (pendingQuery) { dest = "/?q=" + encodeURIComponent(pendingQuery); }
+      window.location.href = dest;
+    } else {
+      statusEl.textContent = "保存失败，请重试";
+      statusEl.className = "status err";
+      btn.disabled = false;
+      btn.textContent = "保存并开始";
+    }
+  } catch(e) {
+    statusEl.textContent = "网络错误";
+    statusEl.className = "status err";
+    btn.disabled = false;
+    btn.textContent = "保存并开始";
+  }
+}
+
+function doSkip() {
+  sessionStorage.removeItem("cagentos_pending_query");
+  var dest = "/";
+  if (pendingQuery) { dest = "/?q=" + encodeURIComponent(pendingQuery); }
+  window.location.href = dest;
+}
+
+document.getElementById("saveBtn").addEventListener("click", doSave);
+document.getElementById("skipBtn").addEventListener("click", doSkip);
+</script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "freeze_label": "pre-ashare-integration",
+  "frozen_at": "2026-07-24",
+  "description": "A-share 数据接入前冻结。后续任何 provenance 变化以此为对照组。",
+  "baseline": {
+    "question": "小鹏 Q4 2025 营收同比怎么样？",
+    "runs": 3,
+    "hallucination_rate": 0.0,
+    "hallucination_count": 0,
+    "derived_traced": "≈3",
+    "deriv_block": "3/3 runs",
+    "answered": "3/3 ANSWERED",
+    "core_coverage": "3-4/4",
+    "note": "0% 幻觉率, 所有数字可追溯, F1 answered 断言通过, 精度继承闭环完整"
+  },
+  "key_metrics_to_recheck": [
+    "hallucination_rate (must stay 0%)",
+    "derived_traced (should not drop — new data shouldn't break existing derivations)",
+    "core_coverage (should not drop — agent shouldn't say less because new source confuses it)",
+    "answered (must stay 3/3 — F1 assertion)"
+  ],
+  "reference_files": [
+    "scripts/_baseline_xpev_q4_3x.py",
+    "scripts/run_provenance_baseline.py"
+  ]
+}

@@ -1,0 +1,128 @@
+/* ══ Global icon definitions — shared across all pages ══
+   This file is the single source of truth for [data-icon] CSS masks.
+   Every page that uses the sidebar (chat/knowledge/brief/about) must
+   link this file so icons render consistently regardless of current page.
+*/
+
+/* ── Base: all [data-icon] elements use mask + currentColor ── */
+[data-icon] {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  background: currentColor;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  flex-shrink: 0;
+}
+
+/* ── Sidebar-specific sizing ── */
+.sidebar-nav-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.sidebar-logo-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.sidebar-collapse-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* ── Collapse button + collapsed state (shared across pages) ── */
+/* Trae IDE style: small rounded square, subtle bg, 14px icon */
+.sidebar-collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--icon-tertiary);
+  cursor: pointer;
+  margin-left: auto;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.12s ease, color 0.12s ease, opacity 0.2s ease;
+  opacity: 0.5;
+}
+.sidebar-collapse-btn:hover {
+  background: var(--bg-overlay-l1);
+  color: var(--icon-default);
+  opacity: 1;
+}
+.sidebar-collapse-btn:active {
+  background: var(--bg-overlay-l2);
+}
+.sidebar-collapse-icon {
+  width: 14px;
+  height: 14px;
+}
+.app-sidebar {
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.app-sidebar.collapsed {
+  width: 48px;
+}
+.app-sidebar.collapsed .app-sidebar-logo {
+  justify-content: center;
+  padding: var(--spacer-12) var(--spacer-6);
+}
+.app-sidebar.collapsed .app-sidebar-logo-text,
+.app-sidebar.collapsed .sidebar-logo-icon,
+.app-sidebar.collapsed .sidebar-nav-label,
+.app-sidebar.collapsed .app-sidebar-footer {
+  display: none;
+}
+.app-sidebar.collapsed .sidebar-collapse-btn {
+  margin: 0 auto;
+  opacity: 0.7;
+  transform: rotate(180deg);
+}
+.app-sidebar.collapsed .sidebar-nav-item {
+  justify-content: center;
+  padding: var(--spacer-8) var(--spacer-4);
+}
+.app-sidebar.collapsed .app-sidebar-nav {
+  padding: var(--spacer-6) var(--spacer-4);
+}
+.app-shell.sidebar-collapsed .app-main {
+  margin-left: 48px;
+}
+
+/* ── All icon SVG mappings (absolute paths) ── */
+/* Sidebar + navigation icons */
+[data-icon="agent"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/agent.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/agent.svg); }
+[data-icon="chat"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/chat.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/chat.svg); }
+[data-icon="calendar"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/calendar.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/calendar.svg); }
+[data-icon="doc"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/doc.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/doc.svg); }
+[data-icon="info"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/info.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/info.svg); }
+[data-icon="monitor"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/monitor.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/monitor.svg); }
+
+/* Chat page icons */
+[data-icon="code"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/code.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/code.svg); }
+[data-icon="check-small"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/check-small.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/check-small.svg); }
+[data-icon="arrow-right"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/arrow-right.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/arrow-right.svg); }
+[data-icon="arrow-collapse"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/arrow-collapse.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/arrow-collapse.svg); }
+[data-icon="brain"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/brain.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/brain.svg); }
+[data-icon="clock_time"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/clock_time.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/clock_time.svg); }
+[data-icon="Plus"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/Plus.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/Plus.svg); }
+
+/* Knowledge page icons */
+[data-icon="Search"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/Search.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/Search.svg); }
+[data-icon="Copy"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/Copy.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/Copy.svg); }
+[data-icon="download"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/download.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/download.svg); }
+[data-icon="history"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/history.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/history.svg); }
+[data-icon="expand"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/Expand.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/Expand.svg); }
+[data-icon="error_simple"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/error_simple.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/error_simple.svg); }
+
+/* Brief page icons */
+[data-icon="arrow_up"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/arrow_up.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/arrow_up.svg); }

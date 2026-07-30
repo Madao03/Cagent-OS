@@ -1,8 +1,9 @@
-"""AKShare stock adapter — A-shares & HK stocks via Sina data source.
+"""AKShare stock adapter — A-shares, HK stocks, US stocks via Sina.
 
 Covers:
   - A-shares (上海/深圳): daily OHLCV + 1-minute intraday
   - HK stocks: daily OHLCV
+  - US stocks: daily OHLCV (via stock_us_daily, Sina Finance US channel)
   - US stock indices (Nasdaq, S&P 500, Dow Jones)
 
 All data from Sina Finance — free, no API key, China direct-connect
@@ -84,7 +85,14 @@ class AkshareStockAdapter(DataSourceAdapter):
         start = str(params.get("start_date", "20250101"))
         end = str(params.get("end_date", ""))
 
-        if market == "hk":
+        if market == "us":
+            # US stocks via Sina Finance US channel
+            df = await asyncio.to_thread(
+                _ak_import().stock_us_daily,
+                symbol=ticker,
+                adjust="qfq",
+            )
+        elif market == "hk":
             df = await asyncio.to_thread(
                 _ak_import().stock_hk_daily,
                 symbol=ticker,

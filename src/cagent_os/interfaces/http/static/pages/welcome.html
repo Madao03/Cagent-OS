@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CagentOS · 欢迎</title>
+  <script>
+    (function(){var h=document.documentElement;var s;try{s=localStorage.getItem('cagentos-theme')}catch(e){}var d;if(s==='light')d=false;else if(s==='dark')d=true;else d=!window.matchMedia('(prefers-color-scheme: light)').matches;if(d){h.classList.add('dark');h.classList.remove('light')}else{h.classList.remove('dark');h.classList.add('light')}})();
+  </script>
+  <style>
+    :root {
+      --bg-base-default: #0d1117; --bg-overlay-l1: #161b22; --bg-overlay-l2: #1c2128;
+      --bg-brand: #2f81f7; --bg-brand-hover: #388bfd;
+      --text-default: #e6edf3; --text-secondary: #9198a1; --text-tertiary: #6e7681;
+      --border-neutral-l1: #30363d; --border-neutral-l2: #3a3f47;
+      --status-error-default: #f85149; --status-success-default: #2ea043;
+      --status-alert-default: #d29922;
+      --radius-md: 6px; --radius-lg: 8px; --radius-xl: 12px;
+      --spacer-8: 8px; --spacer-12: 12px; --spacer-16: 16px; --spacer-24: 24px;
+      --spacer-32: 32px; --spacer-48: 48px;
+      --font-family-default: "SF Pro Text", "PingFang SC", system-ui, sans-serif;
+      --font-family-heading: "SF Pro", "PingFang SC", system-ui, sans-serif;
+    }
+    html.light {
+      --bg-base-default: #ffffff; --bg-overlay-l1: #f6f8fa; --bg-overlay-l2: #eaeef2;
+      --text-default: #1f2328; --text-secondary: #59636e; --text-tertiary: #818b98;
+      --border-neutral-l1: #d1d9e0; --border-neutral-l2: #afb8c1;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-family-default);
+      background: var(--bg-base-default);
+      color: var(--text-default);
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 680px; margin: 0 auto; padding: var(--spacer-48) var(--spacer-24);
+    }
+    h1 {
+      font-family: var(--font-family-heading);
+      font-size: 28px; font-weight: 600; margin-bottom: var(--spacer-12);
+    }
+    h2 {
+      font-family: var(--font-family-heading);
+      font-size: 16px; font-weight: 600; margin: var(--spacer-24) 0 var(--spacer-8);
+    }
+    .tagline {
+      color: var(--text-secondary); font-size: 14px; margin-bottom: var(--spacer-32);
+      line-height: 1.6;
+    }
+    .disclaimer {
+      background: var(--bg-overlay-l1); border-radius: var(--radius-lg);
+      padding: var(--spacer-16); margin-bottom: var(--spacer-24);
+      font-size: 13px; color: var(--text-tertiary); line-height: 1.7;
+    }
+    .disclaimer strong { color: var(--text-secondary); }
+    .capabilities {
+      display: flex; flex-direction: column; gap: var(--spacer-8);
+      margin-bottom: var(--spacer-24);
+    }
+    .cap-row {
+      display: flex; align-items: baseline; gap: var(--spacer-8);
+      font-size: 13px; line-height: 1.6;
+    }
+    .cap-icon { font-size: 13px; width: 18px; flex-shrink: 0; }
+    .cap-icon.good { color: var(--status-success-default); }
+    .cap-icon.limited { color: var(--status-alert-default); }
+    .cap-icon.none { color: var(--status-error-default); }
+    .cap-text { color: var(--text-secondary); }
+    .cap-note { color: var(--text-tertiary); font-size: 12px; margin-left: 26px; }
+    .sample-questions h2 { margin-bottom: var(--spacer-12); }
+    .sample-q {
+      display: block; width: 100%; text-align: left;
+      padding: var(--spacer-12) var(--spacer-16);
+      margin-bottom: var(--spacer-8);
+      background: var(--bg-overlay-l1);
+      border: 1px solid var(--border-neutral-l1);
+      border-radius: var(--radius-lg);
+      color: var(--text-default); font-size: 14px; cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      font-family: var(--font-family-default);
+    }
+    .sample-q:hover {
+      border-color: var(--bg-brand); background: var(--bg-overlay-l2);
+    }
+    .sample-q .q-hint {
+      display: block; font-size: 11px; color: var(--text-tertiary); margin-top: var(--spacer-4);
+    }
+    .actions {
+      display: flex; align-items: center; gap: var(--spacer-16); margin-top: var(--spacer-32);
+      padding-top: var(--spacer-24); border-top: 1px solid var(--border-neutral-l1);
+    }
+    .action-links { font-size: 13px; color: var(--text-tertiary); }
+    .action-links a { color: var(--text-secondary); text-decoration: none; }
+    .action-links a:hover { color: var(--bg-brand); }
+    .action-sep { margin: 0 var(--spacer-4); }
+    .btn {
+      padding: var(--spacer-10) var(--spacer-24); border-radius: var(--radius-md);
+      font-size: 14px; font-weight: 500; cursor: pointer; border: none;
+      font-family: var(--font-family-default);
+      transition: background 0.15s;
+    }
+    .btn-primary { background: var(--bg-brand); color: #fff; }
+    .btn-primary:hover { background: var(--bg-brand-hover); }
+    .btn-secondary { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-neutral-l1); }
+    .btn-secondary:hover { background: var(--bg-overlay-l1); }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(115, 115, 115, 0.28); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(115, 115, 115, 0.45); }
+    html.dark ::-webkit-scrollbar-thumb { background: rgba(200, 200, 200, 0.18); }
+    html.dark ::-webkit-scrollbar-thumb:hover { background: rgba(200, 200, 200, 0.30); }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>欢迎使用 CagentOS</h1>
+  <p class="tagline">
+    投研工作台 &mdash; 每个数字都可追溯，没有出处的数字不会出现。
+  </p>
+
+  <div class="disclaimer">
+    <strong>免责声明</strong><br>
+    本系统提供数据检索、分析与溯源，不提供投资建议。所有市场判断由用户自行做出。
+    AI 生成的内容可能存在错误，关键数据请自行核实。
+    过去的表现不预示未来结果。
+  </div>
+
+  <h2>能力边界</h2>
+  <div class="capabilities">
+    <div class="cap-row">
+      <span class="cap-icon good">&#10003;</span>
+      <span class="cap-text">美股/中概股财报（含审计状态与季度）&middot; A股财报 &middot; 美国宏观 &middot; Crypto &middot; 精选知识库</span>
+    </div>
+    <div class="cap-note">完整说明见侧栏「关于」</div>
+    <div class="cap-row">
+      <span class="cap-icon limited">&#9888;</span>
+      <span class="cap-text">港股仅覆盖双重上市标的 &middot; 台股/韩股仅搜索</span>
+    </div>
+    <div class="cap-row">
+      <span class="cap-icon none">&#10007;</span>
+      <span class="cap-text">纯港股财报 &middot; 卖方一致预期 &middot; 实时盘口 &middot; 投资建议</span>
+    </div>
+  </div>
+
+  <div class="sample-questions">
+    <h2>试试看</h2>
+    <button class="sample-q" onclick="askDirect('小鹏 Q4 2025 营收同比怎么样')">
+      小鹏 Q4 2025 营收同比怎么样
+      <span class="q-hint">溯源卡片 · 审计状态标注</span>
+    </button>
+    <button class="sample-q" onclick="askDirect('茅台最新净利润多少')">
+      茅台最新净利润多少
+      <span class="q-hint">双口径 · 数据源层级</span>
+    </button>
+    <button class="sample-q" onclick="askDirect('腾讯 2025 Q3 营收')">
+      腾讯 2025 Q3 营收
+      <span class="q-hint">数据不可得的处理方式</span>
+    </button>
+    <button class="sample-q" onclick="askDirect('BTC 现在高估还是低估')">
+      BTC 现在高估还是低估
+      <span class="q-hint">链上与衍生品数据</span>
+    </button>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" onclick="goOnboard()">直接开始</button>
+    <span class="action-links">
+      <a href="#" onclick="goOnboard();return false">填写偏好</a>
+      <span class="action-sep">·</span>
+      <a href="#" onclick="goAbout();return false">查看说明</a>
+    </span>
+  </div>
+</div>
+
+<script>
+  function askDirect(query) {
+    sessionStorage.setItem("cagentos_pending_query", query);
+    window.location.href = "/?q=" + encodeURIComponent(query);
+  }
+  function goOnboard() {
+    window.location.href = "/onboard";
+  }
+  function goAbout() {
+    sessionStorage.setItem("cagentos_from_welcome", "1");
+    window.location.href = "/about";
+  }
+</script>
+</body>
+</html>

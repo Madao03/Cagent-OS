@@ -1,0 +1,35 @@
+[
+  {
+    "case": "case_003",
+    "elapsed_s": 334.9,
+    "output_chars": 9378,
+    "tool_calls": 41,
+    "tool_errors": 18,
+    "has_derivations": true,
+    "has_akshare_mention": true,
+    "has_price_note": true,
+    "pass": false
+  },
+  {
+    "case": "case_005",
+    "elapsed_s": 443.8,
+    "output_chars": 5855,
+    "tool_calls": 39,
+    "tool_errors": 16,
+    "has_derivations": true,
+    "has_akshare_mention": true,
+    "has_price_note": true,
+    "pass": false
+  },
+  {
+    "case": "case_011",
+    "elapsed_s": 227.4,
+    "output_chars": 5723,
+    "tool_calls": 39,
+    "tool_errors": 17,
+    "has_derivations": true,
+    "has_akshare_mention": false,
+    "has_price_note": true,
+    "pass": true
+  }
+]

@@ -1,0 +1,13 @@
+{
+  "ticker": "XPEV",
+  "accession": "0001193125-26-293394",
+  "form": "6-K",
+  "filing_date": "2026-07-02",
+  "document": "d114872dex991.htm",
+  "url": "https://www.sec.gov/Archives/edgar/data/1810997/000119312526293394/d114872dex991.htm",
+  "content_type": "text/html",
+  "size_bytes": 7095,
+  "sha256": "2f9e5a97af077b2ad49499dcd3905157a917ba22bb557e4c1575c6980d375d19",
+  "fetched_at": "2026-07-23T04:51:53.039516+00:00",
+  "label": "negative_monthly_delivery"
+}

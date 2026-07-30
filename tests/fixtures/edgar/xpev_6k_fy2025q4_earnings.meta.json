@@ -1,0 +1,20 @@
+{
+  "ticker": "XPEV",
+  "accession": "0001193125-26-117623",
+  "form": "6-K",
+  "filing_date": "2026-03-20",
+  "document": "d270013dex991.htm",
+  "url": "https://www.sec.gov/Archives/edgar/data/1810997/000119312526117623/d270013dex991.htm",
+  "content_type": "text/html",
+  "fetched_at": "2026-07-23T04:05:36.221463+00:00",
+  "description": "XPENG Q4 2025 + FY2025 earnings press release (EX-99.1)",
+  "expected": {
+    "revenue_q4_cny": "XPEV Q4 2025 revenue in CNY",
+    "revenue_fy_cny": "XPEV FY2025 revenue in CNY",
+    "currency": "CNY",
+    "period_q4": "2025-10-01 to 2025-12-31",
+    "period_fy": "2025-01-01 to 2025-12-31",
+    "contains_guidance": true,
+    "contains_rmb_usd_dual": true
+  }
+}

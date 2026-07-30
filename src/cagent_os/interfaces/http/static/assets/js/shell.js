@@ -24,16 +24,17 @@
     { key: "chat", label: "对话面板", icon: "chat", disabled: false, page: "/" },
     { key: "brief", label: "每日简报", icon: "calendar", disabled: true, page: "/brief" },
     { key: "dashboard", label: "定制化看板", icon: "monitor", disabled: true, page: null },
-    { key: "knowledge", label: "知识库", icon: "doc", disabled: false, page: "/knowledge" },
+    { key: "opinions", label: "观点库", icon: "brain", disabled: true, page: null },
+    { key: "knowledge", label: "共享知识库", icon: "doc", disabled: false, page: "/knowledge" },
+    { key: "about", label: "关于", icon: "info", disabled: false, page: "/about" },
   ];
 
   function _currentPage() {
     const p = window.location.pathname;
-    // Server redirects /brief → /static/pages/brief.html etc.
-    // Match against the page basename, not the full redirect path.
+    if (p.includes("about.html") || p.includes("/about")) return "about";
     if (p.includes("knowledge.html") || p.includes("/knowledge")) return "knowledge";
     if (p.includes("brief.html") || p.includes("/brief")) return "brief";
-    return "chat"; // default
+    return "chat";
   }
 
   function _renderSidebarNav(navEl) {
@@ -70,6 +71,17 @@
   }
 
   function wireSidebar() {
+    // Inject collapse button if missing (some pages don't have it in HTML)
+    const logoDiv = document.querySelector(".app-sidebar-logo");
+    if (logoDiv && !document.querySelector(".sidebar-collapse-btn")) {
+      const btn = document.createElement("button");
+      btn.className = "sidebar-collapse-btn";
+      btn.setAttribute("aria-label", "收起侧边栏");
+      btn.title = "收起侧边栏";
+      btn.innerHTML = '<span data-icon="arrow-collapse" class="sidebar-collapse-icon" aria-hidden="true"></span>';
+      logoDiv.appendChild(btn);
+    }
+
     const collapseBtn = document.querySelector(".sidebar-collapse-btn");
     if (collapseBtn && !collapseBtn.dataset.wired) {
       collapseBtn.dataset.wired = "1";
@@ -110,6 +122,7 @@
         if (key === "chat") window.location.href = "/";
         else if (key === "brief") window.location.href = "/brief";
         else if (key === "knowledge") window.location.href = "/knowledge";
+        else if (key === "about") window.location.href = "/about";
       });
     });
   }

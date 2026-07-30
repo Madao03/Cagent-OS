@@ -7,11 +7,13 @@ import time
 from pathlib import Path
 
 from fastapi import APIRouter, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 
 from cagent_os.agents.run_engine import AgentRuntime
+from cagent_os.config.cost_tracker import BudgetExceeded, ConcurrencyExceeded, CostTracker
 from cagent_os.conversations.service import ConversationService
 from cagent_os.interfaces.http.auth_context import require_principal_id, resolve_principal_id
+from cagent_os.interfaces.http.rate_limiter import limiter
 from cagent_os.interfaces.http.run_events import project_stream_payload
 from cagent_os.interfaces.http.schemas import (
     OneshotRunRequest,
@@ -30,30 +32,45 @@ def build_runs_router(
     run_engine: AgentRuntime,
     conversation_service: ConversationService,
     user_skill_service: UserSkillService,
+    cost_tracker: CostTracker | None = None,
 ) -> APIRouter:
     router = APIRouter()
 
     @router.post("/api/v1/conversations/{conversation_id}/messages")
+    @limiter.limit("5/minute")
     def post_message(conversation_id: str, payload: PostMessageRequest, request: Request) -> StreamingResponse:
         principal_id = resolve_principal_id(request)
+        request_id = getattr(request.state, "request_id", "")
 
-        # Auto-create conversation if it doesn't exist (MVP convenience).
-        # Pass the client-supplied conversation_id so subsequent requests
-        # with the same ID resolve to this conversation. Without this,
-        # create_conversation would mint a NEW id internally and the
-        # caller's ID would never be registered → KeyError on next call.
-        #
-        # IMPORTANT: user_id MUST be principal_id (from JWT), NOT
-        # payload.user_id. Otherwise all users share the same memory
-        # context (memory.db indexes by conversation.user_id, which was
-        # previously always "default" from the client).
+        # ── Record query for telemetry (before any checks — captures all attempts
+        #     that pass the rate limiter, including concurrency-blocked ones) ──
+        if cost_tracker is not None:
+            try:
+                cost_tracker.record_query(
+                    principal_id,
+                    query=payload.content,
+                    session_id=conversation_id,
+                    request_id=request_id,
+                    is_follow_up=False,  # updated below after conversation lookup
+                )
+            except Exception:
+                logger.debug("Query recording failed (non-fatal)", exc_info=True)
+
+        # ── Concurrency check ──
+        if cost_tracker is not None:
+            try:
+                cost_tracker.acquire(principal_id)
+            except ConcurrencyExceeded as exc:
+                return JSONResponse(status_code=429, content={"detail": str(exc)})
+
+        # ── Auto-create conversation ──
         try:
             conversation_service.get_conversation(principal_id, conversation_id)
         except (KeyError, LookupError):
             user_skill_snapshot = user_skill_service.load_snapshot(principal_id)
             conversation_service.create_conversation(
                 principal_id=principal_id,
-                user_id=principal_id,  # ← memory isolation fix
+                user_id=principal_id,
                 user_skill_snapshot=user_skill_snapshot,
                 conversation_id=conversation_id,
             )
@@ -74,12 +91,21 @@ def build_runs_router(
         )
 
         def sse() -> Iterator[str]:
-            for event in run_engine.run_stream(
-                conversation_id=conversation_id,
-                principal_id=principal_id,
-                user_content=payload.content,
-            ):
-                yield f"data: {json.dumps(project_stream_payload(event, conversation_id=conversation_id), ensure_ascii=False)}\n\n"
+            try:
+                for event in run_engine.run_stream(
+                    conversation_id=conversation_id,
+                    principal_id=principal_id,
+                    user_content=payload.content,
+                ):
+                    yield f"data: {json.dumps(project_stream_payload(event, conversation_id=conversation_id), ensure_ascii=False)}\n\n"
+            except BudgetExceeded as exc:
+                yield f"data: {json.dumps({'type': 'error', 'message': str(exc), 'retry_after_sec': exc.retry_after_sec}, ensure_ascii=False)}\n\n"
+            finally:
+                if cost_tracker is not None:
+                    try:
+                        cost_tracker.release(principal_id)
+                    except Exception:
+                        pass
 
         return StreamingResponse(sse(), media_type="text/event-stream")
 

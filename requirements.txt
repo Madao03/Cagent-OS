@@ -1,0 +1,40 @@
+# CagentOS — Python dependencies
+# Generated from pyproject.toml dependencies.
+# Install: pip install -r requirements.txt
+
+# ── Core runtime ──────────────────────────────────────────────────
+fastapi>=0.115.0
+uvicorn>=0.34.0
+pydantic>=2.10.0
+httpx>=0.28.0
+requests>=2.32.0
+aiohttp>=3.9.0
+
+# ── LLM ───────────────────────────────────────────────────────────
+openai>=1.65.0
+
+# ── Data & serialization ──────────────────────────────────────────
+PyYAML>=6.2.0
+openpyxl>=3.1.0
+numpy>=1.24.0
+python-dotenv>=1.0.0
+
+# ── Database & storage ────────────────────────────────────────────
+aiosqlite>=0.20.0
+
+# ── MCP (Model Context Protocol) ──────────────────────────────────
+mcp>=1.0.0
+
+# ── Auth ──────────────────────────────────────────────────────────
+bcrypt>=4.2.0
+pyjwt>=2.9.0
+
+# ── Rate limiting ─────────────────────────────────────────────────
+slowapi>=0.1.9
+
+# ── HTML / document parsing ───────────────────────────────────────
+beautifulsoup4>=4.12.0
+lxml>=5.0.0
+
+# ── Dev & test ────────────────────────────────────────────────────
+pytest>=8.3.0

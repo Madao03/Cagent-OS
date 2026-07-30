@@ -35,6 +35,7 @@ from cagent_os.conversations.repository import InMemoryConversationRepository
 from cagent_os.conversations.service import ConversationService
 from cagent_os.conversations.sqlite_store import SqliteConversationRepository
 from cagent_os.config import get_settings
+from cagent_os.config.cost_tracker import CostTracker
 from cagent_os.data_layer import DataLayer
 from cagent_os.auth import InvitationCodeStore, UserStore
 from cagent_os.data_layer.adapters.fred_adapter import FredAdapter
@@ -214,6 +215,7 @@ def create_app() -> FastAPI:
         capability_executor=executor,
         settings=settings,
         memory_api=memory_store,
+        cost_tracker=CostTracker(db_path=str(_project_root / "data" / "cost_tracker.db")),
     )
 
     app = FastAPI(
@@ -378,13 +380,32 @@ def create_app() -> FastAPI:
                 return RedirectResponse(url="/static/pages/knowledge.html")
             return RedirectResponse(url="/")
 
+        @app.get("/welcome")
+        async def serve_welcome():
+            p = static_dir / "pages" / "welcome.html"
+            if p.exists():
+                return FileResponse(str(p))
+            return RedirectResponse(url="/")
+
+        @app.get("/onboard")
+        async def serve_onboard():
+            p = static_dir / "pages" / "onboard.html"
+            if p.exists():
+                return FileResponse(str(p))
+            return RedirectResponse(url="/")
+
         @app.get("/login")
         async def serve_login():
-            # Prefer a dedicated login page if present; else fall back to chat.
-            # Frontend will intercept unauthenticated users and redirect to /login.
             login_page = static_dir / "pages" / "login.html"
             if login_page.exists():
                 return FileResponse(str(login_page))
+            return RedirectResponse(url="/")
+
+        @app.get("/about")
+        async def serve_about():
+            p = static_dir / "pages" / "about.html"
+            if p.exists():
+                return FileResponse(str(p))
             return RedirectResponse(url="/")
 
         @app.get("/legacy")
@@ -404,6 +425,7 @@ def create_app() -> FastAPI:
             run_engine=run_engine,
             conversation_service=conversation_service,
             user_skill_service=user_skill_service,
+            cost_tracker=run_engine._cost_tracker if hasattr(run_engine, '_cost_tracker') else None,
         )
     )
 
@@ -448,5 +470,16 @@ def create_app() -> FastAPI:
     # Phase A: Memory management (agent_notes + user_profile)
     from cagent_os.interfaces.http.routes_memory import build_memory_router
     app.include_router(build_memory_router(memory_store))
+
+    # Phase 4c+: User profile (investment focus, free text)
+    from cagent_os.interfaces.http.routes_profile import build_profile_router
+    profiles_dir = _project_root / "data" / "profiles"
+    app.include_router(build_profile_router(profiles_dir))
+
+    # Phase 4c+: cost tracking status
+    from cagent_os.interfaces.http.routes_cost import build_cost_router
+    _cost_tracker = run_engine._cost_tracker if hasattr(run_engine, '_cost_tracker') else None
+    if _cost_tracker is not None:
+        app.include_router(build_cost_router(_cost_tracker))
 
     return app

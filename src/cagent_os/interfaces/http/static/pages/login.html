@@ -272,7 +272,7 @@
         Auth.setCachedUser(data.user);
         succEl.textContent = `${mode === "register" ? "注册" : "登录"}成功,正在跳转…`;
         const params = new URLSearchParams(window.location.search);
-        const next = params.get("next") || "/";
+        const next = params.get("next") || (mode === "register" ? "/welcome" : "/");
         setTimeout(() => { window.location.href = next; }, 300);
       } catch (err) {
         errEl.textContent = String(err);

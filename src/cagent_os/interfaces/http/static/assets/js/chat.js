@@ -347,6 +347,7 @@
     let inUl = false;
     let inOl = false;
     let inBq = false;
+    let inDerivations = false;
     const closeUl = () => { if (inUl) { html += "</ul>"; inUl = false; } };
     const closeOl = () => { if (inOl) { html += "</ol>"; inOl = false; } };
     const closeBq = () => { if (inBq) { html += "</blockquote>"; inBq = false; } };
@@ -371,6 +372,19 @@
 
       const coded = _processInline(line);
       const raw = line.trim();
+
+      // ★ [derivations] block → collapsible details
+      if (raw === "[derivations]" || raw.startsWith("[derivations]")) {
+        closeAllBlocks();
+        inDerivations = true;
+        html += '<details class="chat-md-derivations"><summary>查看计算过程</summary>';
+        continue;
+      }
+      if (raw === "[/derivations]" || raw.startsWith("[/derivations]")) {
+        if (inDerivations) { html += '</details>'; inDerivations = false; }
+        continue;
+      }
+      if (inDerivations) { html += `<p>${coded}</p>`; continue; }
 
       if (/^###\s+/.test(coded)) {
         closeAllBlocks();
@@ -413,6 +427,7 @@
   // ───────────────────────────────────────────────────────────────
 
   let isSending = false;
+  let _firstAssistantDone = false;  // Track first answer for disclaimer injection
 
   async function sendMessage(text) {
     if (isSending || !text.trim()) return;
@@ -506,6 +521,14 @@
           // Stream complete
           if (!answerBuffer) {
             shell.content.innerHTML = '<em style="color: var(--text-tertiary);">(无返回内容)</em>';
+          }
+          // ★ First assistant message per session: inject disclaimer
+          if (!_firstAssistantDone) {
+            _firstAssistantDone = true;
+            const disc = document.createElement("div");
+            disc.className = "chat-disclaimer";
+            disc.textContent = "内容由 AI 生成，不构成投资建议。数据请自行核实。";
+            shell.root.appendChild(disc);
           }
         }
       );
@@ -1325,12 +1348,29 @@
 
     wireInput();
     wireNewConversation();
-    // Load conversation history into the sidebar — await so errors surface
+    // Load conversation history into the sidebar
     try {
       await loadConversationList();
     } catch (err) {
       console.warn("[chat.js] loadConversationList failed:", err);
     }
+
+    // ★ Auto-submit pending query from welcome page
+    const urlParams = new URLSearchParams(window.location.search);
+    const pendingQ = urlParams.get("q") || sessionStorage.getItem("cagentos_pending_query");
+    if (pendingQ) {
+      sessionStorage.removeItem("cagentos_pending_query");
+      // Clean URL
+      if (window.history.replaceState) {
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+      const textarea = document.querySelector(".chat-input");
+      if (textarea) {
+        textarea.value = pendingQ;
+        setTimeout(() => sendMessage(pendingQ), 500);
+      }
+    }
+
     console.info("[chat.js] wired up as user:", user.email, "conv:", CONVERSATION_ID);
   }
 

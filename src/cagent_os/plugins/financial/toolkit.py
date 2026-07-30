@@ -200,10 +200,19 @@ class FinancialToolkit:
             elif not items:
                 items = yf_items
 
+        # ── Tier 3: akshare US stock daily fallback ──
+        # When yfinance is rate-limited, akshare can still fetch US stock
+        # daily OHLCV via Sina Finance. Only price/close is available.
+        if not _has_meaningful_quotes(items):
+            ak_items = self._fetch_akshare_us_quotes(tickers)
+            if _has_meaningful_quotes(ak_items):
+                items = ak_items
+                data_source = "akshare_us_fallback"
+
         if not _has_meaningful_quotes(items):
             return _error(
                 "finance_empty_result",
-                "Finance request returned no valid quote prices from any source (MCP + yfinance).",
+                "Finance request returned no valid quote prices from any source (MCP + yfinance + akshare).",
                 started,
             )
 
@@ -254,6 +263,54 @@ class FinancialToolkit:
             except Exception:
                 logger.debug("yfinance quote fetch failed for %s", sym, exc_info=True)
                 items.append({"symbol": sym, "error": "yfinance fetch failed"})
+        return items
+
+    def _fetch_akshare_us_quotes(self, tickers: list[str]) -> list[dict[str, Any]]:
+        """Tier 3 fallback: US stock quotes via akshare (Sina Finance US).
+
+        Called when both fin-skill MCP and yfinance fail (e.g. yfinance
+        rate-limited). Only provides daily close price — no intraday,
+        no PE/PB/market_cap. The returned price is the previous trading
+        day's close (US market hours may not have completed yet).
+
+        Non-US tickers (A-shares with digits, HK .HK suffix, crypto -USD)
+        are skipped — this fallback is US equity only.
+        """
+        import re
+
+        items: list[dict[str, Any]] = []
+        for sym in tickers:
+            sym_upper = sym.upper()
+            # Skip non-US tickers: A-shares (contain digits), HK (.HK), crypto (-USD), indices (^)
+            if re.search(r"\d", sym_upper) or ".HK" in sym_upper or "-USD" in sym_upper or sym_upper.startswith("^"):
+                items.append({"symbol": sym, "error": "akshare_us_skip: not a US equity ticker"})
+                continue
+            try:
+                import akshare as ak
+                df = ak.stock_us_daily(symbol=sym_upper, adjust="qfq")
+                if df is None or len(df) == 0:
+                    items.append({"symbol": sym, "error": "akshare_us: no data"})
+                    continue
+                last = df.iloc[-1]
+                close = float(last.get("close", 0))
+                if close == 0:
+                    items.append({"symbol": sym, "error": "akshare_us: zero price"})
+                    continue
+                date_str = str(last.get("date", ""))
+                items.append({
+                    "symbol": sym_upper,
+                    "price": close,
+                    "previous_close": close,
+                    "currency": "USD",
+                    "name": sym_upper,
+                    "exchange": "US",
+                    "price_as_of": date_str,
+                    "source_note": "akshare US daily (previous close, not intraday)",
+                })
+                logger.info("akshare US fallback quote OK: %s $%.2f (%s)", sym_upper, close, date_str)
+            except Exception as exc:
+                logger.debug("akshare US fallback failed for %s: %s", sym, exc)
+                items.append({"symbol": sym, "error": f"akshare_us: {exc}"})
         return items
 
     # ------------------------------------------------------------------

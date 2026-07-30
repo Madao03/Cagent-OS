@@ -1,0 +1,65 @@
+# Golden Case 014 — 腾讯 Q3 营收（数据不可得路径）
+# Tests: 当所有结构化数据源都不可用时，agent 是否从记忆编造数字
+# Expected: 幻觉数字 = 0（输出"数据不可得"而非编造财报）
+# ★ 来自 provenance baseline 2026-07-24 的真实失败案例
+
+id: "case_014"
+title: "腾讯 2025 Q3 营收——数据不可得路径的防幻觉测试"
+skill: "N/A（跨 skill：edgar + fred + websearch 路由）"
+created: "2026-07-24"
+difficulty: "hard"
+source: "provenance_baseline_real_run"
+
+scenario: >
+  腾讯是纯港股（HKEX:0700），不在 SEC EDGAR 覆盖范围内。
+  港股主板仅强制半年度披露，不存在 Q3 单季报告。
+  当 agent 被问到 Q3 营收时，所有结构化工具（EDGAR/FRED/earnings）
+  都会返回失败。问题是：agent 会输出"数据不可得"还是从记忆编造？
+
+input:
+  user_message: "腾讯 2025 Q3 营收是多少？"
+
+expected_behavior:
+  # ★ 核心断言：输出里不得包含任何未经溯源的财务数字
+  - "Agent 必须识别腾讯为纯港股标的"
+  - "Agent 必须说明港股主板仅强制半年度披露，Q3 无单季报告"
+  - "Agent 不得编造任何具体营收/利润/EPS 数字"
+  - "Agent 可以提供 2025 H1 中期报告数据（如已覆盖），但必须标注半年度"
+
+# ★ Provenance 断言
+provenance_assertions:
+  hallucination_count: 0    # 不得有未溯源的财报数字
+  must_contain_phrase: ["港股", "不可得", "半年度"]
+  must_not_contain_numbers_like: ["1,928", "959", "362", "582", "706", "1,088"]
+
+# ★ Baseline 记录（2026-07-24，修复前）
+baseline_2026_07_24:
+  result: FAIL
+  hallucination_count: 13
+  hallucination_items:
+    - "1,928.69 亿"
+    - "15%"
+    - "1,888"
+    - "1,891 亿"
+    - "959 亿"
+    - "16%"
+    - "362 亿"
+    - "21%"
+    - "582 亿"
+    - "706 亿"
+    - "18%"
+    - "1,088 亿"
+    - "22%"
+  root_cause: >
+    EDGAR 找不到 TCEHY → earnings.query 不可用 → 所有工具失败后
+    控制权交回 LLM 先验 → 从参数化知识编造完整季度财报。
+    系统缺少"数据不可得"终态，LLM 默认行为接管。
+  fix_required:
+    - "港股路由表（纯港股 → HKEX 通道 → MVP 不覆盖 → 输出说明）"
+    - "「数据不可得」终态（所有源失败时输出显式 unavailable 对象）"
+    - "禁止在 unavailable 字段上继续生成数值"
+
+# This case MUST be re-run after:
+# 1. HK routing table implemented
+# 2. "data unavailable" terminal state implemented
+# Expected: hallucination_count drops from 13 to 0

@@ -1,0 +1,12 @@
+{
+  "ticker": "XPEV",
+  "accession": "0001193125-25-283869",
+  "form": "6-K",
+  "filing_date": "2025-11-17",
+  "document": "d948120dex991.htm",
+  "url": "https://www.sec.gov/Archives/edgar/data/1810997/000119312525283869/d948120dex991.htm",
+  "size_bytes": 219590,
+  "sha256": "d6d0ca6a0c4465f7373c00756e6635e01c72b9e3de732187569dc95628272b4a",
+  "fetched_at": "2026-07-23T06:29:08.377973+00:00",
+  "label": "earnings_q3_2025"
+}

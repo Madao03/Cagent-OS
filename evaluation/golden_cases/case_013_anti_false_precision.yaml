@@ -32,7 +32,7 @@ expected:
     - "数据标注了时间戳和来源"
 
   must_use_tools:
-    - "financial.earnings.query" 或 "financial.websearch" 查分析师共识
+    - "financial.earnings.query 或 financial.websearch 查分析师共识"
     - "Skill(skill=us-stock-analysis)"
 
   must_not_do:

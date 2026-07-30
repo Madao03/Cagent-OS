@@ -1,73 +1,157 @@
 {
-  "timestamp": "2026-07-03T23:58:27.202176",
-  "total": 11,
-  "passed": 10,
+  "timestamp": "2026-07-29T01:24:00.544756",
+  "total": 25,
+  "passed": 23,
   "results": [
     {
       "name": "health:yfinance",
       "passed": true,
       "detail": "up",
-      "time": "2026-07-03T23:58:23.726791"
+      "time": "2026-07-29T01:23:49.904850"
     },
     {
       "name": "health:fred",
       "passed": true,
       "detail": "up",
-      "time": "2026-07-03T23:58:23.726791"
+      "time": "2026-07-29T01:23:49.904850"
     },
     {
       "name": "health:akshare-stock",
       "passed": true,
       "detail": "up",
-      "time": "2026-07-03T23:58:23.726791"
+      "time": "2026-07-29T01:23:49.905859"
     },
     {
       "name": "health:akshare-futures",
       "passed": true,
       "detail": "up",
-      "time": "2026-07-03T23:58:23.726791"
+      "time": "2026-07-29T01:23:49.905859"
     },
     {
-      "name": "fred:fed_funds",
+      "name": "health:akshare-financials",
       "passed": true,
-      "detail": "3.63% (2026-06-01)",
-      "time": "2026-07-03T23:58:24.760412"
+      "detail": "up",
+      "time": "2026-07-29T01:23:49.905859"
     },
     {
-      "name": "yfinance:AAPL_fwd_pe",
+      "name": "health:edgar",
+      "passed": true,
+      "detail": "up",
+      "time": "2026-07-29T01:23:49.905859"
+    },
+    {
+      "name": "health:coinmetrics",
+      "passed": true,
+      "detail": "up",
+      "time": "2026-07-29T01:23:49.905859"
+    },
+    {
+      "name": "health:binance_derivatives",
+      "passed": true,
+      "detail": "up",
+      "time": "2026-07-29T01:23:49.905859"
+    },
+    {
+      "name": "health:defillama",
+      "passed": true,
+      "detail": "up",
+      "time": "2026-07-29T01:23:49.905859"
+    },
+    {
+      "name": "health:fear_greed",
+      "passed": true,
+      "detail": "up",
+      "time": "2026-07-29T01:23:49.905859"
+    },
+    {
+      "name": "fetch:yfinance/AAPL_fwd_pe",
       "passed": false,
       "detail": "None",
-      "time": "2026-07-03T23:58:26.525138"
+      "time": "2026-07-29T01:23:51.941986"
     },
     {
-      "name": "akshare:A股茅台",
+      "name": "fetch:fred/unemployment_rate",
       "passed": true,
-      "detail": "¥1194.45",
-      "time": "2026-07-03T23:58:27.019766"
+      "detail": "4.2%",
+      "time": "2026-07-29T01:23:52.666783"
     },
     {
-      "name": "akshare:螺纹钢",
+      "name": "fetch:akshare-stock/600519",
+      "passed": true,
+      "detail": "¥1320.0",
+      "time": "2026-07-29T01:23:53.059951"
+    },
+    {
+      "name": "fetch:akshare-futures/RB0",
       "passed": true,
       "detail": "¥3062.0",
-      "time": "2026-07-03T23:58:27.201176"
+      "time": "2026-07-29T01:23:53.324531"
+    },
+    {
+      "name": "fetch:akshare-financials/600519_bs",
+      "passed": true,
+      "detail": "102 items",
+      "time": "2026-07-29T01:23:54.362226"
+    },
+    {
+      "name": "fetch:edgar/AAPL_revenue",
+      "passed": true,
+      "detail": "416,161,000,000.0",
+      "time": "2026-07-29T01:23:55.872568"
+    },
+    {
+      "name": "fetch:coinmetrics/BTC_mvrv",
+      "passed": true,
+      "detail": "{'asset': 'BTC', 'fetched_at': '2026-07-29T08:23:57.282715+00:00', 'source': 'coinmetrics_community'",
+      "time": "2026-07-29T01:23:57.283730"
+    },
+    {
+      "name": "fetch:binance_derivatives/BTC_funding",
+      "passed": true,
+      "detail": "{'symbol': 'BTCUSDT', 'fetched_at': '2026-07-29T08:23:57.821033+00:00', 'source': 'binance_futures',",
+      "time": "2026-07-29T01:23:57.821033"
+    },
+    {
+      "name": "fetch:defillama/global_tvl",
+      "passed": false,
+      "detail": "None",
+      "time": "2026-07-29T01:23:57.822563"
+    },
+    {
+      "name": "fetch:fear_greed/index",
+      "passed": true,
+      "detail": "29/Fear",
+      "time": "2026-07-29T01:23:58.930894"
+    },
+    {
+      "name": "panews:rankings",
+      "passed": true,
+      "detail": "OK (0 articles)",
+      "time": "2026-07-29T01:24:00.509938"
+    },
+    {
+      "name": "rag:status",
+      "passed": true,
+      "detail": "chunks=1491, model=Qwen/Qwen3-Embedding-8B",
+      "time": "2026-07-29T01:24:00.541671"
     },
     {
       "name": "cases:total",
       "passed": true,
       "detail": "13 cases",
-      "time": "2026-07-03T23:58:27.201176"
+      "time": "2026-07-29T01:24:00.543200"
     },
     {
       "name": "cases:scenarios",
       "passed": true,
       "detail": "13 scenarios",
-      "time": "2026-07-03T23:58:27.201176"
+      "time": "2026-07-29T01:24:00.543200"
     },
     {
       "name": "cases:priorities",
       "passed": true,
       "detail": "all P0 or P1",
-      "time": "2026-07-03T23:58:27.201176"
+      "time": "2026-07-29T01:24:00.543739"
     }
   ]
 }

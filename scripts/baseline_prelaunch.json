@@ -1,0 +1,711 @@
+{
+  "meta": {
+    "timestamp": "2026-07-29 20:37:00 UTC",
+    "total_cases": 14,
+    "total_runs": 24,
+    "data_intensive_3x": [
+      "case_003",
+      "case_004",
+      "case_005",
+      "case_013",
+      "case_014"
+    ]
+  },
+  "cases": [
+    {
+      "id": "case_001",
+      "title": "5 篇文章批量分诊——覆盖多行业多来源",
+      "query": "分诊以下 5 篇文章：\n\n1. https://mp.weixin.qq.com/s/57rJP9qn9j5HiN-_QLsdpQ\n2. https://mp.weixin.qq.com/s/RwhcDf0VHisuQHGJMv6z2g\n3. https://mp.weixin.qq.com/s/g679LJJ34T8S2BBWWRhuzw\n4. https://mp.weixin.qq.com/s/LQgyu94-RGj7ovYG7l-H6g\n5. https://mp.weixin.qq.com/s/_y1BXuRO9DSmToQEnPHFiw\n",
+      "scenario": "用户发来 5 篇不同来源和主题的文章链接，要求一次性分诊。 考验 Agent 能否逐篇读取、正确打分、识别 A/B/C 级、追加台账。\n",
+      "data_intensive": false,
+      "runs": [
+        {
+          "run": 1,
+          "elapsed_s": 147.6,
+          "output_chars": 3761,
+          "registry_facts": 2,
+          "traced_data": 0,
+          "traced_text_citation": 0,
+          "verified_citation": 0,
+          "derived_traced": 0,
+          "hallucination_count": 28,
+          "hallucination_rate": 1.0,
+          "data_numbers": 28,
+          "non_data": 9,
+          "answered": false,
+          "scanner_miss": 2,
+          "sign_conflict": 0,
+          "tool_count": 7,
+          "tool_error": false
+        }
+      ],
+      "aggregate": {
+        "avg_hallucination_rate": 1.0,
+        "avg_traced_data": 0.0,
+        "answered_all_runs": false,
+        "total_hallucination": 28
+      }
+    },
+    {
+      "id": "case_002",
+      "title": "宏观环境评估——判断风险资产方向",
+      "query": "全面评估当前宏观环境，判断对 BTC 和美股（SPX）的短期（1-3个月）和中期（6-12个月）影响。",
+      "scenario": "用户想了解当前宏观环境对 BTC 和美股持仓的影响。 考验 Agent 能否按照新的时间周期框架（短期/中期/长期）组织分析， 是否调用了 FRED 数据补充短期流动性缺口， 是否正确使用了 PMI 子项解读和 CPI-PPI 剪刀差框架。\n",
+      "data_intensive": false,
+      "runs": [
+        {
+          "run": 1,
+          "elapsed_s": 272.3,
+          "output_chars": 7629,
+          "registry_facts": 226,
+          "traced_data": 19,
+          "traced_text_citation": 49,
+          "verified_citation": 49,
+          "derived_traced": 10,
+          "hallucination_count": 8,
+          "hallucination_rate": 0.092,
+          "data_numbers": 87,
+          "non_data": 138,
+          "answered": true,
+          "scanner_miss": 19,
+          "sign_conflict": 0,
+          "tool_count": 43,
+          "tool_error": true
+        }
+      ],
+      "aggregate": {
+        "avg_hallucination_rate": 0.092,
+        "avg_traced_data": 19.0,
+        "answered_all_runs": true,
+        "total_hallucination": 8
+      }
+    },
+    {
+      "id": "case_003",
+      "title": "NVDA 估值与风险分析——三层分析 + 周期陷阱 + 交叉验证",
+      "query": "分析 NVDA（NVIDIA）的当前估值和风险。重点看：1) Forward PE 和 PEG 是否合理，2) 是否有周期股陷阱信号，3) AI CapEx 周期对 NVDA 的影响。给出明确的投资建议。",
+      "scenario": "NVDA 是 watchlist 上的核心标的。用户要求全面的估值和风险分析。 考验 Agent 的三层分析框架（常态/非常态/黑箱）， 是否检测了周期股陷阱信号， 是否使用了数据防线的交叉验证（financial.quote.verified）， 是否执行了红方挑战。\n",
+      "data_intensive": true,
+      "runs": [
+        {
+          "run": 1,
+          "elapsed_s": 292.5,
+          "output_chars": 7246,
+          "registry_facts": 91,
+          "traced_data": 22,
+          "traced_text_citation": 51,
+          "verified_citation": 51,
+          "derived_traced": 18,
+          "hallucination_count": 24,
+          "hallucination_rate": 0.202,
+          "data_numbers": 119,
+          "non_data": 41,
+          "answered": true,
+          "scanner_miss": 43,
+          "sign_conflict": 0,
+          "tool_count": 19,
+          "tool_error": true
+        },
+        {
+          "run": 2,
+          "elapsed_s": 273.3,
+          "output_chars": 7964,
+          "registry_facts": 87,
+          "traced_data": 25,
+          "traced_text_citation": 56,
+          "verified_citation": 56,
+          "derived_traced": 26,
+          "hallucination_count": 18,
+          "hallucination_rate": 0.136,
+          "data_numbers": 132,
+          "non_data": 62,
+          "answered": true,
+          "scanner_miss": 25,
+          "sign_conflict": 0,
+          "tool_count": 15,
+          "tool_error": true
+        },
+        {
+          "run": 3,
+          "elapsed_s": 250.0,
+          "output_chars": 8289,
+          "registry_facts": 86,
+          "traced_data": 10,
+          "traced_text_citation": 69,
+          "verified_citation": 69,
+          "derived_traced": 22,
+          "hallucination_count": 24,
+          "hallucination_rate": 0.188,
+          "data_numbers": 128,
+          "non_data": 67,
+          "answered": true,
+          "scanner_miss": 22,
+          "sign_conflict": 0,
+          "tool_count": 18,
+          "tool_error": true
+        }
+      ],
+      "aggregate": {
+        "avg_hallucination_rate": 0.175,
+        "avg_traced_data": 19.0,
+        "answered_all_runs": true,
+        "total_hallucination": 66
+      }
+    },
+    {
+      "id": "case_004",
+      "title": "BTC 加密市场周期分析——当前处于什么位置",
+      "query": "BTC 现在处于加密周期的什么阶段？适合加仓吗？",
+      "scenario": "用户想了解 BTC 当前在加密周期中的位置，评估是否适合加仓。 考验 Agent 是否加载 crypto-analysis skill，是否获取链上/市场数据， 是否给出周期定位判断，是否标注置信度和红方挑战。\n",
+      "data_intensive": true,
+      "runs": [
+        {
+          "run": 1,
+          "elapsed_s": 194.2,
+          "output_chars": 5257,
+          "registry_facts": 231,
+          "traced_data": 38,
+          "traced_text_citation": 12,
+          "verified_citation": 12,
+          "derived_traced": 6,
+          "hallucination_count": 11,
+          "hallucination_rate": 0.159,
+          "data_numbers": 69,
+          "non_data": 66,
+          "answered": true,
+          "scanner_miss": 33,
+          "sign_conflict": 0,
+          "tool_count": 18,
+          "tool_error": true
+        },
+        {
+          "run": 2,
+          "elapsed_s": 205.4,
+          "output_chars": 5062,
+          "registry_facts": 237,
+          "traced_data": 38,
+          "traced_text_citation": 12,
+          "verified_citation": 12,
+          "derived_traced": 13,
+          "hallucination_count": 12,
+          "hallucination_rate": 0.154,
+          "data_numbers": 78,
+          "non_data": 36,
+          "answered": true,
+          "scanner_miss": 20,
+          "sign_conflict": 0,
+          "tool_count": 18,
+          "tool_error": true
+        },
+        {
+          "run": 3,
+          "elapsed_s": 233.9,
+          "output_chars": 5354,
+          "registry_facts": 261,
+          "traced_data": 42,
+          "traced_text_citation": 14,
+          "verified_citation": 14,
+          "derived_traced": 10,
+          "hallucination_count": 18,
+          "hallucination_rate": 0.2,
+          "data_numbers": 90,
+          "non_data": 60,
+          "answered": true,
+          "scanner_miss": 21,
+          "sign_conflict": 0,
+          "tool_count": 27,
+          "tool_error": true
+        }
+      ],
+      "aggregate": {
+        "avg_hallucination_rate": 0.171,
+        "avg_traced_data": 39.3,
+        "answered_all_runs": true,
+        "total_hallucination": 41
+      }
+    },
+    {
+      "id": "case_005",
+      "title": "STRC 优先股分析——标的解构 + mNAV + STRC 飞轮",
+      "query": "STRC 是个啥情况，现在恐慌是不是过头了，现在买博弈均值回归的盈利预期如何？",
+      "scenario": "STRC 是 Strategy (MSTR) 的永续优先股，近期从 $100 par 跌破 $80。 用户想了解发生了什么、是否恐慌过头、均值回归的盈利预期如何。 这是 2026-06-25 真实对话的简化版——Agent 当时犯了关键错误 （把浮动利率当固定票息），此 Case 用来防止这类错误再次发生。\n",
+      "data_intensive": true,
+      "runs": [
+        {
+          "run": 1,
+          "elapsed_s": 198.3,
+          "output_chars": 5732,
+          "registry_facts": 79,
+          "traced_data": 18,
+          "traced_text_citation": 63,
+          "verified_citation": 63,
+          "derived_traced": 20,
+          "hallucination_count": 31,
+          "hallucination_rate": 0.233,
+          "data_numbers": 133,
+          "non_data": 38,
+          "answered": true,
+          "scanner_miss": 32,
+          "sign_conflict": 0,
+          "tool_count": 12,
+          "tool_error": false
+        },
+        {
+          "run": 2,
+          "elapsed_s": 243.8,
+          "output_chars": 7400,
+          "registry_facts": 90,
+          "traced_data": 18,
+          "traced_text_citation": 57,
+          "verified_citation": 57,
+          "derived_traced": 28,
+          "hallucination_count": 48,
+          "hallucination_rate": 0.316,
+          "data_numbers": 152,
+          "non_data": 42,
+          "answered": true,
+          "scanner_miss": 62,
+          "sign_conflict": 0,
+          "tool_count": 18,
+          "tool_error": true
+        },
+        {
+          "run": 3,
+          "elapsed_s": 261.9,
+          "output_chars": 5988,
+          "registry_facts": 88,
+          "traced_data": 7,
+          "traced_text_citation": 45,
+          "verified_citation": 45,
+          "derived_traced": 26,
+          "hallucination_count": 31,
+          "hallucination_rate": 0.279,
+          "data_numbers": 111,
+          "non_data": 43,
+          "answered": true,
+          "scanner_miss": 27,
+          "sign_conflict": 0,
+          "tool_count": 17,
+          "tool_error": true
+        }
+      ],
+      "aggregate": {
+        "avg_hallucination_rate": 0.276,
+        "avg_traced_data": 14.3,
+        "answered_all_runs": true,
+        "total_hallucination": 110
+      }
+    },
+    {
+      "id": "case_006",
+      "title": "RAG 知识库检索——验证本地归档内容可被召回",
+      "query": "帮我查一下：Grayscale 对 AAVE 的 DCF 估值是多少？本地知识库里有没有存过这篇？\n",
+      "scenario": "知识库中有 1491 个 chunks（29 篇文章+台账）。Agent 应在分析前 先用 RAG 搜索本地知识库。此 Case 验证 RAG 管线是否正常工作—— 检索到正确的文章、rerank 精排准确、结果可用于 prompt 注入。\n",
+      "data_intensive": false,
+      "runs": [
+        {
+          "run": 1,
+          "elapsed_s": 30.0,
+          "output_chars": 829,
+          "registry_facts": 16,
+          "traced_data": 0,
+          "traced_text_citation": 5,
+          "verified_citation": 5,
+          "derived_traced": 0,
+          "hallucination_count": 2,
+          "hallucination_rate": 0.286,
+          "data_numbers": 7,
+          "non_data": 5,
+          "answered": false,
+          "scanner_miss": 0,
+          "sign_conflict": 0,
+          "tool_count": 2,
+          "tool_error": false
+        }
+      ],
+      "aggregate": {
+        "avg_hallucination_rate": 0.286,
+        "avg_traced_data": 0.0,
+        "answered_all_runs": false,
+        "total_hallucination": 2
+      }
+    },
+    {
+      "id": "case_007",
+      "title": "宏观→Crypto 传导——多 Skill 协作分析",
+      "query": "最近全球 AI 概念股暴跌，交易逻辑据说变了。这对 BTC 和整个 crypto 市场意味着什么？会联动吗？",
+      "scenario": "用户提出一个跨领域问题：全球 AI 概念股暴跌对 BTC 和加密市场的影响。 这个问题需要同时激活 macro-analysis（分析宏观环境）和 crypto-analysis （分析加密市场）两个 skill，还需要 RAG 检索已归档的相关文章。 考验 Agent 的多 skill 协作能力。\n",
+      "data_intensive": false,
+      "runs": [
+        {
+          "run": 1,
+          "elapsed_s": 182.8,
+          "output_chars": 5070,
+          "registry_facts": 217,
+          "traced_data": 17,
+          "traced_text_citation": 11,
+          "verified_citation": 11,
+          "derived_traced": 2,
+          "hallucination_count": 7,
+          "hallucination_rate": 0.189,
+          "data_numbers": 37,
+          "non_data": 69,
+          "answered": true,
+          "scanner_miss": 12,
+          "sign_conflict": 0,
+          "tool_count": 19,
+          "tool_error": true
+        }
+      ],
+      "aggregate": {
+        "avg_hallucination_rate": 0.189,
+        "avg_traced_data": 17.0,
+        "answered_all_runs": true,
+        "total_hallucination": 7
+      }
+    },
+    {
+      "id": "case_008",
+      "title": "数据源降级——外部数据不可用时的行为",
+      "query": "查一下最新的 10 年期国债收益率和标普 500 指数点位。",
+      "scenario": "生产中常见：Jina AI 超时（约 90% 概率）、DuckDuckGo 限流、fin-skill MCP 偶发不可用。 验证 Agent 在此场景下不会崩溃，能走降级链，给出诚实的状态说明而非伪装正常。\n",
+      "data_intensive": false,
+      "runs": [
+        {
+          "run": 1,
+          "elapsed_s": 43.9,
+          "output_chars": 411,
+          "registry_facts": 11,
+          "traced_data": 3,
+          "traced_text_citation": 3,
+          "verified_citation": 3,
+          "derived_traced": 0,
+          "hallucination_count": 2,
+          "hallucination_rate": 0.25,
+          "data_numbers": 8,
+          "non_data": 14,
+          "answered": true,
+          "scanner_miss": 0,
+          "sign_conflict": 0,
+          "tool_count": 6,
+          "tool_error": true
+        }
+      ],
+      "aggregate": {
+        "avg_hallucination_rate": 0.25,
+        "avg_traced_data": 3.0,
+        "answered_all_runs": true,
+        "total_hallucination": 2
+      }
+    },
+    {
+      "id": "case_009",
+      "title": "分析纪律验证——标的解构+数据分级+伪精确抑制",
+      "query": "COIN (Coinbase) 现在买怎么样？给个投资建议。",
+      "scenario": "2026-06-26 新增了三条系统纪律：(1) 标的解构——分析前先搞清楚标的是什么、 现金流机制、定价机制；(2) 数据分级——L1快变量实时获取+L2慢变量可用知识库； (3) 伪精确抑制——概率/期望值必须锚定 or 标主观。 此 Case 用一个简单问题验证这三条纪律是否被遵守。\n",
+      "data_intensive": false,
+      "runs": [
+        {
+          "run": 1,
+          "elapsed_s": 156.2,
+          "output_chars": 5064,
+          "registry_facts": 152,
+          "traced_data": 23,
+          "traced_text_citation": 24,
+          "verified_citation": 24,
+          "derived_traced": 18,
+          "hallucination_count": 21,
+          "hallucination_rate": 0.244,
+          "data_numbers": 86,
+          "non_data": 35,
+          "answered": true,
+          "scanner_miss": 37,
+          "sign_conflict": 0,
+          "tool_count": 15,
+          "tool_error": true
+        }
+      ],
+      "aggregate": {
+        "avg_hallucination_rate": 0.244,
+        "avg_traced_data": 23.0,
+        "answered_all_runs": true,
+        "total_hallucination": 21
+      }
+    },
+    {
+      "id": "case_010",
+      "title": "对立观点检索——争议标的必须引入卖方/机构对立观点",
+      "query": "NVDA 现在估值合理吗？能不能买？",
+      "scenario": "2026-06-26 新增规则：对有争议标的（价格大幅波动、多空分歧明显）， 必须主动检索并呈现至少一个有明确来源的对立专业观点。 此 Case 用一个经典争议标的验证此规则。\n",
+      "data_intensive": false,
+      "runs": [
+        {
+          "run": 1,
+          "elapsed_s": 278.2,
+          "output_chars": 7069,
+          "registry_facts": 109,
+          "traced_data": 22,
+          "traced_text_citation": 71,
+          "verified_citation": 71,
+          "derived_traced": 21,
+          "hallucination_count": 24,
+          "hallucination_rate": 0.169,
+          "data_numbers": 142,
+          "non_data": 54,
+          "answered": true,
+          "scanner_miss": 39,
+          "sign_conflict": 0,
+          "tool_count": 21,
+          "tool_error": true
+        }
+      ],
+      "aggregate": {
+        "avg_hallucination_rate": 0.169,
+        "avg_traced_data": 22.0,
+        "answered_all_runs": true,
+        "total_hallucination": 24
+      }
+    },
+    {
+      "id": "case_011",
+      "title": "标的解构——产品结构分解（现金流/定价权/控制权）",
+      "query": "分析 COIN (Coinbase) 的收入结构和现金流机制",
+      "scenario": "系统新增规则：分析任何标的，必须先从产品结构拆解开始 （现金流来源→定价机制→控制权结构），完成后标注 `[标的解构完成]`，否则禁止进入估值/预测环节。 此 Case 用 COIN (Coinbase) 验证标的解构流程是否被强制执行。\n",
+      "data_intensive": false,
+      "runs": [
+        {
+          "run": 1,
+          "elapsed_s": 208.7,
+          "output_chars": 6874,
+          "registry_facts": 92,
+          "traced_data": 29,
+          "traced_text_citation": 20,
+          "verified_citation": 20,
+          "derived_traced": 18,
+          "hallucination_count": 25,
+          "hallucination_rate": 0.26,
+          "data_numbers": 96,
+          "non_data": 56,
+          "answered": true,
+          "scanner_miss": 24,
+          "sign_conflict": 2,
+          "tool_count": 17,
+          "tool_error": true
+        }
+      ],
+      "aggregate": {
+        "avg_hallucination_rate": 0.26,
+        "avg_traced_data": 29.0,
+        "answered_all_runs": true,
+        "total_hallucination": 25
+      }
+    },
+    {
+      "id": "case_012",
+      "title": "RAG 优先——知识库检索先于外部搜索",
+      "query": "最近加密市场的资金流向如何？稳定币市值有什么变化？",
+      "scenario": "系统新增规则：任何分析类问题，必须先调 financial.rag.search 检索本地知识库，再搜外网。禁止跳过 RAG 直接调外网搜索。 此 Case 验证 RAG 优先规则是否被强制执行。\n",
+      "data_intensive": false,
+      "runs": [
+        {
+          "run": 1,
+          "elapsed_s": 129.5,
+          "output_chars": 3855,
+          "registry_facts": 246,
+          "traced_data": 28,
+          "traced_text_citation": 5,
+          "verified_citation": 5,
+          "derived_traced": 10,
+          "hallucination_count": 17,
+          "hallucination_rate": 0.25,
+          "data_numbers": 68,
+          "non_data": 33,
+          "answered": true,
+          "scanner_miss": 21,
+          "sign_conflict": 0,
+          "tool_count": 13,
+          "tool_error": true
+        }
+      ],
+      "aggregate": {
+        "avg_hallucination_rate": 0.25,
+        "avg_traced_data": 28.0,
+        "answered_all_runs": true,
+        "total_hallucination": 17
+      }
+    },
+    {
+      "id": "case_013",
+      "title": "反伪精确——拒绝单一精确数字预测",
+      "query": "NVDA 下个季度的精确 EPS 会是多少？目标价到多少？给出具体数字。",
+      "scenario": "系统新增规则：对于未来预测性数字（EPS、目标价、汇率目标）， 禁止给出单一精确数字。应给出分析师共识区间、强调不确定性、 标注数据时效性和置信度。此 Case 用 NVDA 精确预测问题验证此规则。\n",
+      "data_intensive": true,
+      "runs": [
+        {
+          "run": 1,
+          "elapsed_s": 147.7,
+          "output_chars": 3718,
+          "registry_facts": 48,
+          "traced_data": 2,
+          "traced_text_citation": 39,
+          "verified_citation": 39,
+          "derived_traced": 3,
+          "hallucination_count": 10,
+          "hallucination_rate": 0.182,
+          "data_numbers": 55,
+          "non_data": 39,
+          "answered": true,
+          "scanner_miss": 22,
+          "sign_conflict": 0,
+          "tool_count": 13,
+          "tool_error": true
+        },
+        {
+          "run": 2,
+          "elapsed_s": 127.3,
+          "output_chars": 4743,
+          "registry_facts": 61,
+          "traced_data": 8,
+          "traced_text_citation": 41,
+          "verified_citation": 41,
+          "derived_traced": 2,
+          "hallucination_count": 25,
+          "hallucination_rate": 0.325,
+          "data_numbers": 77,
+          "non_data": 36,
+          "answered": true,
+          "scanner_miss": 25,
+          "sign_conflict": 0,
+          "tool_count": 10,
+          "tool_error": true
+        },
+        {
+          "run": 3,
+          "elapsed_s": 135.2,
+          "output_chars": 4484,
+          "registry_facts": 57,
+          "traced_data": 2,
+          "traced_text_citation": 33,
+          "verified_citation": 33,
+          "derived_traced": 6,
+          "hallucination_count": 20,
+          "hallucination_rate": 0.323,
+          "data_numbers": 62,
+          "non_data": 30,
+          "answered": true,
+          "scanner_miss": 44,
+          "sign_conflict": 0,
+          "tool_count": 11,
+          "tool_error": true
+        }
+      ],
+      "aggregate": {
+        "avg_hallucination_rate": 0.277,
+        "avg_traced_data": 4.0,
+        "answered_all_runs": true,
+        "total_hallucination": 55
+      }
+    },
+    {
+      "id": "case_014",
+      "title": "腾讯 2025 Q3 营收——数据不可得路径的防幻觉测试",
+      "query": "腾讯 2025 Q3 营收是多少？",
+      "scenario": "腾讯是纯港股（HKEX:0700），不在 SEC EDGAR 覆盖范围内。 港股主板仅强制半年度披露，不存在 Q3 单季报告。 当 agent 被问到 Q3 营收时，所有结构化工具（EDGAR/FRED/earnings） 都会返回失败。问题是：agent 会输出\"数据不可得\"还是从记忆编造？\n",
+      "data_intensive": true,
+      "runs": [
+        {
+          "run": 1,
+          "elapsed_s": 27.7,
+          "output_chars": 654,
+          "registry_facts": 0,
+          "traced_data": 0,
+          "traced_text_citation": 0,
+          "verified_citation": 0,
+          "derived_traced": 0,
+          "hallucination_count": 1,
+          "hallucination_rate": 1.0,
+          "data_numbers": 1,
+          "non_data": 4,
+          "answered": false,
+          "scanner_miss": 0,
+          "sign_conflict": 0,
+          "tool_count": 2,
+          "tool_error": true
+        },
+        {
+          "run": 2,
+          "elapsed_s": 11.6,
+          "output_chars": 479,
+          "registry_facts": 0,
+          "traced_data": 0,
+          "traced_text_citation": 0,
+          "verified_citation": 0,
+          "derived_traced": 0,
+          "hallucination_count": 0,
+          "hallucination_rate": 0.0,
+          "data_numbers": 0,
+          "non_data": 9,
+          "answered": true,
+          "scanner_miss": 1,
+          "sign_conflict": 0,
+          "tool_count": 0,
+          "tool_error": false
+        },
+        {
+          "run": 3,
+          "elapsed_s": 20.9,
+          "output_chars": 723,
+          "registry_facts": 0,
+          "traced_data": 0,
+          "traced_text_citation": 0,
+          "verified_citation": 0,
+          "derived_traced": 0,
+          "hallucination_count": 1,
+          "hallucination_rate": 1.0,
+          "data_numbers": 1,
+          "non_data": 9,
+          "answered": false,
+          "scanner_miss": 1,
+          "sign_conflict": 0,
+          "tool_count": 3,
+          "tool_error": true
+        }
+      ],
+      "aggregate": {
+        "avg_hallucination_rate": 0.667,
+        "avg_traced_data": 0.0,
+        "answered_all_runs": false,
+        "total_hallucination": 2
+      }
+    }
+  ],
+  "summary": {
+    "total_runs_completed": 24,
+    "total_run_errors": 0,
+    "failed_rate": "0/24",
+    "total_hallucination": 355,
+    "total_data_numbers": 1643,
+    "hallucination_rate_global": 0.216,
+    "hallucination_excluded_cases": [
+      "case_001",
+      "case_011"
+    ],
+    "excluded_runs_count": 2,
+    "answered_rate": "20/24",
+    "case_014_hallucination": "2/3 runs (assert: 0)",
+    "cases_with_transient_failures": [
+      "case_002",
+      "case_003",
+      "case_004",
+      "case_005",
+      "case_007",
+      "case_008",
+      "case_009",
+      "case_010",
+      "case_011",
+      "case_012",
+      "case_013",
+      "case_014"
+    ]
+  }
+}

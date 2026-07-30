@@ -985,6 +985,7 @@ pre {
     .ds-tag--danger { background: var(--status-error-surface-l1); color: var(--status-error-default); }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <link rel="stylesheet" href="/static/assets/css/icons.css">
     <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
     <style type="text/tailwindcss">
   @theme inline {
@@ -1726,6 +1727,37 @@ pre {
     white-space: nowrap;
   }
   .chat-md-table td.num strong { color: var(--text-default); }
+
+  /* ── Derivations collapse ── */
+  .chat-md-derivations {
+    margin: var(--spacer-10) 0;
+    padding: var(--spacer-8) var(--spacer-12);
+    background: var(--bg-overlay-l1);
+    border-radius: var(--radius-6);
+    border: 1px solid var(--border-neutral-l1);
+    font-size: var(--body-sm-font-size);
+  }
+  .chat-md-derivations summary {
+    cursor: pointer;
+    color: var(--text-tertiary);
+    font-weight: var(--font-weight-medium);
+    user-select: none;
+  }
+  .chat-md-derivations p {
+    margin: var(--spacer-6) 0 0;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  /* ── Disclaimer ── */
+  .chat-disclaimer {
+    margin-top: var(--spacer-8);
+    padding-top: var(--spacer-6);
+    font-size: var(--body-xs-font-size);
+    color: var(--text-tertiary);
+    border-top: 1px dashed var(--border-neutral-l1);
+    font-style: italic;
+  }
 
   /* ── Horizontal rule ── */
   .chat-md-hr {
@@ -2612,11 +2644,12 @@ pre {
     const html = document.documentElement;
     let saved = null;
     try { saved = localStorage.getItem('cagentos-theme'); } catch(e) {}
-    if (saved === 'light') {
-      html.classList.remove('dark');
-    } else {
-      html.classList.add('dark');
-    }
+    let useDark;
+    if (saved === 'light') useDark = false;
+    else if (saved === 'dark') useDark = true;
+    else useDark = !window.matchMedia('(prefers-color-scheme: light)').matches;
+    if (useDark) { html.classList.add('dark'); html.classList.remove('light'); }
+    else { html.classList.remove('dark'); html.classList.add('light'); }
     const isDark = html.classList.contains('dark');
     const label = document.querySelector('.theme-toggle-label');
     if (label) label.textContent = isDark ? '亮色' : '深色';

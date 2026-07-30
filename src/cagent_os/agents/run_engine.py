@@ -66,6 +66,7 @@ logger = logging.getLogger(__name__)
 
 MAX_ITERATIONS = 12
 MAX_CONSECUTIVE_TOOL_ERRORS = 5
+WALL_CLOCK_LIMIT_SEC = 240  # 4 minutes — hard time budget per run
 SOFT_ERROR_CODES: set[str] = {
     "finance_empty_result",
     "finance_provider_error",
@@ -211,6 +212,7 @@ class AgentRuntime:
         memory_api: MemoryAPI | None = None,
         trace_writer: TraceWriter | None = None,
         async_bridge: AsyncBridge | None = None,
+        cost_tracker: Any | None = None,  # CostTracker — budget enforcement
     ) -> None:
         self._conversation_service = conversation_service
         self._event_store = event_store
@@ -225,6 +227,66 @@ class AgentRuntime:
         self._memory = memory_api
         self._trace_writer = trace_writer
         self._bridge = async_bridge
+        self._cost_tracker = cost_tracker
+
+    # ── Cost tracking helpers ────────────────────────────────────────
+
+    def _check_cost_budget(self, principal_id: str) -> None:
+        """Check cost budget before LLM call. Yields error event if exceeded."""
+        if self._cost_tracker is None or not self._cost_tracker.enabled:
+            return
+        try:
+            self._cost_tracker.check_budget(principal_id)
+        except Exception as exc:
+            logger.warning("Cost budget exceeded: %s", exc)
+            raise  # Re-raise to be caught by the existing exception handler
+
+    def _record_cost(
+        self,
+        principal_id: str,
+        *,
+        response: Any,
+        model: str = "",
+    ) -> None:
+        """Record token usage after a successful LLM call."""
+        if self._cost_tracker is None or not self._cost_tracker.enabled:
+            return
+        try:
+            # Extract token counts from response (handles both ModelResponse and dict)
+            usage = None
+            if hasattr(response, "usage") and response.usage:
+                usage = response.usage
+            elif isinstance(response, dict):
+                usage = response
+            else:
+                usage_raw = getattr(response, "usage", None)
+                if usage_raw:
+                    usage = usage_raw.model_dump() if hasattr(usage_raw, "model_dump") else usage_raw
+
+            if usage is None:
+                return
+
+            prompt = int(usage.get("prompt_tokens", 0) or 0)
+            completion = int(usage.get("completion_tokens", 0) or 0)
+            if prompt == 0 and completion == 0:
+                # Try total_tokens as fallback (some providers only report total)
+                total = int(usage.get("total_tokens", 0) or 0)
+                if total > 0:
+                    prompt = total  # Assign to prompt as best guess
+
+            if prompt == 0 and completion == 0:
+                return
+
+            self._cost_tracker.record(
+                principal_id,
+                prompt_tokens=prompt,
+                completion_tokens=completion,
+                model=model,
+            )
+        except Exception:
+            logger.debug("Cost recording failed (non-fatal)", exc_info=True)
+
+    # ── Public API ───────────────────────────────────────────────────
 
     def run(
         self,
@@ -312,6 +374,21 @@ class AgentRuntime:
             )
 
             while state.iteration < MAX_ITERATIONS:
+                # ★ Wall clock check — hard time budget
+                elapsed = time.perf_counter() - started_at
+                if elapsed > WALL_CLOCK_LIMIT_SEC:
+                    logger.warning(
+                        "Run hit wall clock limit %.1fs %s",
+                        elapsed,
+                        format_log_context(conversation_id=conversation_id, principal_id=principal_id),
+                    )
+                    self._trace("run_failed", conversation_id, reason="wall_clock_limit")
+                    for ev in self._complete_with_iteration_limit_message(
+                        conversation_id=conversation_id,
+                        iteration_count=state.iteration,
+                    ):
+                        yield ev
+                    return
                 state.iteration += 1
                 try:
                     request = self._build_request(conversation_id, setup)
@@ -344,8 +421,18 @@ class AgentRuntime:
                     return
 
                 try:
+                    # ── Cost budget check ──
+                    self._check_cost_budget(principal_id or conversation.user_id)
+
                     response = self._llm_backend.complete(request)
                     message = response.message
+
+                    # ── Cost recording ──
+                    self._record_cost(
+                        principal_id or conversation.user_id,
+                        response=response,
+                        model=setup.model,
+                    )
                 except Exception as exc:
                     logger.exception(
                         "LLM backend failed %s",
@@ -549,9 +636,12 @@ class AgentRuntime:
                             yield terminal_event
                         return
 
-            stopped = self._append_failed(conversation_id, reason="iteration_limit")
+            stopped_events = self._complete_with_iteration_limit_message(
+                conversation_id=conversation_id,
+                iteration_count=state.iteration,
+            )
             logger.warning(
-                "Run hit iteration limit %s",
+                "Run hit iteration limit %s (completed with fallback)",
                 format_log_context(
                     conversation_id=conversation_id,
                     principal_id=principal_id,
@@ -566,7 +656,8 @@ class AgentRuntime:
                 ),
             )
             self._trace("run_failed", conversation_id, reason="iteration_limit")
-            yield stopped
+            for ev in stopped_events:
+                yield ev
         finally:
             self._lock_manager.release(conversation_id)
 
@@ -654,6 +745,21 @@ class AgentRuntime:
             )
 
             while state.iteration < MAX_ITERATIONS:
+                # ★ Wall clock check — hard time budget
+                elapsed = time.perf_counter() - started_at
+                if elapsed > WALL_CLOCK_LIMIT_SEC:
+                    logger.warning(
+                        "Streaming run hit wall clock limit %.1fs %s",
+                        elapsed,
+                        format_log_context(conversation_id=conversation_id, principal_id=principal_id),
+                    )
+                    self._trace("run_failed", conversation_id, reason="wall_clock_limit")
+                    for ev in self._complete_with_iteration_limit_message(
+                        conversation_id=conversation_id,
+                        iteration_count=state.iteration,
+                    ):
+                        yield ev
+                    return
                 state.iteration += 1
                 try:
                     request = self._build_request(conversation_id, setup)
@@ -689,8 +795,12 @@ class AgentRuntime:
                 tool_calls = []
                 finish_reason = "stop"
                 try:
+                    # ── Cost budget check ──
+                    self._check_cost_budget(principal_id or conversation.user_id)
+
                     stream_method = getattr(self._llm_backend, "stream", None)
                     if callable(stream_method):
+                        stream_usage = None
                         for stream_event in stream_method(request):
                             if stream_event.type == "text" and stream_event.text:
                                 content_chunks.append(stream_event.text)
@@ -705,6 +815,14 @@ class AgentRuntime:
                                 continue
                             if stream_event.type == "done":
                                 finish_reason = stream_event.finish_reason or finish_reason
+                                stream_usage = getattr(stream_event, "usage", None)
+                        # ── Cost recording (streaming) ──
+                        if stream_usage is not None:
+                            self._record_cost(
+                                principal_id or conversation.user_id,
+                                response=stream_usage,
+                                model=setup.model,
+                            )
                     else:
                         response = self._llm_backend.complete(request)
                         message = response.message
@@ -718,6 +836,12 @@ class AgentRuntime:
                         tool_calls = list(message.tool_calls)
                         finish_reason = response.finish_reason or (
                             "tool_calls" if tool_calls else "stop"
+                        )
+                        # ── Cost recording (non-streaming) ──
+                        self._record_cost(
+                            principal_id or conversation.user_id,
+                            response=response,
+                            model=setup.model,
                         )
                 except Exception as exc:
                     logger.exception(
@@ -819,9 +943,12 @@ class AgentRuntime:
                 yield completed
                 return
 
-            stopped = self._append_failed(conversation_id, reason="iteration_limit")
+            stopped_events = self._complete_with_iteration_limit_message(
+                conversation_id=conversation_id,
+                iteration_count=state.iteration,
+            )
             logger.warning(
-                "Streaming run hit iteration limit %s",
+                "Streaming run hit iteration limit %s (completed with fallback)",
                 format_log_context(
                     conversation_id=conversation_id,
                     principal_id=principal_id,
@@ -836,7 +963,8 @@ class AgentRuntime:
                 ),
             )
             self._trace("run_failed", conversation_id, reason="iteration_limit")
-            yield stopped
+            for ev in stopped_events:
+                yield ev
         finally:
             self._lock_manager.release(conversation_id)
 
@@ -1145,6 +1273,51 @@ class AgentRuntime:
         completed = JournalEntry(
             type="run.completed",
             data={"finish_reason": "tool_failure_limit"},
+        )
+        self._event_store.append(conversation_id, completed)
+        return [assistant_event, completed]
+
+    def _complete_with_iteration_limit_message(
+        self,
+        *,
+        conversation_id: str,
+        iteration_count: int,
+    ) -> list[JournalEntry]:
+        """Produce a readable fallback when the agent hits MAX_ITERATIONS.
+
+        Never leave the user with a blank response. Extract any partial
+        content the agent already produced and append a clear explanation.
+        """
+        # Try to salvage partial assistant content from the conversation
+        partial_content = ""
+        try:
+            events = self._event_store.list_events(conversation_id)
+            for event in reversed(events):
+                if event.type == "message.assistant_added":
+                    partial_content = event.content or ""
+                    break
+                if event.type == "run.started":
+                    break
+        except Exception:
+            pass
+
+        if partial_content:
+            # Agent produced some content in earlier iterations — use it
+            fallback = partial_content
+        else:
+            fallback = (
+                "抱歉，分析未能完成。工具调用多次未成功，可能是因为数据源暂时不可用。\n\n"
+                "**已尝试的路径**：结构化数据工具未能返回有效结果。\n\n"
+                "**建议**：\n"
+                "- 稍后重试（可能是数据源临时限流）\n"
+                "- 换一种问法（如从精确数值改为定性分析）\n"
+            )
+
+        assistant_event = assistant_message(fallback)
+        self._event_store.append(conversation_id, assistant_event)
+        completed = JournalEntry(
+            type="run.completed",
+            data={"finish_reason": "iteration_limit_with_partial"},
         )
         self._event_store.append(conversation_id, completed)
         return [assistant_event, completed]

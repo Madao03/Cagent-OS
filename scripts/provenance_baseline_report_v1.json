@@ -1,0 +1,185 @@
+{
+  "questions": [
+    {
+      "question": "小鹏 Q1 2026 营收同比怎么样？",
+      "elapsed_s": 54.9,
+      "output_chars": 1169,
+      "registry_facts": 565,
+      "traced_data": 1,
+      "traced_text_citation": 21,
+      "derived": [
+        "20.34 亿",
+        "20.34 亿",
+        "18.7 亿",
+        "2.7%",
+        "196"
+      ],
+      "normalization": [
+        "130.34 亿",
+        "158.11 亿",
+        "130.34 亿",
+        "158.11 亿",
+        "143.69 亿",
+        "14.41 亿",
+        "29.1 亿",
+        "10.4 亿",
+        "10",
+        "208 亿",
+        "7.3%"
+      ],
+      "hallucination": [
+        "110.00 亿"
+      ],
+      "scanner_miss": [
+        "17.6",
+        "33.3"
+      ],
+      "sign_conflict": [
+        "17.6%",
+        "33.3%"
+      ],
+      "non_data": 16
+    },
+    {
+      "question": "MSTR 的 mNAV 现在是多少？",
+      "elapsed_s": 138.9,
+      "output_chars": 1494,
+      "registry_facts": 185,
+      "traced_data": 0,
+      "traced_text_citation": 10,
+      "derived": [
+        "06",
+        "$65,500",
+        "$66,554",
+        "$65,199",
+        "21)",
+        "24",
+        "$6.75B",
+        "$15.5B",
+        "$94",
+        "$65K",
+        "44%",
+        "$490M",
+        "46.8%"
+      ],
+      "normalization": [
+        "07",
+        "$117K"
+      ],
+      "hallucination": [],
+      "scanner_miss": [
+        "0.61",
+        "0.61",
+        "0.99",
+        "0.99",
+        "0.61",
+        "1.0",
+        "1.0"
+      ],
+      "sign_conflict": [],
+      "non_data": 13
+    },
+    {
+      "question": "腾讯 2025 Q3 营收是多少？",
+      "elapsed_s": 28.6,
+      "output_chars": 529,
+      "registry_facts": 11,
+      "traced_data": 0,
+      "traced_text_citation": 0,
+      "derived": [
+        "10%"
+      ],
+      "normalization": [],
+      "hallucination": [
+        "1,928.69 亿",
+        "15%",
+        "1,888",
+        "1,891 亿",
+        "959 亿",
+        "16%",
+        "362 亿",
+        "21%",
+        "582 亿",
+        "706 亿",
+        "18%",
+        "1,088 亿",
+        "22%"
+      ],
+      "scanner_miss": [
+        "73620",
+        "855728335",
+        "735047"
+      ],
+      "sign_conflict": [],
+      "non_data": 7
+    },
+    {
+      "question": "BTC 现在处于高估还是低估区间？用数据说话",
+      "elapsed_s": 85.1,
+      "output_chars": 3778,
+      "registry_facts": 235,
+      "traced_data": 28,
+      "traced_text_citation": 0,
+      "derived": [
+        "23%",
+        "23%",
+        "75",
+        "0.005%",
+        "14",
+        "$65K",
+        "$67K",
+        "2.5"
+      ],
+      "normalization": [
+        "5.5%",
+        "5.5%",
+        "5.5%",
+        "15%",
+        "5.5%"
+      ],
+      "hallucination": [],
+      "scanner_miss": [
+        "21.5",
+        "2.5",
+        "75.5",
+        "21.5",
+        "21.5",
+        "21.5",
+        "1.8",
+        "1.5"
+      ],
+      "sign_conflict": [],
+      "non_data": 73
+    },
+    {
+      "question": "现在美国的联邦基金利率和 10 年期国债收益率分别是多少？",
+      "elapsed_s": 15.6,
+      "output_chars": 353,
+      "registry_facts": 2,
+      "traced_data": 5,
+      "traced_text_citation": 0,
+      "derived": [],
+      "normalization": [],
+      "hallucination": [
+        "104",
+        "3.50%",
+        "3.75%",
+        "5.25%",
+        "5.50%"
+      ],
+      "scanner_miss": [],
+      "sign_conflict": [],
+      "non_data": 12
+    }
+  ],
+  "totals": {
+    "traced_data": 34,
+    "traced_text_citation": 31,
+    "derived": 27,
+    "normalization": 18,
+    "scanner_miss": 20,
+    "hallucination": 19,
+    "sign_conflict": 2,
+    "non_data": 121
+  }
+}

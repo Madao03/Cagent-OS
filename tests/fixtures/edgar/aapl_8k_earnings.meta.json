@@ -1,0 +1,13 @@
+{
+  "ticker": "AAPL",
+  "accession": "0000320193-26-000011",
+  "form": "6-K",
+  "filing_date": "2026-04-30",
+  "document": "a8-kex991q2202603282026.htm",
+  "url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000011/a8-kex991q2202603282026.htm",
+  "content_type": "text/html",
+  "size_bytes": 168815,
+  "sha256": "f909dffd7a353847e37c33eb5e666fbf0ffd09b8a6f9535127eb1a2dc0e5e913",
+  "fetched_at": "2026-07-23T04:51:54.503850+00:00",
+  "label": "earnings_8k_us_domestic"
+}

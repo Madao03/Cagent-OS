@@ -176,6 +176,16 @@ Multi-Agent Layer (multi_agent/)
 - ✅ **Bug 固化扩展**: 七次同模式 + dual-scale 字段级合并 (×1e9 固定) + 日期格式整体 non-data (含 `2025.10`/`Q4 2025` 片段) + derived 裸整数排除 + 绝对金额排除 (亿/元/$ 不能是派生值)
 
 ### 待实现 (阶段 4d-4e)
+
+## 上线前基线（2026-07-29, n=24 runs, 14 cases）
+
+- **failed_rate**: 0/24（墙钟 240s 兜底，零空白输出）
+- **answered_rate**: 20/24
+- **hallucination_rate**: 21.6%（355/1643，排除 case_001/011 内容处理类）
+- **case_014 幻觉**: 2/3 runs = 0（run1 仍有 2 个，进 backlog）
+- **transient_failures**: 12/14 cases 有 yfinance 限流（circuit breaker + akshare 降级生效）
+- **保障链闭环**: 锁泄漏 TTL → 墙钟兜底 → yfinance 熔断 → akshare 价格降级 → 绝不空白输出
+- **Baseline 文件**: `scripts/baseline_prelaunch.json`
 - Langfuse 全链路 trace 可视化 (每子 Agent 独立 span)
 - 评测 CI/CD 回归套件 (14 Case 按 Agent 维度评估退化)
 
@@ -220,3 +230,4 @@ Multi-Agent Layer (multi_agent/)
 - **Provenance P4 (backlog)**: dump 脚本按数组下标顺序猜 Q1/Q2/Q3 分组 — 应按 `period_start/period_end` 分组。不影响 registry 数据，仅影响 CLI dump 可读性。
 - **Provenance P5 (backlog)**: 派生 fact 成对出现（ratio 0.38 + percentage 38.18 — percentage bridge 产物），且丢失 period_type。应标注主值（primary），并继承父 fact 的 period 信息。
 - **Provenance P6**: ✅ 已修复 — akshare 财报截取最近 8 个报告期，fact 数从 10,204 降至约 600-800。
+- **slowapi key_func 陷阱**: `@limiter.limit()` 装饰器里的 `key_func` 是**无参调用** (`key_func()`)，不传 Request 对象 — 与全局 `Limiter(key_func=fn)` 的签名不同 (那里 `fn` 接收 Request)。限流 key 逻辑必须放在全局 `Limiter(key_func=...)` 层面，不要在装饰器里写 `key_func=lambda r: ...`，否则直接 `TypeError: missing 1 required positional argument: 'r'`。
