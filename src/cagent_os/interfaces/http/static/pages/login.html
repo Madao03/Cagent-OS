@@ -272,7 +272,9 @@
         Auth.setCachedUser(data.user);
         succEl.textContent = `${mode === "register" ? "注册" : "登录"}成功,正在跳转…`;
         const params = new URLSearchParams(window.location.search);
-        const next = params.get("next") || (mode === "register" ? "/welcome" : "/");
+        // Registration always goes to welcome page, ignoring next param.
+        // Login respects next param (e.g., redirect back to where user came from).
+        const next = mode === "register" ? "/welcome" : (params.get("next") || "/");
         setTimeout(() => { window.location.href = next; }, 300);
       } catch (err) {
         errEl.textContent = String(err);
