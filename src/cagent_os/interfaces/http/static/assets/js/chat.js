@@ -386,7 +386,10 @@
       }
       if (inDerivations) { html += `<p>${coded}</p>`; continue; }
 
-      if (/^###\s+/.test(coded)) {
+      if (/^####\s+/.test(coded)) {
+        closeAllBlocks();
+        html += `<h4 class="chat-md-h4">${coded.replace(/^####\s+/, "")}</h4>`;
+      } else if (/^###\s+/.test(coded)) {
         closeAllBlocks();
         html += `<h3 class="chat-md-h3">${coded.replace(/^###\s+/, "")}</h3>`;
       } else if (/^##\s+/.test(coded)) {
