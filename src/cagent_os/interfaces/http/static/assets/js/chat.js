@@ -541,6 +541,9 @@
     } finally {
       isSending = false;
       setSendButtonState(false);
+      // Refresh sidebar conversation list so the new conversation appears
+      // immediately (not only on page reload).
+      loadConversationList().catch(() => {});
     }
   }
 
