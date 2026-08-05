@@ -443,7 +443,6 @@ def create_app() -> FastAPI:
     # /static/ is mounted by StaticFiles above which intercepts all sub-paths).
     # URL pattern: /knowledge-static/00_Inbox/<article>/images/img_0.png
     if _knowledge_dir.exists():
-        from fastapi.responses import FileResponse
 
         @app.get("/knowledge-static/{file_path:path}")
         async def serve_knowledge_file(file_path: str):
