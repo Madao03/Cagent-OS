@@ -474,6 +474,10 @@
         return;
       }
 
+      // Refresh sidebar immediately — conversation is created server-side
+      // the moment the POST lands, no need to wait for the full response.
+      loadConversationList().catch(() => {});
+
       await consumeSSE(
         resp,
         (payload) => {
@@ -541,9 +545,6 @@
     } finally {
       isSending = false;
       setSendButtonState(false);
-      // Refresh sidebar conversation list so the new conversation appears
-      // immediately (not only on page reload).
-      loadConversationList().catch(() => {});
     }
   }
 
