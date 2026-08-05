@@ -1067,19 +1067,27 @@
   // ───────────────────────────────────────────────────────────────
 
   function startNewConversation() {
-    // ★ "新建" navigates to the single main conversation — never creates duplicates.
-    // If already on the main conversation, just clear the thread.
-    // If on any other conversation, switch back to the main one.
-    if (CONVERSATION_ID === _mainConvId) {
-      const thread = document.querySelector(".chat-thread");
-      if (thread) thread.innerHTML = "";
-      // Re-mark active state
-      document.querySelectorAll(".chat-conv-item").forEach(item => {
-        item.classList.toggle("is-active", item.getAttribute("data-conv-id") === _mainConvId);
-      });
-    } else {
-      switchConversation(_mainConvId);
-    }
+    // Generate a fresh conversation ID every time "新建" is clicked.
+    // This ensures the next message goes to a new thread, not appended
+    // to the current conversation.
+    CONVERSATION_ID = generateConvId();
+
+    // Clear the chat thread
+    const thread = document.querySelector(".chat-thread");
+    if (thread) thread.innerHTML = "";
+
+    // Clear the input
+    const input = document.querySelector(".chat-input");
+    if (input) input.value = "";
+
+    // Reset active state — highlight nothing until user sends a message
+    document.querySelectorAll(".chat-conv-item").forEach(item => {
+      item.classList.toggle("is-active", false);
+    });
+
+    // Reload conversation list to include the new one after first message
+    // (don't reload now — will happen naturally when user sends a message)
+    console.info("[chat.js] New conversation started:", CONVERSATION_ID);
   }
 
   function wireNewConversation() {
