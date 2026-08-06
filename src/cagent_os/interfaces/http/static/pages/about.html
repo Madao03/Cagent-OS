@@ -60,6 +60,31 @@
       <h1>CagentOS</h1>
       <p class="subtitle">投研工作台 &mdash; 每个数字都可追溯，没有出处的数字不会出现。</p>
 
+      <h2>如何使用</h2>
+      <p>直接用自然语言提问，系统会自动选择合适的工具、检索数据、标注来源，并在回答中为每个数字附带溯源卡片。</p>
+      <h3>提问示例</h3>
+      <ul>
+        <li><strong>公司财报：</strong>「小鹏 Q4 2025 营收同比怎么样」「茅台最新净利润多少」</li>
+        <li><strong>宏观分析：</strong>「当前美联储利率环境对科技股有什么影响」</li>
+        <li><strong>Crypto：</strong>「BTC 现在高估还是低估」「稳定币市值近期变化」</li>
+        <li><strong>数据验证：</strong>「腾讯 2025 Q3 营收」（系统会告知数据不可得，而非编造）</li>
+      </ul>
+      <h3>交互方式</h3>
+      <ul>
+        <li><strong>数字下划线：</strong>点击带下划线的数字，展开溯源卡片（来源、审计状态、期间、精度）</li>
+        <li><strong>⚠️ 标记：</strong>表示该数字未经结构化验证，来自模型自身知识或外网搜索</li>
+        <li><strong>对话历史：</strong>左侧栏可查看和切换历史会话，点「新建」开启全新对话</li>
+        <li><strong>系统记忆：</strong>系统会记住你的偏好（投资风格、关注标的），跨会话生效</li>
+      </ul>
+
+      <h2>特色功能</h2>
+      <div class="desc-row"><span class="icon" style="color:var(--color-primary);">&#x1F50D;</span><div><strong>数字溯源</strong><br>回答中的每个数字都关联到具体的工具调用结果。点击数字可查看：数据来源（EDGAR/akshare/FRED 等）、审计状态（已审计/未审计）、报告期间、精度等级。未在工具中找到的数字会被标记为 ⚠️ 未溯源</div></div>
+      <div class="desc-row"><span class="icon" style="color:var(--color-primary);">&#x1F4CA;</span><div><strong>派生计算验证</strong><br>同比、毛利率等派生值会自动验证公式（如「营收增长 23.2%」= (Q4 - Q3) / Q3），并继承来源数据的审计状态与精度</div></div>
+      <div class="desc-row"><span class="icon" style="color:var(--color-primary);">&#x1F6E1;</span><div><strong>数据不可得声明</strong><br>当制度上不存在某数据时（如纯港股 Q3 季报），系统会明确声明「数据不可得」并解释原因，而非从外网搜索凑数后以权威感输出</div></div>
+      <div class="desc-row"><span class="icon" style="color:var(--color-primary);">&#x1F4DA;</span><div><strong>精选知识库</strong><br>29 篇经人工分诊的深度研报，按 A/B/C 分级，支持语义检索。Agent 优先从知识库获取信息，减少对外网搜索的依赖</div></div>
+      <div class="desc-row"><span class="icon" style="color:var(--color-primary);">&#x1F9EE;</span><div><strong>多源交叉验证</strong><br>同一指标从多个数据源获取，方差 &gt;5% 自动告警。yfinance 限流时自动降级到 akshare（新浪财经），确保不空白输出</div></div>
+      <div class="desc-row"><span class="icon" style="color:var(--color-primary);">&#x1F4AC;</span><div><strong>跨会话记忆</strong><br>Agent 自动记录用户的投资偏好、关注标的、分析习惯。下次对话直接带着这些上下文回答，无需重复说明。用户可在对话中随时更新偏好</div></div>
+
       <h2>★ 怎么读这些标注</h2>
       <p>这是整个系统最重要的说明。每个数字旁边的标注告诉你它的来源与可靠程度：</p>
       <table class="desc-table">
