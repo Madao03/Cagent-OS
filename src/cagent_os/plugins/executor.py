@@ -78,13 +78,16 @@ class ToolDispatcher:
         if self._fact_registry is not None:
             # Record the target ticker(s) of this tool call — used later
             # to detect tickers where ALL structured tools failed.
-            ticker_arg = request.arguments.get("ticker", "") if request.arguments else ""
-            symbols_arg = request.arguments.get("symbols", []) if request.arguments else []
-            if ticker_arg:
-                self._fact_registry.note_tool_target(str(ticker_arg).strip())
-            if isinstance(symbols_arg, list):
-                for s in symbols_arg:
-                    self._fact_registry.note_tool_target(str(s).strip())
+            # Read ALL ticker-like argument keys (different adapters use different names).
+            args = request.arguments or {}
+            for key in ("ticker", "symbols", "asset", "symbol"):
+                val = args.get(key)
+                if isinstance(val, str) and val.strip():
+                    self._fact_registry.note_tool_target(val)
+                elif isinstance(val, list):
+                    for s in val:
+                        if isinstance(s, str) and s.strip():
+                            self._fact_registry.note_tool_target(s)
 
             if result.status == "ok":
                 try:

@@ -38,6 +38,37 @@ PERIOD_TYPES = frozenset({
 })
 
 
+def _normalize_ticker(raw: str) -> str:
+    """Normalize a ticker symbol for comparison.
+
+    This is the SINGLE authority for ticker comparison across the registry.
+    Handles:
+      - strip + uppercase
+      - strip fiat suffixes: -USD, -USDT, _USD, USDT
+      - strip exchange suffixes: .HK, .SH, .SZ, .BJ
+      - crypto pairs: BTCUSDT → BTC, ETHUSDT → ETH
+
+    Examples:
+      "btc" → "BTC"
+      "BTC-USD" → "BTC"
+      "BTCUSDT" → "BTC"
+      "0700.HK" → "0700"
+      "600519.SH" → "600519"
+    """
+    s = raw.strip().upper()
+    # Strip exchange suffixes (.HK, .SH, .SZ, .BJ)
+    for suffix in (".HK", ".SH", ".SZ", ".BJ"):
+        if s.endswith(suffix):
+            s = s[: -len(suffix)]
+            break
+    # Strip crypto fiat suffixes
+    for suffix in ("-USD", "_USD", "USDT", "USD"):
+        if s.endswith(suffix) and len(s) > len(suffix):
+            s = s[: -len(suffix)]
+            break
+    return s
+
+
 @dataclass
 class Fact:
     """A single data point returned by a tool, with full provenance."""
@@ -117,7 +148,7 @@ class FactRegistry:
         state even without a not_sec_registered signal.
         """
         if ticker and ticker.strip():
-            self._targeted_tickers.add(ticker.upper())
+            self._targeted_tickers.add(_normalize_ticker(ticker))
 
     @property
     def all_tools_failed(self) -> dict[str, str]:
@@ -132,11 +163,30 @@ class FactRegistry:
         ★ Key invariant: a ticker must have ZERO facts to qualify.
         Even one fact (from EDGAR, akshare, etc.) means the ticker is NOT
         all_tools_failed — partial failure is not full failure.
+
+        ★ Safety net: if the registry has ANY facts at all this turn, we
+        do a prefix-match fallback for targeted tickers not found by
+        exact normalized match. This prevents false "all failed" declarations
+        when the ticker format differs between tool call and fact registration
+        (e.g., "BTC-USD" vs "BTC"). A false declaration is worse than no
+        declaration — it damages credibility.
         """
         failed = {}
+        has_any_facts = len(self._facts) > 0
         for t in sorted(self._targeted_tickers):
-            if t not in self._ticker_fact_ids and t not in self._out_of_coverage:
-                failed[t] = "all_structured_tools_failed"
+            if t in self._ticker_fact_ids or t in self._out_of_coverage:
+                continue
+            # Safety-net prefix match: if registry has facts and the targeted
+            # ticker is a prefix of (or contained in) any registered ticker,
+            # treat it as having facts rather than declaring failure.
+            if has_any_facts:
+                matched = any(
+                    t in registered_t or registered_t in t
+                    for registered_t in self._ticker_fact_ids
+                )
+                if matched:
+                    continue
+            failed[t] = "all_structured_tools_failed"
         return failed
 
     @property
@@ -151,7 +201,7 @@ class FactRegistry:
         when a ticker is out of coverage, the correct agent action is to
         declare unavailability, NOT to search for substitute numbers.
         """
-        self._out_of_coverage[ticker.upper()] = reason
+        self._out_of_coverage[_normalize_ticker(ticker)] = reason
 
     @property
     def turn(self) -> int:
@@ -219,13 +269,29 @@ class FactRegistry:
         # Fact objects don't carry a ticker field (ticker is in the tool call
         # arguments, not the result data), so we track the mapping separately.
         # This is the authoritative source for "does this ticker have any facts?"
-        ticker_arg = arguments.get("ticker", "") if arguments else ""
-        if ticker_arg:
-            ticker = ticker_arg.upper()
-            if ticker not in self._ticker_fact_ids:
-                self._ticker_fact_ids[ticker] = set()
+        # ★ Read ALL ticker-like argument keys (different adapters use different names):
+        #   ticker  → financial.quote / financial.edgar.*
+        #   symbols → batch quote queries
+        #   asset   → crypto.onchain.metrics (single asset)
+        #   symbol  → crypto.derivatives (single symbol)
+        ticker_keys = ("ticker", "symbols", "asset", "symbol")
+        ticker_vals: list[str] = []
+        if arguments:
+            for key in ticker_keys:
+                val = arguments.get(key)
+                if isinstance(val, str) and val.strip():
+                    ticker_vals.append(val)
+                elif isinstance(val, list):
+                    ticker_vals.extend(str(s) for s in val if s)
+
+        for raw_ticker in ticker_vals:
+            t = _normalize_ticker(raw_ticker)
+            if not t:
+                continue
+            if t not in self._ticker_fact_ids:
+                self._ticker_fact_ids[t] = set()
             for f in registered:
-                self._ticker_fact_ids[ticker].add(f.id)
+                self._ticker_fact_ids[t].add(f.id)
 
         return registered
 
@@ -608,6 +674,11 @@ class FactRegistry:
         The checker uses this to detect sign conflicts (Registry negative
         but output says "profit").
 
+        ★ Priority: when multiple facts match the same value, audited=true
+        is preferred over audited=False. This ensures that when both LANE 1
+        (XBRL, audited) and LANE 2 (6-K release, unaudited) register the
+        same annual figure, the audited version is used for display.
+
         Args:
             value: the number extracted from agent output
             tolerance: relative tolerance (0.5%)
@@ -624,6 +695,9 @@ class FactRegistry:
         implies_negative = any(kw in sign_context or kw in context_lower for kw in LOSS_KEYWORDS)
         implies_positive = any(kw in sign_context or kw in context_lower for kw in GAIN_KEYWORDS)
 
+        # Collect ALL matching facts, then prefer audited
+        matches: list[Fact] = []
+
         for fact in reversed(self._facts):  # Most recent first
             if fact.kind in ("news", "verified_citation"):
                 continue  # news = URLs, verified_citation = text containers
@@ -632,29 +706,43 @@ class FactRegistry:
             except (ValueError, TypeError):
                 continue
 
+            matched = False
+
             # Try exact match first
             if abs(fact_val - value) <= abs(fact_val) * tolerance:
-                return fact
+                matched = True
 
             # Absolute value matching
-            use_abs = force_abs or (fact_val < 0 and value > 0 and implies_negative)
-            if use_abs:
-                if abs(abs(fact_val) - abs(value)) <= abs(fact_val) * tolerance:
-                    return fact
+            if not matched:
+                use_abs = force_abs or (fact_val < 0 and value > 0 and implies_negative)
+                if use_abs:
+                    if abs(abs(fact_val) - abs(value)) <= abs(fact_val) * tolerance:
+                        matched = True
 
             # ★ Percentage bridge: ratio (0.0147) ↔ percentage (1.47%)
-            # Derived facts often store ratios while output uses percentages.
-            # e.g. derivation = 0.0147, output = "1.47%" → 0.0147 × 100 = 1.47
-            if 0.0001 <= abs(fact_val) <= 1.0 and 0.1 <= abs(value) <= 200:
+            if not matched and 0.0001 <= abs(fact_val) <= 1.0 and 0.1 <= abs(value) <= 200:
                 bridged = fact_val * 100
                 if abs(bridged - value) <= abs(bridged) * tolerance:
-                    return fact
-            if 0.0001 <= abs(value) <= 1.0 and 0.1 <= abs(fact_val) <= 200:
+                    matched = True
+            if not matched and 0.0001 <= abs(value) <= 1.0 and 0.1 <= abs(fact_val) <= 200:
                 bridged = value * 100
                 if abs(fact_val - bridged) <= abs(fact_val) * tolerance:
-                    return fact
+                    matched = True
 
-        return None
+            if matched:
+                matches.append(fact)
+
+        if not matches:
+            return None
+
+        # ★ Priority: audited=True first, then source_tier=primary, then first match
+        for f in matches:
+            if f.audited is True:
+                return f
+        for f in matches:
+            if f.source_tier == "primary":
+                return f
+        return matches[0]
 
     def export(self) -> list[dict[str, Any]]:
         """Export all facts as dicts (for trace persistence)."""
