@@ -634,7 +634,9 @@
     } else if (audited === false) {
       auditHTML = '<span class="prov-card-row-warn">❌ 未审计 ' + escapeHtml(_auditContext(fact)) + '</span>';
     } else {
-      auditHTML = '<span class="prov-card-row-val">未知</span>';
+      // ★ null/undefined = 不适用 (FRED/行情/crypto 等非财报数据)
+      // Show "不适用" instead of "未知" for cleaner semantics
+      auditHTML = '<span class="prov-card-row-val" style="color:var(--text-tertiary);font-size:11px">不适用</span>';
     }
 
     const precision = fact.precision ? `（精度: ${escapeHtml(fact.precision)}）` : "";
@@ -753,15 +755,21 @@
 
     const tier = factData.source_tier || "";
     const audited = factData.audited;
-    // Determine visual tier: audited primary → primary, secondary → secondary, derived → derived
+    // ★ Visual tier is driven by TRACE STATUS, not audit status:
+    //   traced data → primary/secondary (green/yellow based on source quality)
+    //   derived → derived (blue)
+    //   verified_citation → citation (yellow)
+    //   untraced → untraced (red) — only this one should be red
     if (factData.kind === "derived") {
       popover.dataset.tier = "derived";
-    } else if (audited === true && tier === "primary") {
-      popover.dataset.tier = "primary";
+    } else if (factData.kind === "verified_citation") {
+      popover.dataset.tier = "secondary";
     } else if (tier === "secondary") {
       popover.dataset.tier = "secondary";
     } else {
-      popover.dataset.tier = tier || "untraced";
+      // ★ Traced data gets primary (green) regardless of audit status
+      // Audit status is shown as a row inside the card, not as the border color
+      popover.dataset.tier = tier || "primary";
     }
 
     // Position the popover near the anchor

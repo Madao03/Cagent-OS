@@ -232,6 +232,24 @@ def _is_data_number(raw: str, number_str: str, full_text: str, pos: int) -> bool
         if not any(w in surrounding for w in data_context_words):
             return False
 
+    # ★ Chapter/section numbers at line start: "2.3", "3.1.1", "2.2"
+    # These look like "X.Y" or "X.Y.Z" at the beginning of a line followed by space + text
+    # Must check: is this at a line start and followed by non-digit content?
+    line_start = full_text.rfind("\n", 0, pos)
+    line_start = line_start + 1 if line_start != -1 else 0
+    line_from_start = full_text[line_start:]
+    # Match X.Y or X.Y.Z at line start, followed by space and text (not more digits)
+    if re.match(r'^\s*\d+\.\d+(?:\.\d+)?\s+[^\d]', line_from_start):
+        # But allow if the number has currency/magnitude context (e.g., "$2.3B")
+        if not has_context and "." in clean:
+            parts = clean.split(".")
+            if all(p.isdigit() for p in parts) and all(int(p) < 100 for p in parts):
+                return False
+
+    # ★ Markdown heading numbers: lines starting with # or **bold**
+    if re.match(r'^#{1,6}\s', line_from_start) or re.match(r'^\*\*[^*]+\*\*', line_from_start):
+        return False
+
     return True
 
 
