@@ -1484,10 +1484,10 @@
       } catch (err) {
         console.warn("[chat.js] poll error:", err);
       }
-      // Schedule next poll
-      _convPollTimer = setTimeout(poll, 2500);
+      // Schedule next poll — ★ 800ms for near-native streaming feel
+      _convPollTimer = setTimeout(poll, 800);
     };
-    _convPollTimer = setTimeout(poll, 2500);
+    _convPollTimer = setTimeout(poll, 800);
   }
 
   function _getLastAssistantShell() {
