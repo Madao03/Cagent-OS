@@ -27,8 +27,10 @@
       .badge-warn { background: var(--status-alert-default); color: #000; }
       .badge-none { background: var(--status-error-default); color: #fff; }
       .badge-info { background: var(--status-primary-default); color: #fff; }
-      .desc-row { display: flex; align-items: baseline; gap: var(--spacer-4); margin-bottom: var(--spacer-4); }
-      .desc-row .icon { width: 24px; flex-shrink: 0; text-align: center; font-size: 13px; }
+      .desc-row { display: flex; align-items: baseline; gap: var(--spacer-4); margin-bottom: var(--spacer-16); }
+      .desc-row .icon { width: 24px; flex-shrink: 0; text-align: center; font-size: 15px; }
+      .desc-row strong { color: var(--text-default); font-weight: var(--font-weight-strong); }
+      .desc-row div { color: var(--text-tertiary); font-size: var(--body-sm-font-size); line-height: 1.7; }
       .desc-table { width: 100%; border-collapse: collapse; margin: var(--spacer-12) 0; font-size: var(--body-sm-font-size); }
       .desc-table th { text-align: left; padding: var(--spacer-6) var(--spacer-10); color: var(--text-tertiary); font-weight: var(--font-weight-medium); font-size: var(--body-xs-font-size); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--border-neutral-l2); }
       .desc-table th:first-child, .desc-table td:first-child { white-space: nowrap; min-width: 90px; }
