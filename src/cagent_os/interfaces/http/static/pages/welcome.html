@@ -95,13 +95,21 @@
     .action-links a:hover { color: var(--bg-brand); }
     .action-sep { margin: 0 var(--spacer-4); }
     .btn {
-      padding: var(--spacer-10) var(--spacer-24); border-radius: var(--radius-md);
-      font-size: 14px; font-weight: 500; cursor: pointer; border: none;
+      padding: 12px 32px; border-radius: var(--radius-lg);
+      font-size: 15px; font-weight: 600; cursor: pointer; border: none;
       font-family: var(--font-family-default);
-      transition: background 0.15s;
+      transition: all 0.2s ease;
     }
-    .btn-primary { background: var(--bg-brand); color: #fff; }
-    .btn-primary:hover { background: var(--bg-brand-hover); }
+    .btn-primary {
+      background: var(--bg-brand); color: #fff;
+      box-shadow: 0 4px 14px rgba(47, 129, 247, 0.35);
+    }
+    .btn-primary:hover {
+      background: var(--bg-brand-hover);
+      box-shadow: 0 6px 20px rgba(47, 129, 247, 0.45);
+      transform: translateY(-1px);
+    }
+    .btn-primary:active { transform: translateY(0); }
     .btn-secondary { background: transparent; color: var(--text-secondary); border: 1px solid var(--border-neutral-l1); }
     .btn-secondary:hover { background: var(--bg-overlay-l1); }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
