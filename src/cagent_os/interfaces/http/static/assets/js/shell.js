@@ -122,7 +122,7 @@
         if (key === "chat") window.location.href = "/";
         else if (key === "brief") window.location.href = "/brief";
         else if (key === "knowledge") window.location.href = "/knowledge";
-        else if (key === "about") window.location.href = "/about";
+        else if (key === "about") { try { sessionStorage.removeItem("cagentos_from_welcome"); } catch(e) {} window.location.href = "/about"; }
       });
     });
   }
