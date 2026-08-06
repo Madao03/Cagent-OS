@@ -69,10 +69,12 @@ def _is_url_safe(url: str) -> tuple[bool, str]:
     return True, "ok"
 
 # -- Playwright scripts paths (in WSL) ----------------------------------
-# Configurable via environment variables; defaults work for local dev.
-_WSL_PYTHON = os.environ.get("CAGENTOS_WSL_PYTHON", "/path/to/your/playwright-venv/bin/python3")
-_FETCH_WEIXIN_SCRIPT = os.environ.get("CAGENTOS_WSL_FETCH_SCRIPT", "/path/to/your/fetch_weixin.py")
-_FETCH_BROWSER_SCRIPT = os.environ.get("CAGENTOS_WSL_FETCH_BROWSER_SCRIPT", "/path/to/your/fetch_browser.py")
+# Configurable via environment variables. None = not configured.
+# On Linux servers without WSL, browser mode returns immediately.
+_IS_WINDOWS = os.name == "nt"
+_WSL_PYTHON = os.environ.get("CAGENTOS_WSL_PYTHON") or None
+_FETCH_WEIXIN_SCRIPT = os.environ.get("CAGENTOS_WSL_FETCH_SCRIPT") or None
+_FETCH_BROWSER_SCRIPT = os.environ.get("CAGENTOS_WSL_FETCH_BROWSER_SCRIPT") or None
 
 # -- Multi-modal vision API (for image.describe) ------------------------
 # Set CAGENTOS_VISION_API_KEY to activate; defaults to placeholder.
@@ -215,27 +217,15 @@ class WebPlugin(Plugin):
 
     def _fetch_via_browser(self, url: str) -> ToolResult:
         """Fetch a URL via Playwright headless browser (WSL bridge)."""
-        # Verify WSL is available
-        try:
-            check = subprocess.run(
-                ["wsl", "--", "echo", "ok"],
-                capture_output=True, text=True, encoding="utf-8", timeout=5,
-                stdin=subprocess.DEVNULL,
-            )
-            if check.returncode != 0 or "ok" not in check.stdout:
-                return ToolResult(
-                    status="error",
-                    error_code="wsl_unavailable",
-                    content={
-                        "message": "WSL is not available. Browser fetch requires WSL to run Playwright.",
-                        "fallback": "Plain HTTP fetch was also unsuccessful for this URL.",
-                    },
-                )
-        except (subprocess.TimeoutExpired, FileNotFoundError):
+        # ★ Fast-fail on non-Windows platforms or unconfigured paths
+        if not _IS_WINDOWS or not _WSL_PYTHON or not _FETCH_BROWSER_SCRIPT:
             return ToolResult(
                 status="error",
-                error_code="wsl_unavailable",
-                content={"message": "WSL is not available or not responding."},
+                error_code="browser_mode_unavailable",
+                content={
+                    "message": "浏览器模式不可用（需要 Windows + WSL + Playwright 配置）。请使用 HTTP 模式。",
+                    "fallback": "Plain HTTP fetch was also unsuccessful for this URL.",
+                },
             )
 
         url_hash = _slug_from_url(url)
@@ -368,29 +358,14 @@ class WebPlugin(Plugin):
                 error_code="ssrf_blocked",
                 content={"message": f"URL blocked by SSRF protection: {reason}"},
             )
-        # Verify WSL is available
-        try:
-            check = subprocess.run(
-                ["wsl", "--", "echo", "ok"],
-                capture_output=True, text=True, encoding="utf-8", timeout=5,
-                stdin=subprocess.DEVNULL,
-            )
-            if check.returncode != 0 or "ok" not in check.stdout:
-                return ToolResult(
-                    status="error",
-                    error_code="wsl_unavailable",
-                    content={
-                        "message": "WSL is not available. web.fetch_weixin requires WSL to run Playwright.",
-                        "fallback": "Try web.fetch — it may get partial content or search for mirrors.",
-                    },
-                )
-        except (subprocess.TimeoutExpired, FileNotFoundError):
+        # ★ Fast-fail on non-Windows platforms or unconfigured paths
+        if not _IS_WINDOWS or not _WSL_PYTHON or not _FETCH_WEIXIN_SCRIPT:
             return ToolResult(
                 status="error",
-                error_code="wsl_unavailable",
+                error_code="browser_mode_unavailable",
                 content={
-                    "message": "WSL is not available or not responding.",
-                    "fallback": "Try web.fetch or financial.websearch to find article mirrors.",
+                    "message": "微信文章抓取不可用（需要 Windows + WSL + Playwright 配置）。建议手动保存文章后通过知识库注入。",
+                    "fallback": "Try web.fetch — it may get partial content or search for mirrors.",
                 },
             )
         # Fetch to WSL /tmp/ first (no Chinese chars → no subprocess encoding issues).

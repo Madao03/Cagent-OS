@@ -386,6 +386,7 @@ class AgentRuntime:
                     for ev in self._complete_with_iteration_limit_message(
                         conversation_id=conversation_id,
                         iteration_count=state.iteration,
+                        fact_registry=fact_registry,
                     ):
                         yield ev
                     return
@@ -639,6 +640,7 @@ class AgentRuntime:
             stopped_events = self._complete_with_iteration_limit_message(
                 conversation_id=conversation_id,
                 iteration_count=state.iteration,
+                fact_registry=fact_registry,
             )
             logger.warning(
                 "Run hit iteration limit %s (completed with fallback)",
@@ -757,6 +759,7 @@ class AgentRuntime:
                     for ev in self._complete_with_iteration_limit_message(
                         conversation_id=conversation_id,
                         iteration_count=state.iteration,
+                        fact_registry=fact_registry,
                     ):
                         yield ev
                     return
@@ -946,6 +949,7 @@ class AgentRuntime:
             stopped_events = self._complete_with_iteration_limit_message(
                 conversation_id=conversation_id,
                 iteration_count=state.iteration,
+                fact_registry=fact_registry,
             )
             logger.warning(
                 "Streaming run hit iteration limit %s (completed with fallback)",
@@ -1282,11 +1286,16 @@ class AgentRuntime:
         *,
         conversation_id: str,
         iteration_count: int,
+        fact_registry: FactRegistry | None = None,
     ) -> list[JournalEntry]:
         """Produce a readable fallback when the agent hits MAX_ITERATIONS.
 
         Never leave the user with a blank response. Extract any partial
         content the agent already produced and append a clear explanation.
+
+        ★ Provenance gate is still executed (detection + marking only, no
+        regeneration) so that ⚠️ markers appear on untraced numbers even
+        when the run hits wall-clock or iteration limits.
         """
         # Try to salvage partial assistant content from the conversation
         partial_content = ""
@@ -1312,6 +1321,21 @@ class AgentRuntime:
                 "- 稍后重试（可能是数据源临时限流）\n"
                 "- 换一种问法（如从精确数值改为定性分析）\n"
             )
+
+        # ★ Run provenance check even on fallback output — detection + marking only
+        # No regeneration (we're already out of budget). Just mark untraced numbers.
+        if fact_registry is not None and fact_registry.facts:
+            try:
+                check_result = check_provenance(fallback, fact_registry)
+                fallback = apply_markers(fallback, check_result)
+                logger.info(
+                    "Provenance gate executed on fallback output: %d traced, %d untraced %s",
+                    check_result.traced,
+                    check_result.untraced,
+                    format_log_context(conversation_id=conversation_id),
+                )
+            except Exception:
+                logger.debug("Provenance check failed on fallback (non-fatal)", exc_info=True)
 
         assistant_event = assistant_message(fallback)
         self._event_store.append(conversation_id, assistant_event)
