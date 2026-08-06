@@ -1255,13 +1255,19 @@
       const data = await resp.json();
       // Render each event by type — including tool calls for full traceability
       let lastAssistantShell = null;
+      const TOOL_TYPES = ["run.tool_requested", "run.tool_completed", "run.tool_failed", "message.assistant_tool_calls_added"];
       for (const evt of data.events) {
         if (evt.type === "message.user_added" && evt.content) {
           renderUserMessage(evt.content);
         } else if (evt.type === "message.assistant_added" && evt.content) {
-          lastAssistantShell = renderAssistantShell();
+          // Reuse existing shell if created by tool events, otherwise create new
+          if (!lastAssistantShell) lastAssistantShell = renderAssistantShell();
           if (lastAssistantShell) lastAssistantShell.content.innerHTML = renderMarkdownLite(evt.content);
-        } else if ((evt.type === "run.tool_requested" || evt.type === "run.tool_completed" || evt.type === "run.tool_failed" || evt.type === "message.assistant_tool_calls_added") && lastAssistantShell) {
+        } else if (TOOL_TYPES.includes(evt.type)) {
+          // Create assistant shell lazily when first tool event appears
+          // (tool events come BEFORE the final answer in the event stream)
+          if (!lastAssistantShell) lastAssistantShell = renderAssistantShell();
+          if (!lastAssistantShell) continue;
           // Reconstruct payload for renderReactStep from stored event data
           const ed = evt.data || {};
           let payload;
