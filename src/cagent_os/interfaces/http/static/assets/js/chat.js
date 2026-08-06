@@ -1326,6 +1326,8 @@
   async function switchConversation(convId) {
     /** Switch to an existing conversation: update state, load events, render */
     if (convId === CONVERSATION_ID) return;
+    // ★ Stop polling the previous conversation
+    _stopConvPolling();
     CONVERSATION_ID = convId;
     // Update sidebar active state
     document.querySelectorAll(".chat-conv-item").forEach((item) => {
@@ -1378,9 +1380,113 @@
         }
       }
       console.info(`[chat.js] loaded ${data.total} events for conv ${convId}`);
+
+      // ★ Check if run is still in progress — if so, poll for new events
+      const lastEvt = data.events[data.events.length - 1];
+      const isRunning = lastEvt && lastEvt.type !== "run.completed" && lastEvt.type !== "run.failed";
+      if (isRunning) {
+        _startConvPolling(convId, data.events.length);
+      }
     } catch (err) {
       console.error("switchConversation error:", err);
     }
+  }
+
+  // ★ Conversation polling — re-fetch new events periodically until run completes
+  let _convPollTimer = null;
+  let _convPollConvId = null;
+
+  function _stopConvPolling() {
+    if (_convPollTimer) {
+      clearTimeout(_convPollTimer);
+      _convPollTimer = null;
+    }
+    _convPollConvId = null;
+  }
+
+  function _startConvPolling(convId, knownEventCount) {
+    _stopConvPolling();
+    _convPollConvId = convId;
+    const poll = async () => {
+      if (_convPollConvId !== convId || convId !== CONVERSATION_ID) {
+        return; // User switched away
+      }
+      try {
+        const resp = await Auth.fetch(`${API_BASE}/api/v1/conversations/${convId}/events`, {});
+        if (!resp.ok) return;
+        const data = await resp.json();
+        // Only process new events
+        const newEvents = data.events.slice(knownEventCount);
+        if (newEvents.length > 0) {
+          knownEventCount = data.events.length;
+          // Render new events into the current thread
+          const thread = document.querySelector(".chat-thread");
+          if (thread) {
+            // Find or create the last assistant shell
+            let lastShell = _getLastAssistantShell();
+            const TOOL_TYPES = ["run.tool_requested", "run.tool_completed", "run.tool_failed", "message.assistant_tool_calls_added"];
+            for (const evt of newEvents) {
+              if (evt.type === "message.user_added" && evt.content) {
+                renderUserMessage(evt.content);
+                lastShell = null;
+              } else if (evt.type === "message.assistant_added" && evt.content) {
+                if (!lastShell) lastShell = renderAssistantShell();
+                if (lastShell) lastShell.content.innerHTML = renderMarkdownLite(evt.content);
+              } else if (TOOL_TYPES.includes(evt.type)) {
+                if (!lastShell) lastShell = renderAssistantShell();
+                if (!lastShell) continue;
+                const ed = evt.data || {};
+                let payload;
+                if (evt.type === "message.assistant_tool_calls_added") {
+                  const tc = (ed.tool_calls || [])[0] || {};
+                  payload = { phase: "tool_plan", tool_name: tc.name || "", tool_input_preview: JSON.stringify(tc.arguments || {}).slice(0, 220), tool_status: "running" };
+                } else if (evt.type === "run.tool_requested") {
+                  payload = { phase: "tool_call", tool_name: ed.name || "", tool_input_preview: JSON.stringify(ed.arguments || {}).slice(0, 220), tool_status: "running" };
+                } else if (evt.type === "run.tool_completed") {
+                  payload = { phase: "tool_result", tool_name: ed.name || "", tool_output_preview: JSON.stringify(ed.result || "").slice(0, 220), tool_status: ed.status || "ok" };
+                } else {
+                  payload = { phase: "tool_result", tool_name: ed.name || "", tool_message: ed.message || "failed", tool_status: "error" };
+                }
+                if (lastShell.stepsEl) renderReactStep(lastShell.stepsEl, payload);
+              } else if (evt.type === "run.provenance" && evt.data && lastShell) {
+                applyProvenanceToShell(lastShell, evt.data);
+              } else if (evt.type === "run.completed" || evt.type === "run.failed") {
+                // Run finished — stop polling
+                _stopConvPolling();
+                return;
+              }
+            }
+          }
+          // Scroll to bottom
+          const thread2 = document.querySelector(".chat-thread");
+          if (thread2) thread2.scrollTop = thread2.scrollHeight;
+        }
+        // Check if run completed
+        const lastEvt = data.events[data.events.length - 1];
+        if (lastEvt && (lastEvt.type === "run.completed" || lastEvt.type === "run.failed")) {
+          _stopConvPolling();
+          return;
+        }
+      } catch (err) {
+        console.warn("[chat.js] poll error:", err);
+      }
+      // Schedule next poll
+      _convPollTimer = setTimeout(poll, 2500);
+    };
+    _convPollTimer = setTimeout(poll, 2500);
+  }
+
+  function _getLastAssistantShell() {
+    /** Find the last assistant message shell in the thread DOM. */
+    const thread = document.querySelector(".chat-thread");
+    if (!thread) return null;
+    const msgs = thread.querySelectorAll(".chat-msg-ai");
+    if (msgs.length === 0) return null;
+    const last = msgs[msgs.length - 1];
+    return {
+      content: last.querySelector(".chat-msg-content"),
+      stepsEl: last.querySelector(".react-steps"),
+    };
   }
 
   // ───────────────────────────────────────────────────────────────
