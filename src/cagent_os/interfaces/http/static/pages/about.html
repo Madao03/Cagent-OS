@@ -14,7 +14,7 @@
       .layout { display: flex; min-height: 100vh; }
       .sidebar { width: 240px; flex-shrink: 0; }
       .main { flex: 1; overflow-y: auto; }
-      .content { max-width: 700px; margin: 0 auto; padding: var(--spacer-48) var(--spacer-24) var(--spacer-64); }
+      .content { max-width: 700px; padding: var(--spacer-48) var(--spacer-24) var(--spacer-64); margin-left: max(calc((100vw - 700px) / 2 - 240px), var(--spacer-24)); margin-right: max(calc((100vw - 700px) / 2 - 240px), var(--spacer-24)); }
       h1 { font-family: var(--font-family-heading); font-size: 24px; font-weight: 700; margin: 0 0 var(--spacer-8); }
       .subtitle { color: var(--text-secondary); font-size: var(--body-base-font-size); margin-bottom: var(--spacer-32); }
       h2 { font-family: var(--font-family-heading); font-size: 16px; font-weight: 600; margin: var(--spacer-32) 0 var(--spacer-10); padding-bottom: var(--spacer-6); border-bottom: 1px solid var(--border-neutral-l1); }
