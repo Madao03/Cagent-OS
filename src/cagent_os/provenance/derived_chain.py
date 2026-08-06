@@ -96,16 +96,38 @@ def _find_fact_by_caliber_period(
 
     Used for semantic references like net_income@2025Q4.
     Matches case-insensitively on caliber.
+
+    ★ Also matches by ticker for quote.query fields (e.g., price@MSFT,
+    fifty_two_week_high@MSFT) — when period_end is empty, match by
+    ticker on any field whose value matches the caliber.
     """
     caliber_lower = caliber.lower()
     for f in registry.facts:
         if f.kind not in ("data", "derived"):
             continue
         f_caliber = (getattr(f, 'caliber', '') or '').lower()
-        f_period_end = getattr(f, 'period_end', '') or ''
-        f_period_type = getattr(f, 'period_type', '') or ''
-        if f_caliber == caliber_lower and f_period_end == period_end and f_period_type == period_type:
-            return f
+        # ★ Fuzzy caliber matching: support common aliases
+        caliber_aliases = {
+            "fcf": {"free_cash_flow", "fcf"},
+            "capex": {"capital_expenditure", "capex", "capital_expenditures"},
+            "ocf": {"operating_cash_flow", "ocf", "cash_from_operations"},
+            "revenue": {"revenue", "total_revenue", "revenues"},
+            "net_income": {"net_income", "net_income_loss"},
+            "operating_income": {"operating_income", "income_from_operations"},
+        }
+        # Expand caliber to include aliases
+        target_calibers = {caliber_lower}
+        for key, aliases in caliber_aliases.items():
+            if caliber_lower in aliases:
+                target_calibers |= aliases
+        if f_caliber in target_calibers:
+            f_period_end = getattr(f, 'period_end', '') or ''
+            f_period_type = getattr(f, 'period_type', '') or ''
+            if not period_end:
+                # No period constraint — match by caliber only (e.g., quote fields)
+                return f
+            if f_period_end == period_end and f_period_type == period_type:
+                return f
     return None
 
 # ── Precision ranking ───────────────────────────────────────────
