@@ -744,14 +744,58 @@
         hideProvCard();
       });
       document.body.appendChild(_provPopover);
+
+      // ★ Close a pinned popover when clicking anywhere outside of it
+      document.addEventListener("click", (e) => {
+        if (_provPopover && _provPopover.classList.contains("is-pinned") && !_provPopover.contains(e.target)) {
+          _closePinnedPopover();
+        }
+      });
+      // ★ Esc closes a pinned popover
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && _provPopover && _provPopover.classList.contains("is-pinned")) {
+          _closePinnedPopover();
+        }
+      });
     }
     return _provPopover;
   }
 
-  function showProvCard(factData, anchorEl) {
+  function showProvCard(factData, anchorEl, pinned) {
     clearTimeout(_provPopoverTimer);
     const popover = _getPopover();
+
+    // ★ Hover preview is suppressed while any popover is pinned
+    if (!pinned && popover.classList.contains("is-pinned")) {
+      return;
+    }
+    // ★ Click pins: unpin a previously pinned popover first (only one at a time)
+    if (pinned) {
+      popover.classList.remove("is-pinned");
+    }
+
     popover.innerHTML = _buildProvCardHTML(factData);
+
+    if (pinned) {
+      popover.classList.add("is-pinned");
+      // ★ Add ✕ close button to the header (top-right)
+      const header = popover.querySelector(".prov-card-header");
+      if (header) {
+        const closeBtn = document.createElement("button");
+        closeBtn.type = "button";
+        closeBtn.className = "prov-card-close";
+        closeBtn.setAttribute("aria-label", "关闭");
+        closeBtn.textContent = "✕";
+        closeBtn.style.cssText = "margin-left:auto;background:transparent;border:none;color:var(--text-tertiary);font-size:13px;line-height:1;cursor:pointer;padding:0 2px;border-radius:4px";
+        closeBtn.addEventListener("mouseenter", () => { closeBtn.style.color = "var(--text-default)"; });
+        closeBtn.addEventListener("mouseleave", () => { closeBtn.style.color = "var(--text-tertiary)"; });
+        closeBtn.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          _closePinnedPopover();
+        });
+        header.appendChild(closeBtn);
+      }
+    }
 
     const tier = factData.source_tier || "";
     const audited = factData.audited;
@@ -789,11 +833,22 @@
   }
 
   function hideProvCard() {
+    // ★ Pinned popovers stay open on mouseleave
+    if (_provPopover && _provPopover.classList.contains("is-pinned")) {
+      return;
+    }
     _provPopoverTimer = setTimeout(() => {
       if (_provPopover) {
         _provPopover.classList.remove("is-open");
       }
     }, 150);
+  }
+
+  /** Force-close the currently pinned popover (✕ / outside click / Esc). */
+  function _closePinnedPopover() {
+    if (_provPopover) {
+      _provPopover.classList.remove("is-pinned", "is-open");
+    }
   }
 
   function applyProvenanceToShell(shell, provData) {
@@ -927,12 +982,7 @@
           span.addEventListener("mouseleave", () => hideProvCard());
           span.addEventListener("click", (e) => {
             e.stopPropagation();
-            const popover = _getPopover();
-            if (popover.classList.contains("is-open")) {
-              hideProvCard();
-            } else {
-              showProvCard(fact, span);
-            }
+            showProvCard(fact, span, true);
           });
         }
 
