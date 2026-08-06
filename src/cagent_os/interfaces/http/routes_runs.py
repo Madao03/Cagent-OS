@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from collections.abc import Iterator
+import asyncio
 import json
 import logging
 import time
-from pathlib import Path
+from collections.abc import Iterator
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -90,22 +90,86 @@ def build_runs_router(
             ),
         )
 
-        def sse() -> Iterator[str]:
+        # ── Decoupled SSE: run agent in background task, stream from queue ──
+        # The agent runs to completion even if the client disconnects.
+        # Results are persisted to DB by run_engine regardless of SSE state.
+        # The SSE reader simply drains the queue and exits when done.
+        event_queue: asyncio.Queue = asyncio.Queue(maxsize=256)
+
+        def _run_agent_thread() -> None:
+            """Run agent in a thread, push events to queue."""
             try:
                 for event in run_engine.run_stream(
                     conversation_id=conversation_id,
                     principal_id=principal_id,
                     user_content=payload.content,
                 ):
-                    yield f"data: {json.dumps(project_stream_payload(event, conversation_id=conversation_id), ensure_ascii=False)}\n\n"
+                    payload_dict = project_stream_payload(event, conversation_id=conversation_id)
+                    try:
+                        event_queue.put_nowait(json.dumps(payload_dict, ensure_ascii=False))
+                    except asyncio.QueueFull:
+                        logger.warning("SSE queue full, dropping event for conv=%s", conversation_id)
             except BudgetExceeded as exc:
-                yield f"data: {json.dumps({'type': 'error', 'message': str(exc), 'retry_after_sec': exc.retry_after_sec}, ensure_ascii=False)}\n\n"
+                error_data = json.dumps(
+                    {"type": "error", "message": str(exc), "retry_after_sec": exc.retry_after_sec},
+                    ensure_ascii=False,
+                )
+                try:
+                    event_queue.put_nowait(error_data)
+                except asyncio.QueueFull:
+                    pass
+            except Exception:
+                logger.exception("Agent run failed in background thread conv=%s", conversation_id)
+                error_data = json.dumps(
+                    {"type": "error", "message": "Agent run failed unexpectedly"},
+                    ensure_ascii=False,
+                )
+                try:
+                    event_queue.put_nowait(error_data)
+                except asyncio.QueueFull:
+                    pass
             finally:
+                # Signal end of stream
+                try:
+                    event_queue.put_nowait(None)  # type: ignore[arg-type]
+                except asyncio.QueueFull:
+                    pass
+                # Release concurrency slot
                 if cost_tracker is not None:
                     try:
                         cost_tracker.release(principal_id)
                     except Exception:
                         pass
+
+        async def sse() -> Iterator[str]:
+            """Stream events from queue to client.
+
+            If client disconnects, this generator stops — but the background
+            thread continues running until the agent completes or wall-clock
+            timeout. Results are persisted to DB regardless.
+            """
+            import concurrent.futures
+            import threading
+
+            # Start agent in a daemon thread (not asyncio task — run_engine is sync)
+            thread = threading.Thread(target=_run_agent_thread, daemon=True)
+            thread.start()
+
+            try:
+                while True:
+                    # Use run_in_executor to make Queue.get_nowait non-blocking-friendly
+                    # in async context. Poll with small sleep.
+                    try:
+                        raw = event_queue.get_nowait()
+                        if raw is None:
+                            break  # End of stream sentinel
+                        yield f"data: {raw}\n\n"
+                    except asyncio.QueueEmpty:
+                        await asyncio.sleep(0.05)
+                        continue
+            except asyncio.CancelledError:
+                # Client disconnected — agent thread keeps running
+                logger.info("SSE client disconnected, agent continues in background conv=%s", conversation_id)
 
         return StreamingResponse(sse(), media_type="text/event-stream")
 
