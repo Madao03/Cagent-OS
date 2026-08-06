@@ -167,7 +167,48 @@ def _make_search_variants(raw: str) -> list[str]:
         if _comma_stripped != _comma_var:
             variants.append(_comma_stripped)
         variants.append(_comma_var)
-    return variants
+
+    # ★ Western magnitude suffix variants: billion↔B, million↔M, trillion↔T
+    # These are pure surface-format differences (same literal value), not
+    # unit conversions. "billion" and "B" both mean ×10^9.
+    import re as _re
+    _MAGNITUDE_MAP = {
+        "trillion": "T", "billion": "B", "million": "M",
+        "bn": "B", "bn.": "B",
+        "tn": "T", "tn.": "T",
+        "mn": "M", "mn.": "M",
+    }
+    _REVERSE_MAP = {v: k for k, v in _MAGNITUDE_MAP.items()}
+    # Also map full words to short forms
+    _MAGNITUDE_MAP["trillion"] = "T"
+    for full, short in [("billion", "B"), ("trillion", "T"), ("million", "M")]:
+        if full in raw.lower():
+            for v in list(variants):
+                replaced = _re.sub(_re.escape(full), short, v, flags=_re.IGNORECASE)
+                if replaced != v:
+                    variants.append(replaced)
+        if short in raw and raw.upper() != raw.replace(short, ""):
+            for v in list(variants):
+                replaced = _re.sub(_re.escape(short), full, v, flags=_re.IGNORECASE)
+                if replaced != v:
+                    variants.append(replaced)
+    # Also handle bn/tn/mn short forms
+    for short_full in [("bn", "billion"), ("tn", "trillion"), ("mn", "million")]:
+        short, full = short_full
+        pattern = _re.compile(r'\b' + _re.escape(short) + r'\b', _re.IGNORECASE)
+        if pattern.search(raw):
+            for v in list(variants):
+                replaced = pattern.sub(full, v)
+                if replaced != v:
+                    variants.append(replaced)
+
+    # Deduplicate preserving order
+    seen = set(); unique = []
+    for v in variants:
+        if v not in seen:
+            seen.add(v)
+            unique.append(v)
+    return unique
 
 
 def _insert_thousands_comma(raw: str) -> str | None:

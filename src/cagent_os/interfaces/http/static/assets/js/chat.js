@@ -680,6 +680,30 @@
       html += `<div class="prov-card-row"><span class="prov-card-label">工具</span><span class="prov-card-row-val" style="font-family:var(--font-family-mono);font-size:10px">${escapeHtml(fact.capability)}</span></div>`;
     }
 
+    // ★ Media tier for verified_citation (social media vs pro media vs official)
+    if (fact.kind === "verified_citation" || fact.media_tier) {
+      const mt = fact.media_tier || "";
+      let mtLabel = "";
+      let mtColor = "var(--text-tertiary)";
+      if (mt === "0_primary") { mtLabel = "🟢 一手来源"; mtColor = "var(--color-success)"; }
+      else if (mt === "1_media_pro") { mtLabel = "🟡 专业媒体"; mtColor = "var(--color-warning)"; }
+      else if (mt === "3_aggregator") { mtLabel = "🔴 社交媒体/博客"; mtColor = "var(--color-error)"; }
+      if (mtLabel) {
+        html += `<div class="prov-card-row"><span class="prov-card-label">信源</span><span class="prov-card-row-val" style="color:${mtColor};font-size:11px">${mtLabel}</span></div>`;
+      }
+    }
+
+    // ★ Citation sentence (for verified_citation: show the matching original text)
+    if (fact.kind === "verified_citation" && fact.citation_sentence) {
+      html += `<div class="prov-card-row" style="flex-direction:column;align-items:flex-start"><span class="prov-card-label">原句</span><span class="prov-card-row-val" style="font-size:11px;color:var(--text-secondary);font-style:italic;margin-top:2px">"${escapeHtml(fact.citation_sentence)}"</span></div>`;
+    }
+
+    // ★ Clickable URL
+    if (fact.url) {
+      const shortUrl = fact.url.length > 50 ? fact.url.substring(0, 47) + "..." : fact.url;
+      html += `<div class="prov-card-row"><span class="prov-card-label">链接</span><a href="${escapeHtml(fact.url)}" target="_blank" rel="noopener" style="font-size:11px;color:var(--color-primary);text-decoration:none">${escapeHtml(shortUrl)} →</a></div>`;
+    }
+
     // ★ Derived expansion: show formula + parent fact references
     if (derivInfo) {
       html += '<div class="prov-card-section-title">派生计算</div>';
@@ -774,6 +798,14 @@
     // Build derivation lookup map: fact_id → {formula_display, parent_ids, ...}
     _provDerivations = {};
     (provData.derivations || []).forEach(d => { _provDerivations[d.fact_id] = d; });
+
+    // ★ Merge citation_sentence from traced_numbers into facts dict
+    // so the provenance card can display the original matching sentence
+    (_provTraced || []).forEach(tn => {
+      if (tn.citation_sentence && tn.fact_id && _provFacts[tn.fact_id]) {
+        _provFacts[tn.fact_id].citation_sentence = tn.citation_sentence;
+      }
+    });
 
     console.info("[prov]", "traced:", _provTraced.length, "untraced:", _provUntraced.length, "facts:", Object.keys(_provFacts).length);
     if (_provTraced.length === 0 && _provUntraced.length === 0) {

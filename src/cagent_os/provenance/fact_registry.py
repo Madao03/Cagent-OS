@@ -69,6 +69,43 @@ def _normalize_ticker(raw: str) -> str:
     return s
 
 
+def _classify_media_tier(url: str) -> str:
+    """Classify a URL's domain into media tier.
+
+    Returns:
+        "0_primary" — regulatory/exchange/company official
+        "1_media_pro" — professional media
+        "3_aggregator" — social media/forums/blogs/unknown
+    """
+    url_lower = (url or "").lower()
+    # Social media / forums → 🔴
+    SOCIAL_DOMAINS = {"x.com", "twitter.com", "reddit.com", "微博.com", "weibo.com",
+                      "xueqiu.com", "guba.eastmoney", "seekingalpha.com",
+                      "medium.com", "substack.com", "youtube.com"}
+    for d in SOCIAL_DOMAINS:
+        if d in url_lower:
+            return "3_aggregator"
+    # Professional media → 🟡
+    PRO_DOMAINS = {"bloomberg.com", "reuters.com", "ft.com", "wsj.com", "nytimes.com",
+                   "cnbc.com", "ftchinese.com", "theguardian.com", "economist.com",
+                   "finance.yahoo.com", "marketwatch.com", "barrons.com",
+                   "caixin.com", "21jingji.com", "yicai.com", "stcn.com",
+                   "thedefiant.io", "theblock.co", "coindesk.com", "cointelegraph.com"}
+    for d in PRO_DOMAINS:
+        if d in url_lower:
+            return "1_media_pro"
+    # Regulatory / exchange / official → 🟢
+    PRIMARY_DOMAINS = {"sec.gov", "hkexnews", "sse.com.cn", "szse.cn", "bse.cn",
+                       "chinamoney", "treasury.gov", "federalreserve.gov",
+                       "stlouisfed.org", "binance.com", "defillama.com",
+                       "coinmetrics.io", "alternative.me"}
+    for d in PRIMARY_DOMAINS:
+        if d in url_lower:
+            return "0_primary"
+    # Unknown → default to pro (benefit of doubt)
+    return "1_media_pro"
+
+
 @dataclass
 class Fact:
     """A single data point returned by a tool, with full provenance."""
@@ -358,6 +395,7 @@ class FactRegistry:
             capability=capability_id,
             url=url,
             source_tier=source_tier,
+            media_tier=_classify_media_tier(url),
             published_at=published_at,
             confidence="medium",
             fetched_at=datetime.now(timezone.utc).isoformat(),
@@ -565,6 +603,7 @@ class FactRegistry:
                                         capability=capability_id,
                                         url=cit_url,
                                         source_tier="curated" if source == "knowledge_base" else "",
+                                        media_tier="0_primary" if source == "knowledge_base" else _classify_media_tier(cit_url),
                                         published_at=cit_date,
                                         confidence="medium",
                                         fetched_at=datetime.now(timezone.utc).isoformat(),
@@ -590,6 +629,7 @@ class FactRegistry:
                         capability=capability_id,
                         url=cit_url,
                         source_tier="curated" if source == "knowledge_base" else "",
+                        media_tier="0_primary" if source == "knowledge_base" else _classify_media_tier(cit_url),
                         published_at=cit_date,
                         confidence="medium",
                         fetched_at=datetime.now(timezone.utc).isoformat(),
