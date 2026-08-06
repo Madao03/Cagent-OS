@@ -231,3 +231,5 @@ Multi-Agent Layer (multi_agent/)
 - **Provenance P5 (backlog)**: 派生 fact 成对出现（ratio 0.38 + percentage 38.18 — percentage bridge 产物），且丢失 period_type。应标注主值（primary），并继承父 fact 的 period 信息。
 - **Provenance P6**: ✅ 已修复 — akshare 财报截取最近 8 个报告期，fact 数从 10,204 降至约 600-800。
 - **slowapi key_func 陷阱**: `@limiter.limit()` 装饰器里的 `key_func` 是**无参调用** (`key_func()`)，不传 Request 对象 — 与全局 `Limiter(key_func=fn)` 的签名不同 (那里 `fn` 接收 Request)。限流 key 逻辑必须放在全局 `Limiter(key_func=...)` 层面，不要在装饰器里写 `key_func=lambda r: ...`，否则直接 `TypeError: missing 1 required positional argument: 'r'`。
+- **Provenance P7 (backlog)**: 茅台 EPS caliber 未标注「单季/累计」。A 股一季报 EPS 通常为单季值，逻辑成立但 caliber 未写明。触发: 出现 EPS 时间序列比较需求时。
+- **Provenance P8 (backlog)**: 覆盖率分母混在一起 — 搜索来源的引用与真未溯源在同一分母。建议拆分显示「结构化 / 引用 / 未溯源」三类，避免用户把「38% 来自新闻与卖方观点」误读为质量问题。触发: 用户对覆盖率数字产生疑问时。
