@@ -1898,6 +1898,15 @@ pre {
     font-weight: 600;
     color: var(--text-default);
   }
+  /* 建设中灰化（参考侧栏 WIP 样式） */
+  .ctx-card.is-wip {
+    opacity: 0.6;
+  }
+  .ctx-card-tag {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    font-weight: var(--font-weight-regular);
+  }
   .ctx-card-meta {
     font-family: var(--font-family-mono);
     font-size: var(--body-sm-font-size);
@@ -2602,9 +2611,10 @@ pre {
             </div>
 
             <!-- Agent Progress card -->
-            <div class="ds-card ctx-card">
+            <div class="ds-card ctx-card is-wip">
               <div class="ctx-card-head">
                 <span class="ctx-card-title">多 Agent 协作</span>
+                <span class="ctx-card-tag">建设中</span>
               </div>
               <div class="agent-row">
                 <span data-icon="check-small" class="agent-icon is-success" aria-hidden="true"></span>
