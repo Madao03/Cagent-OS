@@ -142,12 +142,12 @@
 
     if (payload.phase === "tool_call") {
       statusText = "调用中";
-      iconName = "dot";
+      iconName = "cue_loading";
       statusClass = "react-step-status-running";
     } else if (payload.phase === "tool_result") {
       if (payload.tool_status === "error" || payload.phase === "tool_result" && payload.tool_message) {
         statusText = "失败";
-        iconName = "x-small";
+        iconName = "Close";
         statusClass = "react-step-status-error";
       } else {
         statusText = "成功";
@@ -156,7 +156,7 @@
       }
     } else if (payload.phase === "tool_plan") {
       statusText = "调用中";
-      iconName = "dot";
+      iconName = "cue_loading";
       statusClass = "react-step-status-running";
     }
 
