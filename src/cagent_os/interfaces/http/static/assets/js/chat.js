@@ -1253,7 +1253,7 @@
         return;
       }
       const data = await resp.json();
-      // Render each event by type
+      // Render each event by type — including tool calls for full traceability
       let lastAssistantShell = null;
       for (const evt of data.events) {
         if (evt.type === "message.user_added" && evt.content) {
@@ -1261,6 +1261,21 @@
         } else if (evt.type === "message.assistant_added" && evt.content) {
           lastAssistantShell = renderAssistantShell();
           if (lastAssistantShell) lastAssistantShell.content.innerHTML = renderMarkdownLite(evt.content);
+        } else if ((evt.type === "run.tool_requested" || evt.type === "run.tool_completed" || evt.type === "run.tool_failed" || evt.type === "message.assistant_tool_calls_added") && lastAssistantShell) {
+          // Reconstruct payload for renderReactStep from stored event data
+          const ed = evt.data || {};
+          let payload;
+          if (evt.type === "message.assistant_tool_calls_added") {
+            const tc = (ed.tool_calls || [])[0] || {};
+            payload = { phase: "tool_plan", tool_name: tc.name || "", tool_input_preview: JSON.stringify(tc.arguments || {}).slice(0, 220), tool_status: "running" };
+          } else if (evt.type === "run.tool_requested") {
+            payload = { phase: "tool_call", tool_name: ed.name || "", tool_input_preview: JSON.stringify(ed.arguments || {}).slice(0, 220), tool_status: "running" };
+          } else if (evt.type === "run.tool_completed") {
+            payload = { phase: "tool_result", tool_name: ed.name || "", tool_output_preview: JSON.stringify(ed.result || "").slice(0, 220), tool_status: ed.status || "ok" };
+          } else {
+            payload = { phase: "tool_result", tool_name: ed.name || "", tool_message: ed.message || "failed", tool_status: "error" };
+          }
+          if (lastAssistantShell.stepsEl) renderReactStep(lastAssistantShell.stepsEl, payload);
         } else if (evt.type === "run.provenance" && evt.data && lastAssistantShell) {
           // Apply provenance to the most recent assistant message
           applyProvenanceToShell(lastAssistantShell, evt.data);
