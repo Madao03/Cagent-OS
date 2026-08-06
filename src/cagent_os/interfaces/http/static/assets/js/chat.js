@@ -1347,14 +1347,22 @@
       const data = await resp.json();
       // Render each event by type — including tool calls for full traceability
       let lastAssistantShell = null;
+      let partialAnswer = ""; // ★ Accumulate assistant_delta for in-progress streams
       const TOOL_TYPES = ["run.tool_requested", "run.tool_completed", "run.tool_failed", "message.assistant_tool_calls_added"];
       for (const evt of data.events) {
         if (evt.type === "message.user_added" && evt.content) {
           renderUserMessage(evt.content);
+          partialAnswer = ""; // Reset for new turn
+        } else if (evt.type === "message.assistant_delta" && evt.content) {
+          // ★ Accumulate partial answer during streaming
+          partialAnswer += evt.content;
+          if (!lastAssistantShell) lastAssistantShell = renderAssistantShell();
+          if (lastAssistantShell) lastAssistantShell.content.innerHTML = renderMarkdownLite(partialAnswer) + '<span class="cursor-blink">▎</span>';
         } else if (evt.type === "message.assistant_added" && evt.content) {
           // Reuse existing shell if created by tool events, otherwise create new
           if (!lastAssistantShell) lastAssistantShell = renderAssistantShell();
           if (lastAssistantShell) lastAssistantShell.content.innerHTML = renderMarkdownLite(evt.content);
+          partialAnswer = evt.content; // Track in case more events follow
         } else if (TOOL_TYPES.includes(evt.type)) {
           // Create assistant shell lazily when first tool event appears
           // (tool events come BEFORE the final answer in the event stream)
@@ -1424,11 +1432,17 @@
           if (thread) {
             // Find or create the last assistant shell
             let lastShell = _getLastAssistantShell();
+            let pollPartial = "";
             const TOOL_TYPES = ["run.tool_requested", "run.tool_completed", "run.tool_failed", "message.assistant_tool_calls_added"];
             for (const evt of newEvents) {
               if (evt.type === "message.user_added" && evt.content) {
                 renderUserMessage(evt.content);
                 lastShell = null;
+                pollPartial = "";
+              } else if (evt.type === "message.assistant_delta" && evt.content) {
+                pollPartial += evt.content;
+                if (!lastShell) lastShell = renderAssistantShell();
+                if (lastShell) lastShell.content.innerHTML = renderMarkdownLite(pollPartial) + '<span class="cursor-blink">▎</span>';
               } else if (evt.type === "message.assistant_added" && evt.content) {
                 if (!lastShell) lastShell = renderAssistantShell();
                 if (lastShell) lastShell.content.innerHTML = renderMarkdownLite(evt.content);
