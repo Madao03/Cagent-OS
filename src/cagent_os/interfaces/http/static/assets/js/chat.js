@@ -133,14 +133,36 @@
     const toolName = el("span", "react-step-tool", payload.tool_name || "tool");
     header.appendChild(toolName);
 
+    // ★ Determine status for visual styling
     const statusSpan = el("span", "react-step-status");
     const statusIcon = el("span", "react-step-status-icon");
-    statusIcon.setAttribute("data-icon", "check-small");
-    statusSpan.appendChild(statusIcon);
-
     let statusText = payload.tool_status || "running";
-    if (payload.phase === "tool_call") statusText = "调用中";
-    else if (payload.phase === "tool_result") statusText = payload.tool_status === "error" ? "失败" : "成功";
+    let iconName = "check-small"; // default: success
+    let statusClass = "react-step-status-ok";
+
+    if (payload.phase === "tool_call") {
+      statusText = "调用中";
+      iconName = "dot";
+      statusClass = "react-step-status-running";
+    } else if (payload.phase === "tool_result") {
+      if (payload.tool_status === "error" || payload.phase === "tool_result" && payload.tool_message) {
+        statusText = "失败";
+        iconName = "x-small";
+        statusClass = "react-step-status-error";
+      } else {
+        statusText = "成功";
+        iconName = "check-small";
+        statusClass = "react-step-status-ok";
+      }
+    } else if (payload.phase === "tool_plan") {
+      statusText = "调用中";
+      iconName = "dot";
+      statusClass = "react-step-status-running";
+    }
+
+    statusIcon.setAttribute("data-icon", iconName);
+    statusSpan.classList.add(statusClass);
+    statusSpan.appendChild(statusIcon);
     statusSpan.appendChild(el("span", "", statusText));
     header.appendChild(statusSpan);
     step.appendChild(header);

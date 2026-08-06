@@ -1593,6 +1593,12 @@ pre {
     color: var(--status-success-default);
     font-size: var(--body-sm-font-size);
   }
+  /* ★ Status-specific styling */
+  .react-step-status-ok { background: var(--status-success-surface-l1); color: var(--status-success-default); }
+  .react-step-status-running { background: var(--status-alert-surface-l1); color: var(--status-alert-active); }
+  .react-step-status-error { background: var(--status-error-surface-l1); color: var(--status-error-default); }
+  .react-step-status-running .react-step-status-icon { animation: pulse-dot 1.5s ease-in-out infinite; }
+  @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
   .react-step-status-icon {
     width: 12px;
     height: 12px;
