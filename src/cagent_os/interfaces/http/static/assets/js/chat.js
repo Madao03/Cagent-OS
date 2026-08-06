@@ -1275,8 +1275,12 @@
           meta.appendChild(el("span", "ds-tag", `${c.event_count} evt`));
         }
         item.appendChild(meta);
-        // Click → switch conversation
-        item.addEventListener("click", () => switchConversation(c.conversation_id));
+        // Click → switch conversation (★ force re-render if thread is empty)
+        item.addEventListener("click", () => {
+          const thread = document.querySelector(".chat-thread");
+          const isEmpty = !thread || !thread.children.length;
+          switchConversation(c.conversation_id, isEmpty);
+        });
         convList.appendChild(item);
       });
 
@@ -1323,9 +1327,11 @@
     titleSpan.textContent = trimmed.length > maxLen ? trimmed.slice(0, maxLen - 1) + "…" : trimmed;
   }
 
-  async function switchConversation(convId) {
+  async function switchConversation(convId, force) {
     /** Switch to an existing conversation: update state, load events, render */
-    if (convId === CONVERSATION_ID) return;
+    // ★ Allow re-rendering the same conversation (force=true) for when DOM
+    // was cleared by another conversation's SSE stream disconnecting.
+    if (convId === CONVERSATION_ID && !force) return;
     // ★ Stop polling the previous conversation
     _stopConvPolling();
     CONVERSATION_ID = convId;
