@@ -192,11 +192,15 @@ def _build_derived_hint(result: CheckResult) -> str:
         items = ", ".join(unique[:5])
         parts.append(
             f"💡 以下数字看起来像计算派生值（比率/百分比）: {items}\n"
-            f"   若为已有数据的计算结果，请在输出末尾补 [derivations] 块声明来源，格式:\n"
+            f"   这类数字通常是计算所得，必须在 [derivations] 块中声明公式与父节点。\n"
+            f"   格式示例:\n"
             f"   [derivations]\n"
             f"   (revenue@2025Q4 - revenue@2024Q4) / abs(revenue@2024Q4) = 0.382\n"
+            f"   (price@MSFT - fifty_two_week_high@MSFT) / fifty_two_week_high@MSFT = -0.103\n"
+            f"   capex@GOOGL_Q1 + capex@AMZN_Q1 + capex@MSFT_Q1 = 110.8\n"
             f"   [/derivations]\n"
             f"   引用格式: caliber@period（如 revenue@2025Q4）或 fact_id（如 f:0:3）。\n"
+            f"   也可引用 quote.query 的字段：price@MSFT、fifty_two_week_high@MSFT。\n"
         )
 
     if amount_looking:
