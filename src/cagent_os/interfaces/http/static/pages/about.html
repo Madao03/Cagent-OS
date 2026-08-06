@@ -30,7 +30,7 @@
       .desc-row { display: flex; align-items: baseline; gap: var(--spacer-4); margin-bottom: var(--spacer-16); }
       .desc-row .icon { width: 24px; flex-shrink: 0; text-align: center; font-size: 15px; }
       .desc-row strong { color: var(--text-default); font-weight: var(--font-weight-strong); }
-      .desc-row div { color: var(--text-tertiary); font-size: var(--body-sm-font-size); line-height: 1.7; }
+      .desc-row div { color: var(--text-secondary); font-size: var(--body-base-font-size); line-height: 1.7; }
       .desc-table { width: 100%; border-collapse: collapse; margin: var(--spacer-12) 0; font-size: var(--body-sm-font-size); }
       .desc-table th { text-align: left; padding: var(--spacer-6) var(--spacer-10); color: var(--text-tertiary); font-weight: var(--font-weight-medium); font-size: var(--body-xs-font-size); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--border-neutral-l2); }
       .desc-table th:first-child, .desc-table td:first-child { white-space: nowrap; min-width: 90px; }
@@ -42,7 +42,7 @@
       .faq-item .q { font-weight: var(--font-weight-strong); color: var(--text-default); margin-bottom: var(--spacer-4); }
       .faq-item .a { color: var(--text-secondary); }
       .disclaimer-box { background: var(--bg-overlay-l1); border-radius: var(--radius-lg); padding: var(--spacer-16); margin: var(--spacer-16) 0; border: 1px solid var(--border-neutral-l1); }
-      .disclaimer-box p { font-size: var(--body-sm-font-size); margin-bottom: var(--spacer-4); }
+      .disclaimer-box p { font-size: var(--body-base-font-size); margin-bottom: var(--spacer-4); }
       .action-bar { margin-top: var(--spacer-16); padding-top: var(--spacer-12); border-top: 1px solid var(--border-neutral-l1); }
       .action-bar a { display: inline-block; padding: var(--spacer-8) var(--spacer-16); background: var(--bg-brand); color: #fff; border-radius: var(--radius-md); font-size: var(--body-sm-font-size); text-decoration: none; }
       .action-bar a:hover { background: var(--bg-brand-hover); }
@@ -122,10 +122,12 @@
       </div>
 
       <h2>常见问题</h2>
-      <div class="faq-item"><div class="q">为什么有些数字带 ⚠️？</div><div class="a">该数字未在本系统的结构化数据工具中找到匹配来源。可能来自 LLM 自身知识或外网搜索结果。请参考上文「怎么读这些标注」。</div></div>
-      <div class="faq-item"><div class="q">为什么问港股回答不了？</div><div class="a">港股主板仅强制半年度披露（中期报 + 年报），不存在 Q1/Q3 单季报告。对于纯港股（腾讯/汇丰/友邦等），HKEXnews 披露以 PDF 为主，本系统未接入结构化解析。美股+港股双重上市的中概股走 EDGAR 通道，覆盖度好得多。</div></div>
-      <div class="faq-item"><div class="q">为什么同一个数有两种口径？</div><div class="a">常见于净利润 vs 归母净利润、营业总收入 vs 营业收入。会计准则允许这些差异存在——系统会尽量标注口径（如"归母"），而不是强行合并。</div></div>
-      <div class="faq-item"><div class="q">系统显示「数据不可得」是不是坏了？</div><div class="a">不是。这是有意为之。某些数据在制度上不存在（如纯港股季度报告），或本系统未覆盖。我们选择诚实告知，不做推算。这是本系统与普通 AI 聊天机器人最大的区别之一。</div></div>
+      <ul>
+        <li><strong>为什么有些数字带 ⚠️？</strong> 该数字未在本系统的结构化数据工具中找到匹配来源。可能来自 LLM 自身知识或外网搜索结果。请参考上文「怎么读这些标注」。</li>
+        <li><strong>为什么问港股回答不了？</strong> 港股主板仅强制半年度披露（中期报 + 年报），不存在 Q1/Q3 单季报告。对于纯港股（腾讯/汇丰/友邦等），HKEXnews 披露以 PDF 为主，本系统未接入结构化解析。美股+港股双重上市的中概股走 EDGAR 通道，覆盖度好得多。</li>
+        <li><strong>为什么同一个数有两种口径？</strong> 常见于净利润 vs 归母净利润、营业总收入 vs 营业收入。会计准则允许这些差异存在——系统会尽量标注口径（如"归母"），而不是强行合并。</li>
+        <li><strong>系统显示「数据不可得」是不是坏了？</strong> 不是。这是有意为之。某些数据在制度上不存在（如纯港股季度报告），或本系统未覆盖。我们选择诚实告知，不做推算。这是本系统与普通 AI 聊天机器人最大的区别之一。</li>
+      </ul>
 
       <div id="action-bar" class="action-bar"></div>
     </div>
