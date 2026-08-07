@@ -26,6 +26,8 @@
     { key: "dashboard", label: "定制化看板", icon: "monitor", disabled: true, page: null },
     { key: "opinions", label: "观点库", icon: "brain", disabled: true, page: null },
     { key: "knowledge", label: "共享知识库", icon: "doc", disabled: false, page: "/knowledge" },
+    { key: "roadmap", label: "开发路线图", icon: "design-flow", disabled: true, page: null },
+    { key: "feedback", label: "反馈中心", icon: "ai_bulb", disabled: true, page: null },
     { key: "about", label: "关于", icon: "info", disabled: false, page: "/about" },
   ];
 
