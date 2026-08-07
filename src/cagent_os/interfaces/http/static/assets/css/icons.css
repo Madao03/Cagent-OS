@@ -19,6 +19,24 @@
   flex-shrink: 0;
 }
 
+/* ── Icon SVG masks (global — shared across all pages) ── */
+[data-icon="agent"] { -webkit-mask-image: url(../icons/dl_builtin_trae_work/agent.svg); mask-image: url(../icons/dl_builtin_trae_work/agent.svg); }
+[data-icon="chat"] { -webkit-mask-image: url(../icons/dl_builtin_trae_work/chat.svg); mask-image: url(../icons/dl_builtin_trae_work/chat.svg); }
+[data-icon="calendar"] { -webkit-mask-image: url(../icons/dl_builtin_trae_work/calendar.svg); mask-image: url(../icons/dl_builtin_trae_work/calendar.svg); }
+[data-icon="monitor"] { -webkit-mask-image: url(../icons/dl_builtin_trae_work/monitor.svg); mask-image: url(../icons/dl_builtin_trae_work/monitor.svg); }
+[data-icon="doc"] { -webkit-mask-image: url(../icons/dl_builtin_trae_work/Doc-Builtin.svg); mask-image: url(../icons/dl_builtin_trae_work/Doc-Builtin.svg); }
+[data-icon="brain"] { -webkit-mask-image: url(../icons/dl_builtin_trae_work/brain.svg); mask-image: url(../icons/dl_builtin_trae_work/brain.svg); }
+[data-icon="info"] { -webkit-mask-image: url(../icons/dl_builtin_trae_work/info.svg); mask-image: url(../icons/dl_builtin_trae_work/info.svg); }
+[data-icon="design-flow"] { -webkit-mask-image: url(../icons/dl_builtin_trae_work/design-flow.svg); mask-image: url(../icons/dl_builtin_trae_work/design-flow.svg); }
+[data-icon="ai_bulb"] { -webkit-mask-image: url(../icons/dl_builtin_trae_work/ai_bulb.svg); mask-image: url(../icons/dl_builtin_trae_work/ai_bulb.svg); }
+[data-icon="clock_time"] { -webkit-mask-image: url(../icons/dl_builtin_trae_work/clock_time.svg); mask-image: url(../icons/dl_builtin_trae_work/clock_time.svg); }
+[data-icon="code"] { -webkit-mask-image: url(../icons/dl_builtin_trae_work/code.svg); mask-image: url(../icons/dl_builtin_trae_work/code.svg); }
+[data-icon="check-small"] { -webkit-mask-image: url(../icons/dl_builtin_trae_work/check-small.svg); mask-image: url(../icons/dl_builtin_trae_work/check-small.svg); }
+[data-icon="Close"] { -webkit-mask-image: url(../icons/dl_builtin_trae_work/Close.svg); mask-image: url(../icons/dl_builtin_trae_work/Close.svg); }
+[data-icon="arrow-collapse"] { -webkit-mask-image: url(../icons/dl_builtin_trae_work/arrow-collapse.svg); mask-image: url(../icons/dl_builtin_trae_work/arrow-collapse.svg); }
+[data-icon="arrow-right"] { -webkit-mask-image: url(../icons/dl_builtin_trae_work/arrow-right.svg); mask-image: url(../icons/dl_builtin_trae_work/arrow-right.svg); }
+[data-icon="Plus"] { -webkit-mask-image: url(../icons/dl_builtin_trae_work/Plus.svg); mask-image: url(../icons/dl_builtin_trae_work/Plus.svg); }
+
 /* ── Sidebar-specific sizing ── */
 .sidebar-nav-icon {
   width: 20px;
