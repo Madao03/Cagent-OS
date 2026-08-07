@@ -58,6 +58,22 @@
   function applySidebarLabels() {
     const navEl = document.querySelector(".app-sidebar-nav");
     if (navEl) _renderSidebarNav(navEl);
+    // ★ Ensure logo is consistent across all pages
+    _ensureLogo();
+  }
+
+  function _ensureLogo() {
+    const logoDiv = document.querySelector(".app-sidebar-logo");
+    if (!logoDiv) return;
+    // If logo already has content, skip
+    if (logoDiv.querySelector(".logo-title")) return;
+    // Inject logo HTML
+    logoDiv.innerHTML =
+      '<span class="sidebar-logo-icon" aria-hidden="true"><span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,#4B3FE3,#6A6FFF);text-align:center;line-height:28px;color:#fff;font-weight:700;font-size:14px;font-family:var(--font-family-mono,monospace)">C</span></span>' +
+      '<span class="app-sidebar-logo-text">' +
+        '<span class="logo-title">CagentOS</span>' +
+        '<span class="logo-subtitle">投研工作台</span>' +
+      '</span>';
   }
 
   function normalizeModelTag() {
