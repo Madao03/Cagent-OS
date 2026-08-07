@@ -299,8 +299,12 @@ def build_roadmap_router(db_path: str | Path) -> APIRouter:
 
     @router.get("/api/v1/roadmap")
     def get_roadmap() -> dict:
-        """Public read-only — return all groups + cards."""
+        """Public read-only — return all groups + cards. Auto-seeds on first call."""
         groups = _load_all_groups(db_path)
+        if not groups:
+            count = _replace_all(db_path, _DEFAULT_GROUPS)
+            logger.info("Roadmap auto-seeded with default data: %d groups", count)
+            groups = _load_all_groups(db_path)
         return {"groups": groups}
 
     @router.put("/api/v1/roadmap")
