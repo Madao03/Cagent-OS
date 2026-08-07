@@ -423,17 +423,23 @@
 
     async function saveBoard() {
       const payload = collectBoard();
+      console.log("[roadmap] PUT payload:", JSON.stringify(payload).slice(0, 500));
       try {
         const resp = await Auth.fetch("/api/v1/roadmap", {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
-        if (resp.ok) showBanner("已保存", true);
-        else showBanner("保存失败（接口未就绪）", false);
+        if (resp.ok) {
+          showBanner("已保存", true);
+        } else {
+          const errBody = await resp.text();
+          console.error("[roadmap] PUT failed:", resp.status, errBody);
+          showBanner("保存失败 (" + resp.status + "): " + errBody.slice(0, 100), false);
+        }
       } catch (err) {
-        // API not implemented yet — keep local edits, inform admin
-        showBanner("已记录本地（接口开发中）", false);
+        console.error("[roadmap] PUT exception:", err);
+        showBanner("保存异常: " + err.message, false);
       }
     }
 
