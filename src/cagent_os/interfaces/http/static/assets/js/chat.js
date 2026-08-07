@@ -831,7 +831,9 @@
     //   derived → derived (blue)
     //   verified_citation → citation (yellow)
     //   untraced → untraced (red) — only this one should be red
-    if (factData.kind === "derived") {
+    if (factData.kind === "untraced") {
+      popover.dataset.tier = "untraced";
+    } else if (factData.kind === "derived") {
       popover.dataset.tier = "derived";
     } else if (factData.kind === "verified_citation") {
       popover.dataset.tier = "secondary";
