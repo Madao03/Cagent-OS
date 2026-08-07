@@ -1614,11 +1614,20 @@ pre {
     font-family: var(--font-family-mono);
     font-size: var(--body-sm-font-size);
     color: var(--text-tertiary);
+    word-break: break-all;
+    overflow-wrap: break-word;
+    overflow-x: auto;
+    max-width: 100%;
   }
   .react-step-result {
     font-size: var(--body-sm-font-size);
     color: var(--text-secondary);
+    word-break: break-all;
+    overflow-wrap: break-word;
+    overflow-x: auto;
+    max-width: 100%;
   }
+  .react-step { min-width: 0; max-width: 100%; overflow: hidden; }
 
   /* Assistant message */
   .chat-msg-assistant {
