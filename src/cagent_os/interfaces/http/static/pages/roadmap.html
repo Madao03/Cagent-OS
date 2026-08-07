@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>开发路线图 · CagentOS</title>
+    <script>
+      (function(){var h=document.documentElement;var s;try{s=localStorage.getItem('cagentos-theme')}catch(e){}var d;if(s==='light')d=false;else if(s==='dark')d=true;else d=!window.matchMedia('(prefers-color-scheme: light)').matches;if(d){h.classList.add('dark');h.classList.remove('light')}else{h.classList.remove('dark');h.classList.add('light')}})();
+    </script>
+    <style id="theme-vars">/* tokens from chat.html — compact */:root{--radius-0:0px;--radius-2:2px;--radius-4:4px;--radius-6:6px;--radius-8:8px;--radius-10:10px;--radius-12:12px;--radius-16:16px;--radius-20:20px;--radius-24:24px;--radius-32:32px;--radius-full:999px;--radius-xs:var(--radius-2);--radius-sm:var(--radius-4);--radius-md:var(--radius-6);--radius-lg:var(--radius-8);--radius-xl:var(--radius-10);--border-width-default:1px;--spacer-0:0px;--spacer-2:2px;--spacer-3:3px;--spacer-4:4px;--spacer-6:6px;--spacer-8:8px;--spacer-10:10px;--spacer-12:12px;--spacer-16:16px;--spacer-20:20px;--spacer-24:24px;--spacer-32:32px;--spacer-40:40px;--spacer-48:48px;--spacer-64:64px;--icon-size-12:12px;--icon-size-14:14px;--icon-size-16:16px;--icon-size-20:20px;--icon-size-24:24px;--font-family-default:"SF Pro Text","PingFang SC",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--font-family-heading:"SF Pro","PingFang SC",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--font-family-metric:"Inter","SF Pro Text","PingFang SC",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--font-family-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;--font-weight-default:400;--font-weight-code:450;--font-weight-medium:500;--font-weight-strong:600;--font-family-base:var(--font-family-default);--font-family-heading-alias:var(--font-family-heading);--font-family-mono-alias:var(--font-family-mono);--body-xs-font-size:10px;--body-xs-font-weight:400;--body-xs-line-height:14px;--body-sm-font-size:11px;--body-sm-font-weight:400;--body-sm-line-height:16px;--body-md-font-size:12px;--body-md-font-weight:400;--body-md-line-height:18px;--body-base-font-size:14px;--body-base-font-weight:400;--body-base-line-height:20px;--bg-base-default:#FFFFFF;--bg-base-secondary:#F5F5F5;--bg-base-tertiary:#E5E5E5;--bg-overlay-l1:rgba(115,115,115,0.08);--bg-overlay-l2:rgba(115,115,115,0.12);--bg-overlay-l3:rgba(115,115,115,0.16);--bg-overlay-l4:rgba(115,115,115,0.20);--bg-white:#FFFFFF;--bg-menu:#FFFFFF;--bg-tooltip:#FFFFFF;--bg-invert:#262626;--bg-invert-hover:#404040;--bg-invert-active:#171717;--bg-invert-disabled:rgba(115,115,115,0.20);--bg-brand:#4B3FE3;--bg-brand-hover:#6A6FFF;--bg-brand-active:#3F31C6;--bg-brand-disabled:rgba(75,63,227,0.22);--bg-brand-popup:rgba(170,183,255,0.36);--text-default:#171717;--text-default-hover:#262626;--text-secondary:#404040;--text-secondary-hover:#171717;--text-tertiary:#737373;--text-disabled:#A1A1A1;--text-onbrand:#FFFFFF;--icon-default:#262626;--icon-default-hover:#171717;--icon-secondary:#404040;--icon-tertiary:#737373;--icon-disabled:#A1A1A1;--border-neutral-l1:rgba(115,115,115,0.12);--border-neutral-l2:rgba(115,115,115,0.18);--border-neutral-l3:rgba(115,115,115,0.36);--border-contrast:#000000;--border-brand:#4B3FE3;--status-primary-default:#2F74FF;--status-primary-hover:#4C88FF;--status-success-default:#15A877;--status-error-default:#E8463A;--status-alert-default:#FEA900;--status-error-surface-l1:rgba(232,70,58,0.12);--color-primary:var(--bg-brand);--color-primary-hover:var(--bg-brand-hover);--color-primary-disabled:var(--bg-brand-disabled);--color-primary-soft:var(--bg-brand-popup);--color-accent:var(--bg-brand);--color-foreground:var(--text-default);--color-muted-foreground:var(--text-secondary);--color-on-surface-variant:var(--text-secondary);--color-disabled-foreground:var(--text-disabled);--color-border:var(--border-neutral-l1);--color-border-strong:var(--border-neutral-l2);--color-border-stronger:var(--border-neutral-l3);--color-card:var(--bg-base-secondary);--color-surface:var(--bg-base-secondary);--color-surface-variant:var(--bg-base-tertiary);--color-info:var(--status-primary-default);--color-success:var(--status-success-default);--color-warning:var(--status-alert-default);--color-error:var(--status-error-default);--color-error-soft:var(--status-error-surface-l1);}html.dark{--bg-base-default:#0d1117;--bg-base-secondary:#151b23;--bg-base-tertiary:#0a0d13;--bg-overlay-l1:rgba(255,255,255,0.04);--bg-overlay-l2:rgba(255,255,255,0.08);--bg-overlay-l3:rgba(255,255,255,0.12);--bg-overlay-l4:rgba(255,255,255,0.16);--bg-white:#0d1117;--bg-menu:#151b23;--bg-tooltip:#1c2128;--bg-invert:#e6edf3;--bg-invert-hover:#d1d9e0;--bg-invert-active:#c1c9d1;--bg-invert-disabled:rgba(255,255,255,0.12);--text-default:#e6edf3;--text-secondary:#9198a1;--text-tertiary:#6e7681;--text-disabled:#424850;--icon-default:#c1c9d1;--icon-secondary:#9198a1;--icon-tertiary:#6e7681;--icon-disabled:#424850;--border-neutral-l1:rgba(255,255,255,0.08);--border-neutral-l2:rgba(255,255,255,0.12);--border-neutral-l3:rgba(255,255,255,0.24);--border-contrast:#ffffff;}</style>
+    <link rel="stylesheet" href="/static/assets/css/icons.css">
+    <style>
+      body { font-family: var(--font-family-default); background: var(--bg-base-default); color: var(--text-default); margin: 0; }
+      .layout { display: flex; min-height: 100vh; }
+      .sidebar { width: 240px; flex-shrink: 0; }
+      .main { flex: 1; overflow-y: auto; }
+      .content { max-width: 1180px; padding: var(--spacer-48) var(--spacer-24) var(--spacer-64); margin-left: max(calc((100vw - 1180px) / 2 - 240px), var(--spacer-24)); margin-right: max(calc((100vw - 1180px) / 2 - 240px), var(--spacer-24)); }
+      h1 { font-family: var(--font-family-heading); font-size: 24px; font-weight: 700; margin: 0 0 var(--spacer-8); }
+      .subtitle { color: var(--text-secondary); font-size: var(--body-base-font-size); margin-bottom: var(--spacer-24); }
+
+      /* ── Board ── */
+      .board { display: flex; gap: var(--spacer-16); align-items: flex-start; margin-bottom: var(--spacer-32); }
+      .column { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; }
+      .column-header { display: flex; align-items: center; justify-content: space-between; font-family: var(--font-family-heading); font-size: var(--body-base-font-size); font-weight: var(--font-weight-strong); padding: var(--spacer-6) var(--spacer-10); margin-bottom: var(--spacer-12); border-bottom: 2px solid var(--border-neutral-l2); }
+      .column-header .col-count { font-size: var(--body-sm-font-size); font-weight: var(--font-weight-default); color: var(--text-tertiary); }
+      .column-cards { display: flex; flex-direction: column; gap: var(--spacer-10); min-height: 80px; flex: 1; }
+
+      /* ── Card ── */
+      .card { position: relative; border-radius: var(--radius-lg); padding: var(--spacer-12); border: 1px solid var(--border-neutral-l1); box-shadow: 0 1px 2px rgba(0,0,0,0.04); transition: box-shadow .15s ease; }
+      .card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+      .card[data-status="done"] { background: rgba(21,168,119,0.06); border-left: 3px solid var(--status-success-default); }
+      .card[data-status="in_progress"] { background: rgba(75,63,227,0.04); border-left: 3px solid var(--bg-brand); }
+      .card[data-status="planned"] { background: var(--bg-overlay-l1); border-left: 3px solid var(--border-neutral-l3); }
+      html.dark .card[data-status="done"] { background: rgba(21,168,119,0.10); }
+      html.dark .card[data-status="in_progress"] { background: rgba(75,63,227,0.10); }
+
+      .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--spacer-8); margin-bottom: var(--spacer-6); }
+      .card-title { font-family: var(--font-family-heading); font-weight: var(--font-weight-strong); font-size: 13px; color: var(--text-default); line-height: 1.4; }
+      .card-priority { font-size: var(--body-xs-font-size); font-weight: var(--font-weight-strong); white-space: nowrap; flex-shrink: 0; padding: 1px 5px; border-radius: var(--radius-xs); }
+      .prio-done { color: var(--text-tertiary); background: var(--bg-overlay-l1); }
+      .prio-p0-ip { color: #F97316; background: rgba(249,115,22,0.10); }
+      .prio-p1-ip { color: #EAB308; background: rgba(234,179,8,0.12); }
+      .prio-p0-planned { color: var(--status-error-default); background: var(--status-error-surface-l1); }
+      .prio-p1-planned { color: #F97316; background: rgba(249,115,22,0.10); }
+      .prio-p2-planned { color: var(--text-tertiary); background: var(--bg-overlay-l1); }
+
+      .card-desc { font-size: var(--body-sm-font-size); line-height: 1.6; color: var(--text-secondary); }
+      .card-eta { font-size: var(--body-xs-font-size); color: var(--text-tertiary); margin-top: var(--spacer-8); display: flex; align-items: center; gap: var(--spacer-4); }
+
+      /* ── Children / progress ── */
+      .card-progress { display: flex; align-items: center; gap: var(--spacer-8); margin-top: var(--spacer-8); }
+      .progress-text { font-size: var(--body-sm-font-size); font-weight: var(--font-weight-strong); color: var(--text-secondary); }
+      .progress-bar { flex: 1; height: 4px; border-radius: var(--radius-full); background: var(--bg-overlay-l2); overflow: hidden; }
+      .progress-bar > span { display: block; height: 100%; border-radius: var(--radius-full); background: var(--bg-brand); }
+      .card[data-status="done"] .progress-bar > span { background: var(--status-success-default); }
+      .toggle-children { background: none; border: none; color: var(--text-tertiary); font-size: var(--body-sm-font-size); cursor: pointer; padding: 0 var(--spacer-4); }
+      .toggle-children:hover { color: var(--text-secondary); }
+      .card-children { list-style: none; padding: 0; margin: var(--spacer-8) 0 0; display: none; }
+      .card-children.open { display: block; }
+      .card-children li { font-size: var(--body-sm-font-size); color: var(--text-secondary); padding: var(--spacer-3) 0; display: flex; align-items: flex-start; gap: var(--spacer-6); line-height: 1.5; }
+      .card-children li.done > span { text-decoration: line-through; color: var(--text-tertiary); }
+      .card-children input[type="checkbox"] { margin-top: 2px; accent-color: var(--bg-brand); cursor: pointer; }
+      .card-children input[type="checkbox"]:disabled { cursor: default; }
+
+      /* ── Admin controls ── */
+      .card .card-actions { display: none; gap: var(--spacer-6); margin-top: var(--spacer-8); padding-top: var(--spacer-8); border-top: 1px dashed var(--border-neutral-l1); }
+      body.is-admin .card .card-actions { display: flex; }
+      body.is-admin .card .drag-handle { display: block; }
+      .drag-handle { display: none; position: absolute; top: var(--spacer-8); right: var(--spacer-8); cursor: grab; color: var(--text-tertiary); font-size: 14px; line-height: 1; user-select: none; }
+      .drag-handle:active { cursor: grabbing; }
+      .card.has-handle { padding-right: var(--spacer-20); }
+      .mini-btn { font-size: var(--body-xs-font-size); padding: 2px var(--spacer-8); border-radius: var(--radius-sm); border: 1px solid var(--border-neutral-l2); background: var(--bg-base-default); color: var(--text-secondary); cursor: pointer; }
+      .mini-btn:hover { border-color: var(--bg-brand); color: var(--bg-brand); }
+      .mini-btn.primary { background: var(--bg-brand); color: #fff; border-color: var(--bg-brand); }
+      .mini-btn.primary:hover { background: var(--bg-brand-hover); }
+      .add-card-btn { width: 100%; margin-top: var(--spacer-8); padding: var(--spacer-8); border: 1px dashed var(--border-neutral-l2); border-radius: var(--radius-md); background: transparent; color: var(--text-tertiary); font-size: var(--body-sm-font-size); cursor: pointer; display: none; }
+      .add-card-btn:hover { color: var(--bg-brand); border-color: var(--bg-brand); }
+      body.is-admin .add-card-btn { display: block; }
+
+      /* edit mode inputs */
+      .card.editing .card-title-view,
+      .card.editing .card-desc-view { display: none; }
+      .card:not(.editing) .card-title-input,
+      .card:not(.editing) .card-desc-input { display: none; }
+      .card-title-input, .card-desc-input { width: 100%; font-family: inherit; font-size: 13px; color: var(--text-default); background: var(--bg-base-default); border: 1px solid var(--border-brand); border-radius: var(--radius-sm); padding: var(--spacer-4) var(--spacer-6); margin-bottom: var(--spacer-6); box-sizing: border-box; }
+      .card-desc-input { font-size: var(--body-sm-font-size); min-height: 40px; resize: vertical; }
+      .card:not(.editing) .card-actions .save-btn { display: none; }
+      .card.editing .card-actions .edit-btn { display: none; }
+
+      /* Sortable drag state */
+      .sortable-ghost { opacity: 0.5; }
+      .sortable-drag { box-shadow: 0 4px 16px rgba(0,0,0,0.18); }
+
+      /* ── Feedback hint ── */
+      .feedback-hint { margin-top: var(--spacer-16); padding-top: var(--spacer-16); border-top: 1px solid var(--border-neutral-l1); color: var(--text-secondary); font-size: var(--body-base-font-size); }
+      .feedback-hint a { color: var(--bg-brand); text-decoration: none; font-weight: var(--font-weight-strong); }
+      .feedback-hint a:hover { text-decoration: underline; }
+      .save-banner { position: fixed; bottom: var(--spacer-24); left: 50%; transform: translateX(-50%); padding: var(--spacer-8) var(--spacer-16); border-radius: var(--radius-lg); background: var(--bg-brand); color: #fff; font-size: var(--body-sm-font-size); box-shadow: 0 4px 16px rgba(75,63,227,0.3); opacity: 0; pointer-events: none; transition: opacity .2s ease; z-index: 50; }
+      .save-banner.show { opacity: 1; }
+
+      /* ── Responsive ── */
+      @media (max-width: 960px) {
+        .board { flex-direction: column; }
+        .content { max-width: 100%; margin-left: var(--spacer-24); margin-right: var(--spacer-24); }
+      }
+
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(115, 115, 115, 0.28); border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(115, 115, 115, 0.45); }
+      html.dark ::-webkit-scrollbar-thumb { background: rgba(200, 200, 200, 0.18); }
+      html.dark ::-webkit-scrollbar-thumb:hover { background: rgba(200, 200, 200, 0.30); }
+    </style>
+</head>
+<body>
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <div class="main">
+    <div class="content">
+      <h1>开发路线图</h1>
+      <p class="subtitle">CagentOS 正在持续进化 &mdash; 这里记录已交付的能力、正在打磨的功能，以及下一步的计划。</p>
+      <div id="board" class="board"></div>
+      <div class="feedback-hint">想要什么功能？<a href="#" id="feedback-link">去反馈 →</a></div>
+    </div>
+  </div>
+</div>
+<div class="save-banner" id="save-banner">已保存</div>
+<script src="/static/assets/js/auth.js"></script>
+<link rel="stylesheet" href="/static/assets/css/icons.css">
+<script src="/static/assets/js/shell.js"></script>
+<script>
+  (async function () {
+    "use strict";
+
+    const user = await Auth.requireUser();
+    if (!user) return;
+    Auth.renderUserBadge(user);
+    if (window.Shell) {
+      if (typeof Shell.renderSidebar === "function") Shell.renderSidebar({ activePage: "roadmap" });
+      if (typeof Shell.wireNavClicks === "function") Shell.wireNavClicks();
+      if (typeof Shell.updateModelBadge === "function") Shell.updateModelBadge();
+    }
+
+    const isAdmin = Auth.isAdmin();
+    if (isAdmin) document.body.classList.add("is-admin");
+
+    // ── Feedback link (route not yet built) ──
+    document.getElementById("feedback-link").addEventListener("click", function (e) {
+      e.preventDefault();
+      alert("反馈功能开发中，敬请期待 ✨");
+    });
+
+    // ── Fallback data (used when /api/v1/roadmap is unavailable) ──
+    const FALLBACK = {
+      groups: [
+        {
+          status: "done",
+          title: "✅ 已上线",
+          cards: [
+            { id: "d1", title: "AgentRuntime 核心引擎", desc: "ReAct 循环 + Event Sourcing，Plugin 体系 + 8 provider LLM 路由 + 白名单 ToolGuard。", priority: "P0", eta: null, children: null },
+            { id: "d2", title: "数字溯源系统 (Provenance)", desc: "字段级事实注册 + 中文量级归一化 + 三遍校验 + 路由感知反馈，每个数字都可追溯。", priority: "P0", eta: null,
+              children: [
+                { text: "FactRegistry 字段级注册 + precision 传播", done: true },
+                { text: "派生计算链（AST 安全求值 + 继承规则）", done: true },
+                { text: "XPEV Q4 基线：0% 幻觉率，三跑全 ANSWERED", done: true },
+                { text: "溯源 UI（浮窗 + 派生链展开 + 信源分级）", done: true }
+              ]
+            },
+            { id: "d3", title: "SEC EDGAR 双通道", desc: "LANE 1 companyfacts XBRL 结构化 + LANE 2 业绩新闻稿抽取，含 S3 零成本分类器与离线物化缓存。", priority: "P0", eta: null, children: null },
+            { id: "d4", title: "Crypto 数据矩阵", desc: "DeFiLlama + Coin Metrics + Binance + 恐贪指数，4 源 × 7 capability，全免费无 key。", priority: "P1", eta: null, children: null },
+            { id: "d5", title: "多 Agent 编排", desc: "Supervisor 自研编排器 + DataCollector/Researcher/Red-Team/Editor 四 Agent + Cron 定时日报。", priority: "P1", eta: null, children: null },
+            { id: "d6", title: "Web UI (Phase 4c)", desc: "对话/简报/知识库三合一页面 + JWT auth + 静态资源托管，Beta 已上线 cagentos.com。", priority: "P0", eta: "2026-08-07", children: null },
+            { id: "d7", title: "共享知识库 (RAG)", desc: "6-scheme 分块 + Qwen3 Embedding/Reranker + 语义检索，已归档 29 篇深度研报。", priority: "P1", eta: null, children: null }
+          ]
+        },
+        {
+          status: "in_progress",
+          title: "🔨 近期",
+          cards: [
+            { id: "i1", title: "阶段 4d-4e 收尾", desc: "完善多 Agent 协作链路与评测自动化，推进 25-criterion LLM-Judge 回归套件。", priority: "P0", eta: "2026 Q3", children: null },
+            { id: "i2", title: "反馈中心", desc: "侧栏已占位，用户反馈收集与处理流程建设中。", priority: "P1", eta: "2026 Q3", children: null },
+            { id: "i3", title: "EDGAR LANE 2 深层 HTML", desc: "ex992 / 港交所式嵌套 HTML 解析，覆盖 XPEV Q1/Q2 等业绩稿。", priority: "P1", eta: null,
+              children: [
+                { text: "S3 Phase 2 LLM 兜底分类器", done: true },
+                { text: "S4-S8 表格解析", done: true },
+                { text: "ex992 深层嵌套 HTML 提取", done: false },
+                { text: "非 12 月财年对齐（AAPL/NVDA）", done: false }
+              ]
+            },
+            { id: "i4", title: "图片多模态", desc: "image.describe 骨架就绪，等待 API key 激活。", priority: "P2", eta: null, children: null }
+          ]
+        },
+        {
+          status: "planned",
+          title: "📋 计划中",
+          cards: [
+            { id: "p1", title: "Fact 独立索引表 (P2)", desc: "按 (ticker, period, caliber) 跨会话查询，需一次性从 events 反解析回填历史 facts。", priority: "P1", eta: null, children: null },
+            { id: "p2", title: "A 股分红入等式", desc: "ΔRE 完整性：纳入分配股利项，避免跨越分红除息日时差出一个分红量级误报。", priority: "P2", eta: null, children: null },
+            { id: "p3", title: "覆盖率分类显示", desc: "拆分「结构化 / 引用 / 未溯源」三类，避免把新闻引用误读为质量问题。", priority: "P2", eta: null, children: null },
+            { id: "p4", title: "定制化看板", desc: "用户可配置的个性化数据看板，侧栏已占位。", priority: "P1", eta: "2026 Q4", children: null },
+            { id: "p5", title: "观点库", desc: "沉淀分析观点与判断记录，支持回溯验证，侧栏已占位。", priority: "P2", eta: "2026 Q4", children: null }
+          ]
+        }
+      ]
+    };
+
+    // ── Fetch roadmap data (fall back to bundled data if API missing) ──
+    let data;
+    try {
+      const resp = await Auth.fetch("/api/v1/roadmap");
+      if (resp.ok) {
+        const payload = await resp.json();
+        data = (payload && payload.groups) ? payload : FALLBACK;
+      } else {
+        data = FALLBACK;
+      }
+    } catch (err) {
+      console.warn("[roadmap] /api/v1/roadmap unavailable, using fallback data", err);
+      data = FALLBACK;
+    }
+
+    // ── Priority badge resolver ──
+    function priorityBadge(status, priority) {
+      if (status === "done") return { text: priority + " ✅", cls: "prio-done" };
+      if (status === "in_progress") {
+        if (priority === "P0") return { text: "P0", cls: "prio-p0-ip" };
+        return { text: priority || "P1", cls: "prio-p1-ip" };
+      }
+      // planned
+      if (priority === "P0") return { text: "P0", cls: "prio-p0-planned" };
+      if (priority === "P1") return { text: "P1", cls: "prio-p1-planned" };
+      return { text: priority || "P2", cls: "prio-p2-planned" };
+    }
+
+    function escapeHtml(s) {
+      return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+      });
+    }
+
+    function renderChildren(card) {
+      if (!card.children || !card.children.length) return "";
+      const done = card.children.filter(function (c) { return c.done; }).length;
+      const total = card.children.length;
+      const pct = Math.round((done / total) * 100);
+      const items = card.children.map(function (c, idx) {
+        return '<li class="' + (c.done ? "done" : "") + '">' +
+          '<input type="checkbox" data-card="' + card.id + '" data-idx="' + idx + '"' + (c.done ? " checked" : "") + (isAdmin ? "" : " disabled") + '>' +
+          "<span>" + escapeHtml(c.text) + "</span></li>";
+      }).join("");
+      return '<div class="card-progress">' +
+        '<span class="progress-text">' + done + "/" + total + "</span>" +
+        '<div class="progress-bar"><span style="width:' + pct + '%"></span></div>' +
+        '<button class="toggle-children" type="button">展开</button>' +
+        "</div>" +
+        '<ul class="card-children">' + items + "</ul>";
+    }
+
+    function renderCard(card, status) {
+      const badge = priorityBadge(status, card.priority);
+      const eta = card.eta ? '<div class="card-eta">⏱ ' + escapeHtml(card.eta) + "</div>" : "";
+      const children = renderChildren(card);
+      return '<div class="card has-handle" data-status="' + status + '" data-id="' + escapeHtml(card.id) + '">' +
+        '<span class="drag-handle" title="拖动">≡</span>' +
+        '<div class="card-head">' +
+        '<span class="card-title card-title-view">' + escapeHtml(card.title) + "</span>" +
+        '<input class="card-title-input" value="' + escapeHtml(card.title) + '">' +
+        '<span class="card-priority ' + badge.cls + '">' + badge.text + "</span>" +
+        "</div>" +
+        '<div class="card-desc card-desc-view">' + escapeHtml(card.desc) + "</div>" +
+        '<textarea class="card-desc-input">' + escapeHtml(card.desc) + "</textarea>" +
+        children + eta +
+        '<div class="card-actions">' +
+        '<button class="mini-btn edit-btn" type="button">编辑</button>' +
+        '<button class="mini-btn primary save-btn" type="button">保存</button>' +
+        "</div>" +
+        "</div>";
+    }
+
+    function renderBoard(groups) {
+      const board = document.getElementById("board");
+      board.innerHTML = "";
+      groups.forEach(function (group) {
+        const col = document.createElement("div");
+        col.className = "column";
+        col.dataset.status = group.status;
+        const count = (group.cards || []).length;
+        let html = '<div class="column-header"><span>' + escapeHtml(group.title) + "</span>" +
+          '<span class="col-count">' + count + "</span></div>";
+        html += '<div class="column-cards" data-status="' + group.status + '">';
+        (group.cards || []).forEach(function (card) {
+          html += renderCard(card, group.status);
+        });
+        html += "</div>";
+        html += '<button class="add-card-btn" type="button" data-status="' + group.status + '">+ 新建卡片</button>';
+        col.innerHTML = html;
+        board.appendChild(col);
+      });
+      wireCardInteractions();
+      if (isAdmin) initSortable();
+    }
+
+    // ── Card interactions: toggle children, edit, checkbox ──
+    function wireCardInteractions() {
+      // toggle children
+      document.querySelectorAll(".toggle-children").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          const card = btn.closest(".card");
+          const list = card.querySelector(".card-children");
+          if (!list) return;
+          const open = list.classList.toggle("open");
+          btn.textContent = open ? "收起" : "展开";
+        });
+      });
+
+      if (!isAdmin) return;
+
+      // edit / save
+      document.querySelectorAll(".card .edit-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          btn.closest(".card").classList.add("editing");
+          const ti = btn.closest(".card").querySelector(".card-title-input");
+          if (ti) ti.focus();
+        });
+      });
+      document.querySelectorAll(".card .save-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          const card = btn.closest(".card");
+          const title = card.querySelector(".card-title-input").value.trim();
+          const desc = card.querySelector(".card-desc-input").value.trim();
+          if (title) card.querySelector(".card-title-view").textContent = title;
+          card.querySelector(".card-desc-view").textContent = desc;
+          card.classList.remove("editing");
+          saveBoard();
+        });
+      });
+
+      // children checkbox toggle (admin only)
+      document.querySelectorAll('.card-children input[type="checkbox"]').forEach(function (cb) {
+        cb.addEventListener("change", function () {
+          const li = cb.closest("li");
+          if (cb.checked) li.classList.add("done"); else li.classList.remove("done");
+          // sync in-memory + progress
+          syncProgress(cb.closest(".card"));
+          saveBoard();
+        });
+      });
+
+      // add card
+      document.querySelectorAll(".add-card-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          const status = btn.dataset.status;
+          const container = document.querySelector('.column-cards[data-status="' + status + '"]');
+          const id = "new-" + Date.now();
+          const tmp = document.createElement("div");
+          tmp.innerHTML = renderCard({ id: id, title: "新卡片", desc: "点击编辑添加描述", priority: status === "done" ? "P1" : status === "in_progress" ? "P1" : "P2", eta: null, children: null }, status);
+          const node = tmp.firstElementChild;
+          container.appendChild(node);
+          node.classList.add("editing");
+          node.querySelector(".card-title-input").focus();
+          // rewire for this node
+          node.querySelector(".save-btn").addEventListener("click", function () {
+            const title = node.querySelector(".card-title-input").value.trim();
+            const desc = node.querySelector(".card-desc-input").value.trim();
+            if (title) node.querySelector(".card-title-view").textContent = title;
+            node.querySelector(".card-desc-view").textContent = desc;
+            node.classList.remove("editing");
+            saveBoard();
+          });
+        });
+      });
+    }
+
+    function syncProgress(card) {
+      const boxes = card.querySelectorAll('.card-children input[type="checkbox"]');
+      if (!boxes.length) return;
+      let done = 0;
+      boxes.forEach(function (b) { if (b.checked) done++; });
+      const total = boxes.length;
+      const pct = Math.round((done / total) * 100);
+      const txt = card.querySelector(".progress-text");
+      if (txt) txt.textContent = done + "/" + total;
+      const bar = card.querySelector(".progress-bar > span");
+      if (bar) bar.style.width = pct + "%";
+    }
+
+    // ── Collect current board state from DOM ──
+    function collectBoard() {
+      const groups = [];
+      document.querySelectorAll(".column").forEach(function (col) {
+        const status = col.dataset.status;
+        const titleEl = col.querySelector(".column-header > span");
+        const cards = [];
+        col.querySelectorAll(".card").forEach(function (card) {
+          const children = [];
+          card.querySelectorAll(".card-children li").forEach(function (li) {
+            const cb = li.querySelector('input[type="checkbox"]');
+            const span = li.querySelector("span");
+            children.push({ text: span ? span.textContent : "", done: !!(cb && cb.checked) });
+          });
+          cards.push({
+            id: card.dataset.id,
+            title: card.querySelector(".card-title-view").textContent,
+            desc: card.querySelector(".card-desc-view").textContent,
+            priority: (card.querySelector(".card-priority").textContent || "").replace(/\s*✅/, "").trim(),
+            eta: null,
+            children: children.length ? children : null
+          });
+        });
+        groups.push({ status: status, title: titleEl ? titleEl.textContent : "", cards: cards });
+      });
+      return { groups: groups };
+    }
+
+    function showBanner(msg, ok) {
+      const banner = document.getElementById("save-banner");
+      banner.textContent = msg;
+      banner.style.background = ok ? "var(--bg-brand)" : "var(--status-error-default)";
+      banner.classList.add("show");
+      setTimeout(function () { banner.classList.remove("show"); }, 1800);
+    }
+
+    async function saveBoard() {
+      const payload = collectBoard();
+      try {
+        const resp = await Auth.fetch("/api/v1/roadmap", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        if (resp.ok) showBanner("已保存", true);
+        else showBanner("保存失败（接口未就绪）", false);
+      } catch (err) {
+        // API not implemented yet — keep local edits, inform admin
+        showBanner("已记录本地（接口开发中）", false);
+      }
+    }
+
+    // ── SortableJS (admin drag & drop between columns) ──
+    function initSortable() {
+      if (typeof window.Sortable === "undefined") {
+        // dynamically load CDN, then init
+        const s = document.createElement("script");
+        s.src = "https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js";
+        s.onload = function () { setupSortable(); };
+        s.onerror = function () { console.warn("[roadmap] SortableJS failed to load"); };
+        document.head.appendChild(s);
+      } else {
+        setupSortable();
+      }
+    }
+
+    function setupSortable() {
+      if (typeof window.Sortable === "undefined") return;
+      document.querySelectorAll(".column-cards").forEach(function (col) {
+        window.Sortable.create(col, {
+          group: "roadmap",
+          handle: ".drag-handle",
+          animation: 150,
+          ghostClass: "sortable-ghost",
+          dragClass: "sortable-drag",
+          onEnd: function (evt) {
+            // update card status badge to match new column
+            const card = evt.item;
+            const newStatus = evt.to.getAttribute("data-status");
+            card.setAttribute("data-status", newStatus);
+            const badge = card.querySelector(".card-priority");
+            const rawPrio = (badge.textContent || "").replace(/\s*✅/, "").trim();
+            const pb = priorityBadge(newStatus, rawPrio);
+            badge.textContent = pb.text;
+            badge.className = "card-priority " + pb.cls;
+            // recolor card background via attribute (CSS handles it)
+            saveBoard();
+          }
+        });
+      });
+    }
+
+    renderBoard(data.groups);
+  })();
+</script>
+</body>
+</html>

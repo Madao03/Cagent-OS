@@ -26,7 +26,7 @@
     { key: "dashboard", label: "定制化看板", icon: "monitor", disabled: true, page: null },
     { key: "opinions", label: "观点库", icon: "brain", disabled: true, page: null },
     { key: "knowledge", label: "共享知识库", icon: "doc", disabled: false, page: "/knowledge" },
-    { key: "roadmap", label: "开发路线图", icon: "design-flow", disabled: true, page: null },
+    { key: "roadmap", label: "开发路线图", icon: "design-flow", disabled: false, page: "/roadmap" },
     { key: "feedback", label: "反馈中心", icon: "ai_bulb", disabled: true, page: null },
     { key: "about", label: "关于", icon: "info", disabled: false, page: "/about" },
   ];
@@ -36,6 +36,7 @@
     if (p.includes("about.html") || p.includes("/about")) return "about";
     if (p.includes("knowledge.html") || p.includes("/knowledge")) return "knowledge";
     if (p.includes("brief.html") || p.includes("/brief")) return "brief";
+    if (p.includes("roadmap.html") || p.includes("/roadmap")) return "roadmap";
     return "chat";
   }
 

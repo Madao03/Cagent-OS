@@ -411,6 +411,13 @@ def create_app() -> FastAPI:
                 return FileResponse(str(p))
             return RedirectResponse(url="/")
 
+        @app.get("/roadmap")
+        async def serve_roadmap():
+            p = static_dir / "pages" / "roadmap.html"
+            if p.exists():
+                return FileResponse(str(p))
+            return RedirectResponse(url="/")
+
         @app.get("/legacy")
         async def serve_legacy():
             p = static_dir / "legacy.html"
@@ -483,5 +490,9 @@ def create_app() -> FastAPI:
     _cost_tracker = run_engine._cost_tracker if hasattr(run_engine, '_cost_tracker') else None
     if _cost_tracker is not None:
         app.include_router(build_cost_router(_cost_tracker))
+
+    # Roadmap page API (public read, admin write)
+    from cagent_os.interfaces.http.routes_roadmap import build_roadmap_router
+    app.include_router(build_roadmap_router(_project_root / "data" / "roadmap.db"))
 
     return app
