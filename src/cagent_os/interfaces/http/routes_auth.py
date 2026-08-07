@@ -208,8 +208,9 @@ def build_auth_router(user_store: UserStore, invitation_store: InvitationCodeSto
         }
 
     @router.get("/api/v1/auth/invitations")
-    def list_invitations() -> dict:
-        """Public list of invitation codes (internal use only — lock down before launch)."""
+    def list_invitations(request: Request) -> dict:
+        """List invitation codes (admin only)."""
+        _require_admin(request)
         return {
             "all": invitation_store.list_all(),
             "available": invitation_store.list_available(),

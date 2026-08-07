@@ -12,7 +12,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from cagent_os.agents.run_engine import AgentRuntime
 from cagent_os.config.cost_tracker import BudgetExceeded, ConcurrencyExceeded, CostTracker
 from cagent_os.conversations.service import ConversationService
-from cagent_os.interfaces.http.auth_context import require_principal_id, resolve_principal_id
+from cagent_os.interfaces.http.auth_context import require_principal_id
 from cagent_os.interfaces.http.rate_limiter import limiter
 from cagent_os.interfaces.http.run_events import project_stream_payload
 from cagent_os.interfaces.http.schemas import (
@@ -39,7 +39,7 @@ def build_runs_router(
     @router.post("/api/v1/conversations/{conversation_id}/messages")
     @limiter.limit("5/minute")
     def post_message(conversation_id: str, payload: PostMessageRequest, request: Request) -> StreamingResponse:
-        principal_id = resolve_principal_id(request)
+        principal_id = require_principal_id(request)
         request_id = getattr(request.state, "request_id", "")
 
         # ── Record query for telemetry (before any checks — captures all attempts
