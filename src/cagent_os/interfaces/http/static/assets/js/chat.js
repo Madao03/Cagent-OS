@@ -629,8 +629,10 @@
   }
 
   function _sourceTierLabel(tier) {
-    if (tier === "primary") return "一级来源";
-    if (tier === "secondary") return "⚠️ 二手聚合";
+    if (tier === "primary" || tier === "0_primary") return "一级来源";
+    if (tier === "secondary" || tier === "1_media_pro") return "⚠️ 二手聚合";
+    if (tier === "curated") return "知识库精选";
+    if (tier === "3_aggregator") return "社交媒体/博客";
     return tier || "未知";
   }
 
@@ -638,7 +640,14 @@
     /** Build the inner HTML for a provenance data card from a Fact object. */
     const sourceLabel = SOURCE_LABELS[fact.source] || fact.source || "未知";
     const tier = fact.source_tier || "";
-    const tierClass = tier === "primary" ? "prov-card-row-ok" : (tier === "secondary" ? "prov-card-row-warn" : "");
+    // ★ Infer tier from source if source_tier is empty
+    const _PRIMARY_SOURCES = ["EDGAR", "FRED", "CoinMetrics", "Binance", "DeFiLlama", "alternative.me", "akshare"];
+    let effectiveTier = tier;
+    if (!effectiveTier && !isDerived) {
+      if (_PRIMARY_SOURCES.some(s => fact.source && fact.source.includes(s))) effectiveTier = "primary";
+      else if (fact.source === "knowledge_base") effectiveTier = "curated";
+    }
+    const tierClass = effectiveTier === "primary" ? "prov-card-row-ok" : (effectiveTier === "secondary" ? "prov-card-row-warn" : "");
 
     const isDerived = fact.kind === "derived";
     const derivInfo = isDerived ? _provDerivations[fact.id] || null : null;
@@ -649,9 +658,14 @@
       periodStr = `${fact.period_start || "?"} ~ ${fact.period_end || "?"}` + (pt ? `（${pt}）` : "");
     }
 
-    // Derived facts: show friendly caliber label
-    let caliber = fact.caliber || fact.kind || "";
-    if (isDerived) caliber = "派生计算值";
+    // ★ Caliber: hide technical values that have no user-facing meaning
+    let caliber = fact.caliber || "";
+    const _TECHNICAL_CALIBERS = ["value", "verified_citation", "data", ""];
+    if (isDerived) {
+      caliber = "派生计算值";
+    } else if (_TECHNICAL_CALIBERS.includes(caliber)) {
+      caliber = "";  // Hide meaningless technical caliber
+    }
     const acctStd = fact.accounting_standard || "";
 
     const audited = fact.audited;
@@ -677,8 +691,8 @@
     html += `<div class="prov-card-row"><span class="prov-card-label">来源</span><span class="prov-card-row-val">${escapeHtml(sourceLabel)}</span></div>`;
 
     // Tier
-    if (tier) {
-      html += `<div class="prov-card-row"><span class="prov-card-label">层级</span><span class="${tierClass}">${_sourceTierLabel(tier)}</span></div>`;
+    if (effectiveTier) {
+      html += `<div class="prov-card-row"><span class="prov-card-label">层级</span><span class="${tierClass}">${_sourceTierLabel(effectiveTier)}</span></div>`;
     }
 
     // Period
