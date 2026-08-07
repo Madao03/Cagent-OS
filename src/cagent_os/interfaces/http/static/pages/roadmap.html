@@ -246,7 +246,7 @@
       const items = card.children.map(function (c, idx) {
         return '<li class="' + (c.done ? "done" : "") + '">' +
           '<input type="checkbox" data-card="' + card.id + '" data-idx="' + idx + '"' + (c.done ? " checked" : "") + (isAdmin ? "" : " disabled") + '>' +
-          "<span>" + escapeHtml(c.text) + "</span></li>";
+          "<span>" + escapeHtml(c.title || "") + "</span></li>";
       }).join("");
       return '<div class="card-progress">' +
         '<span class="progress-text">' + done + "/" + total + "</span>" +
@@ -283,16 +283,16 @@
       groups.forEach(function (group) {
         const col = document.createElement("div");
         col.className = "column";
-        col.dataset.status = group.status;
+        col.dataset.status = group.id;
         const count = (group.cards || []).length;
         let html = '<div class="column-header"><span>' + escapeHtml(group.title) + "</span>" +
           '<span class="col-count">' + count + "</span></div>";
-        html += '<div class="column-cards" data-status="' + group.status + '">';
+        html += '<div class="column-cards" data-status="' + group.id + '">';
         (group.cards || []).forEach(function (card) {
-          html += renderCard(card, group.status);
+          html += renderCard(card, group.id);
         });
         html += "</div>";
-        html += '<button class="add-card-btn" type="button" data-status="' + group.status + '">+ 新建卡片</button>';
+        html += '<button class="add-card-btn" type="button" data-status="' + group.id + '">+ 新建卡片</button>';
         col.innerHTML = html;
         board.appendChild(col);
       });
