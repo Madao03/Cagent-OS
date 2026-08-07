@@ -387,27 +387,28 @@
     // ── Collect current board state from DOM ──
     function collectBoard() {
       const groups = [];
-      document.querySelectorAll(".column").forEach(function (col) {
-        const status = col.dataset.status;
+      document.querySelectorAll(".column").forEach(function (col, idx) {
         const titleEl = col.querySelector(".column-header > span");
+        const status = col.dataset.status;
         const cards = [];
         col.querySelectorAll(".card").forEach(function (card) {
           const children = [];
           card.querySelectorAll(".card-children li").forEach(function (li) {
             const cb = li.querySelector('input[type="checkbox"]');
             const span = li.querySelector("span");
-            children.push({ text: span ? span.textContent : "", done: !!(cb && cb.checked) });
+            children.push({ title: span ? span.textContent : "", done: !!(cb && cb.checked) });
           });
           cards.push({
             id: card.dataset.id,
             title: card.querySelector(".card-title-view").textContent,
             desc: card.querySelector(".card-desc-view").textContent,
+            status: status,
             priority: (card.querySelector(".card-priority").textContent || "").replace(/\s*✅/, "").trim(),
-            eta: null,
-            children: children.length ? children : null
+            eta: "",
+            children: children
           });
         });
-        groups.push({ status: status, title: titleEl ? titleEl.textContent : "", cards: cards });
+        groups.push({ id: status, title: titleEl ? titleEl.textContent : "", sort_order: idx, cards: cards });
       });
       return { groups: groups };
     }
