@@ -640,6 +640,9 @@
     /** Build the inner HTML for a provenance data card from a Fact object. */
     const sourceLabel = SOURCE_LABELS[fact.source] || fact.source || "未知";
     const tier = fact.source_tier || "";
+    const isDerived = fact.kind === "derived";
+    const derivInfo = isDerived ? _provDerivations[fact.id] || null : null;
+
     // ★ Infer tier from source if source_tier is empty
     const _PRIMARY_SOURCES = ["EDGAR", "FRED", "CoinMetrics", "Binance", "DeFiLlama", "alternative.me", "akshare"];
     let effectiveTier = tier;
@@ -648,9 +651,6 @@
       else if (fact.source === "knowledge_base") effectiveTier = "curated";
     }
     const tierClass = effectiveTier === "primary" ? "prov-card-row-ok" : (effectiveTier === "secondary" ? "prov-card-row-warn" : "");
-
-    const isDerived = fact.kind === "derived";
-    const derivInfo = isDerived ? _provDerivations[fact.id] || null : null;
 
     let periodStr = "";
     if (fact.period_start || fact.period_end) {
