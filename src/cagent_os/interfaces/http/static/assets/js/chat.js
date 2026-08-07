@@ -749,7 +749,7 @@
         const pubDate = new Date(fact.published_at);
         const daysAgo = Math.floor((Date.now() - pubDate) / 86400000);
         if (daysAgo > 0) dateLabel += `（${daysAgo} 天前）`;
-        if (daysAgo > 30) staleWarn = ' ⚠️ 可能过时';
+        if (daysAgo > 15) staleWarn = ' ⚠️ 可能过时';
       } catch {}
       html += `<div class="prov-card-row"><span class="prov-card-label">发布</span><span class="prov-card-row-val" style="font-size:11px;color:var(--text-secondary)">${escapeHtml(dateLabel)}${staleWarn}</span></div>`;
     }
