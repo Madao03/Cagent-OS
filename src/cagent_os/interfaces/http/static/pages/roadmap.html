@@ -43,6 +43,13 @@
       .prio-p0-planned { color: var(--status-error-default); background: var(--status-error-surface-l1); }
       .prio-p1-planned { color: #F97316; background: rgba(249,115,22,0.10); }
       .prio-p2-planned { color: var(--text-tertiary); background: var(--bg-overlay-l1); }
+      /* priority selector (admin) */
+      .card-priority.is-admin { cursor: pointer; border: 1px dashed transparent; }
+      .card-priority.is-admin:hover { border-color: currentColor; }
+      .prio-menu { position: absolute; z-index: 60; display: none; flex-direction: column; gap: 2px; background: var(--bg-base-default); border: 1px solid var(--border-neutral-l2); border-radius: var(--radius-sm); box-shadow: 0 4px 16px rgba(0,0,0,0.12); padding: 4px; }
+      .prio-menu.open { display: flex; }
+      .prio-menu button { border: none; background: transparent; cursor: pointer; padding: 4px 12px; font-size: var(--body-xs-font-size); font-weight: var(--font-weight-strong); border-radius: var(--radius-xs); text-align: left; }
+      .prio-menu button:hover { background: var(--bg-overlay-l1); }
 
       .card-desc { font-size: var(--body-sm-font-size); line-height: 1.6; color: var(--text-secondary); }
       .card-eta { font-size: var(--body-xs-font-size); color: var(--text-tertiary); margin-top: var(--spacer-8); display: flex; align-items: center; gap: var(--spacer-4); }
@@ -260,12 +267,13 @@
       const badge = priorityBadge(status, card.priority);
       const eta = card.eta ? '<div class="card-eta">⏱ ' + escapeHtml(card.eta) + "</div>" : "";
       const children = renderChildren(card);
+      const prioCls = badge.cls + (isAdmin ? " is-admin" : "");
       return '<div class="card has-handle" data-status="' + status + '" data-id="' + escapeHtml(card.id) + '">' +
         '<span class="drag-handle" title="拖动">≡</span>' +
         '<div class="card-head">' +
         '<span class="card-title card-title-view">' + escapeHtml(card.title) + "</span>" +
         '<input class="card-title-input" value="' + escapeHtml(card.title) + '">' +
-        '<span class="card-priority ' + badge.cls + '">' + badge.text + "</span>" +
+        '<span class="card-priority ' + prioCls + '" data-priority="' + escapeHtml(card.priority || "P2") + '">' + badge.text + "</span>" +
         "</div>" +
         '<div class="card-desc card-desc-view">' + escapeHtml(card.desc) + "</div>" +
         '<textarea class="card-desc-input">' + escapeHtml(card.desc) + "</textarea>" +
@@ -314,6 +322,22 @@
       });
 
       if (!isAdmin) return;
+
+      // priority selector (admin only) — click to cycle P0→P1→P2→P0
+      document.querySelectorAll(".card-priority.is-admin").forEach(function (badge) {
+        badge.addEventListener("click", function (e) {
+          e.stopPropagation();
+          const current = badge.dataset.priority || "P2";
+          const next = current === "P0" ? "P1" : current === "P1" ? "P2" : "P0";
+          badge.dataset.priority = next;
+          const card = badge.closest(".card");
+          const status = card.dataset.status;
+          const pb = priorityBadge(status === "done" ? "done" : status === "near" ? "in_progress" : "planned", next);
+          badge.textContent = pb.text;
+          badge.className = "card-priority " + pb.cls + " is-admin";
+          saveBoard();
+        });
+      });
 
       // edit / save
       document.querySelectorAll(".card .edit-btn").forEach(function (btn) {
@@ -403,7 +427,7 @@
             title: card.querySelector(".card-title-view").textContent,
             desc: card.querySelector(".card-desc-view").textContent,
             status: status,
-            priority: (card.querySelector(".card-priority").textContent || "").replace(/\s*✅/, "").trim(),
+            priority: card.querySelector(".card-priority").dataset.priority || "P2",
             eta: "",
             children: children
           });
