@@ -1234,10 +1234,14 @@
     const input = document.querySelector(".chat-input");
     if (input) input.value = "";
 
-    // Reset active state — highlight nothing until user sends a message
+    // Reset active state — highlight the new conversation
     document.querySelectorAll(".chat-conv-item").forEach(item => {
-      item.classList.toggle("is-active", false);
+      const id = item.getAttribute("data-conv-id");
+      item.classList.toggle("is-active", id === CONVERSATION_ID);
     });
+    // Ensure the new conversation appears in the sidebar with active state
+    const convList = document.querySelector(".chat-conv-list");
+    if (convList) _ensureCurrentConvInList(convList);
 
     // Reload conversation list to include the new one after first message
     // (don't reload now — will happen naturally when user sends a message)
