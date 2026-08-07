@@ -142,12 +142,21 @@ window.Auth = (function () {
     });
   }
 
+  /**
+   * Check if the current user has admin role.
+   */
+  function isAdmin() {
+    const user = getCachedUser();
+    return !!(user && user.role === "admin");
+  }
+
   return {
     getToken,
     setToken,
     clearToken,
     getCachedUser,
     setCachedUser,
+    isAdmin,
     fetch: fetchWithAuth,
     fetchCurrentUser,
     requireUser,

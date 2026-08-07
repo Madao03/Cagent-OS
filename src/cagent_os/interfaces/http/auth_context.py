@@ -80,6 +80,33 @@ def require_principal_id(request: Request) -> str:
     return user_id
 
 
+def is_admin(request: Request) -> bool:
+    """Check if the current request is from an admin user (via JWT role).
+
+    Returns False if no token, token invalid, or role != "admin".
+    Does NOT raise — callers use this for conditional rendering.
+    """
+    token = _extract_token(request)
+    if not token:
+        return False
+    try:
+        payload = decode_access_token(token)
+    except JWTError:
+        return False
+    return payload.get("role") == "admin"
+
+
+def require_admin(request: Request) -> str:
+    """Strict variant: raises 403 if user is not admin.
+
+    Returns user_id on success. Use this on admin-only routes.
+    """
+    user_id = require_principal_id(request)  # validates token + raises 401
+    if not is_admin(request):
+        raise HTTPException(status_code=403, detail="Admin privilege required")
+    return user_id
+
+
 # Backward compat — existing code imports resolve_current_user_id
 def resolve_current_user_id(request: Request) -> str:
     return resolve_principal_id(request)

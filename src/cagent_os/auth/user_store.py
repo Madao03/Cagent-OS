@@ -268,6 +268,16 @@ class UserStore:
         )
         self._conn.commit()
 
+    def set_role(self, username: str, role: str) -> None:
+        """Set a user's role (e.g., 'admin' or 'user')."""
+        if not self._username_exists(username):
+            raise InvalidCredentialsError(f"User '{username}' not found")
+        self._conn.execute(
+            "UPDATE users SET role = ? WHERE username = ?",
+            (role, username),
+        )
+        self._conn.commit()
+
     def list_users(self, include_disabled: bool = True) -> list[UserRecord]:
         """Return all users (for admin dashboard)."""
         sql = (
@@ -350,7 +360,7 @@ class UserStore:
         self._conn.commit()
         return UserRecord(
             id=user_id, username=username, email=email,
-            display_name=name, role="role",
+            display_name=name, role=role,
             created_via="email", invitation_code=None,
             created_at=created_at,
         )

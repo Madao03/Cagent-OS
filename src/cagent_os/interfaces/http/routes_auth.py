@@ -83,22 +83,32 @@ class GenerateInvitationsRequest(BaseModel):
 def build_auth_router(user_store: UserStore, invitation_store: InvitationCodeStore) -> APIRouter:
     router = APIRouter()
 
-    # Admin token check (simple shared secret via env, MVP only)
+    # Admin token check — supports two auth methods:
+    #   1. JWT with role="admin" (primary, for logged-in admin users)
+    #   2. X-Admin-Token header matching ADMIN_TOKEN env (legacy, for scripts)
     def _require_admin(request: Request) -> None:
-        """Validate X-Admin-Token header against ADMIN_TOKEN env var.
+        """Validate admin privilege via JWT role or X-Admin-Token."""
+        # Method 1: check JWT role
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            try:
+                payload = decode_access_token(auth_header.removeprefix("Bearer ").strip())
+                if payload.get("role") == "admin":
+                    return  # admin confirmed via JWT
+            except JWTError:
+                pass  # fall through to Method 2
 
-        For MVP, we use a shared secret instead of role-based auth.
-        Set ADMIN_TOKEN env var to enable; if unset, admin endpoints 503.
-        """
+        # Method 2: X-Admin-Token (legacy/script access)
         expected = os.environ.get("ADMIN_TOKEN", "").strip()
         if not expected:
             raise HTTPException(
                 status_code=503,
-                detail="Admin endpoints disabled. Set ADMIN_TOKEN env var to enable.",
+                detail="Admin endpoints disabled. Set ADMIN_TOKEN env var or log in as admin.",
             )
         provided = request.headers.get("X-Admin-Token", "").strip()
-        if not provided or provided != expected:
-            raise HTTPException(status_code=403, detail="Invalid admin token")
+        import hmac
+        if not provided or not hmac.compare_digest(provided, expected):
+            raise HTTPException(status_code=403, detail="Admin privilege required")
 
     # ── Auth endpoints (public) ──────────────────────────────────
 
@@ -121,7 +131,7 @@ def build_auth_router(user_store: UserStore, invitation_store: InvitationCodeSto
             except AuthError as exc:
                 raise HTTPException(status_code=400, detail=str(exc))
 
-            token = create_access_token(user_id=user.id, username=user.username)
+            token = create_access_token(user_id=user.id, username=user.username, role=user.role)
             logger.info("User registered via invitation: %s", user.username)
             return AuthResponse(token=token, user=user.to_dict())
 
@@ -138,7 +148,7 @@ def build_auth_router(user_store: UserStore, invitation_store: InvitationCodeSto
             except AuthError as exc:
                 raise HTTPException(status_code=400, detail=str(exc))
 
-            token = create_access_token(user_id=user.id, username=user.username, email=user.email)
+            token = create_access_token(user_id=user.id, username=user.username, email=user.email, role=user.role)
             return AuthResponse(token=token, user=user.to_dict())
 
         raise HTTPException(
@@ -158,7 +168,7 @@ def build_auth_router(user_store: UserStore, invitation_store: InvitationCodeSto
             except InvalidCredentialsError as exc:
                 raise HTTPException(status_code=401, detail=str(exc))
             token = create_access_token(
-                user_id=user.id, username=user.username, email=user.email,
+                user_id=user.id, username=user.username, email=user.email, role=user.role,
             )
             logger.info("User logged in via PIN: %s", user.username)
             return AuthResponse(token=token, user=user.to_dict())
@@ -172,7 +182,7 @@ def build_auth_router(user_store: UserStore, invitation_store: InvitationCodeSto
             except InvalidCredentialsError as exc:
                 raise HTTPException(status_code=401, detail=str(exc))
             token = create_access_token(
-                user_id=user.id, username=user.username, email=user.email,
+                user_id=user.id, username=user.username, email=user.email, role=user.role,
             )
             return AuthResponse(token=token, user=user.to_dict())
 
@@ -259,5 +269,17 @@ def build_auth_router(user_store: UserStore, invitation_store: InvitationCodeSto
             "count": len(codes),
             "note": payload.note,
         }
+
+    @router.post("/api/v1/admin/users/{username}/role")
+    def admin_set_role(username: str, role: str, request: Request) -> dict:
+        """Set a user's role (admin only). Query param: ?role=admin"""
+        _require_admin(request)
+        if role not in ("admin", "user"):
+            raise HTTPException(status_code=400, detail="role must be 'admin' or 'user'")
+        try:
+            user_store.set_role(username, role)
+        except InvalidCredentialsError as exc:
+            raise HTTPException(status_code=404, detail=str(exc))
+        return {"status": "ok", "username": username, "role": role}
 
     return router

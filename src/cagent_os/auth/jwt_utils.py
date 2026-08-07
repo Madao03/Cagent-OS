@@ -3,6 +3,7 @@
 Tokens carry:
   - sub: user_id (subject, always present)
   - username: display name (always present)
+  - role: user role ("user" | "admin", always present)
   - email: optional (set when registered via email mode)
   - exp: expiration (30 days default for 内测 — long lived for convenience)
   - iat: issued-at timestamp
@@ -46,6 +47,7 @@ def create_access_token(
     user_id: str,
     username: str,
     email: str | None = None,
+    role: str = "user",
     expires_in_seconds: int = DEFAULT_TOKEN_EXPIRY_SECONDS,
 ) -> str:
     """Sign and return a JWT for the given user."""
@@ -53,6 +55,7 @@ def create_access_token(
     payload = {
         "sub": user_id,
         "username": username,
+        "role": role,
         "iat": now,
         "exp": now + expires_in_seconds,
     }
