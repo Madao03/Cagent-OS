@@ -163,9 +163,7 @@
 
     statusSpan.classList.add(statusClass);
     if (useSpinner) {
-      // ★ CSS-only spinner instead of SVG icon for running state
-      const spinner = el("span", "react-step-spinner");
-      statusSpan.appendChild(spinner);
+      statusSpan.appendChild(el("span", "", "···"));
     } else {
       statusIcon.setAttribute("data-icon", iconName);
       statusSpan.appendChild(statusIcon);
