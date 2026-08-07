@@ -27,7 +27,7 @@
     { key: "opinions", label: "观点库", icon: "brain", disabled: true, page: null },
     { key: "knowledge", label: "共享知识库", icon: "doc", disabled: false, page: "/knowledge" },
     { key: "roadmap", label: "开发路线图", icon: "design-flow", disabled: false, page: "/roadmap" },
-    { key: "feedback", label: "反馈中心", icon: "ai_bulb", disabled: true, page: null },
+    { key: "feedback", label: "反馈中心", icon: "ai_bulb", disabled: false, page: "/feedback" },
     { key: "about", label: "关于", icon: "info", disabled: false, page: "/about" },
   ];
 
@@ -37,6 +37,7 @@
     if (p.includes("knowledge.html") || p.includes("/knowledge")) return "knowledge";
     if (p.includes("brief.html") || p.includes("/brief")) return "brief";
     if (p.includes("roadmap.html") || p.includes("/roadmap")) return "roadmap";
+    if (p.includes("feedback.html") || p.includes("/feedback")) return "feedback";
     return "chat";
   }
 
@@ -142,6 +143,7 @@
         else if (key === "brief") window.location.href = "/brief";
         else if (key === "knowledge") window.location.href = "/knowledge";
         else if (key === "roadmap") window.location.href = "/roadmap";
+        else if (key === "feedback") window.location.href = "/feedback";
         else if (key === "about") { try { sessionStorage.removeItem("cagentos_from_welcome"); } catch(e) {} window.location.href = "/about"; }
       });
     });

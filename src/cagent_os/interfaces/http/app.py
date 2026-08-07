@@ -418,6 +418,13 @@ def create_app() -> FastAPI:
                 return FileResponse(str(p))
             return RedirectResponse(url="/")
 
+        @app.get("/feedback")
+        async def serve_feedback():
+            p = static_dir / "pages" / "feedback.html"
+            if p.exists():
+                return FileResponse(str(p))
+            return RedirectResponse(url="/")
+
         @app.get("/legacy")
         async def serve_legacy():
             p = static_dir / "legacy.html"
@@ -494,5 +501,9 @@ def create_app() -> FastAPI:
     # Roadmap page API (public read, admin write)
     from cagent_os.interfaces.http.routes_roadmap import build_roadmap_router
     app.include_router(build_roadmap_router(_project_root / "data" / "roadmap.db"))
+
+    # Feedback page API (user submit, admin manage)
+    from cagent_os.interfaces.http.routes_feedback import build_feedback_router
+    app.include_router(build_feedback_router(_project_root / "data" / "feedback.db"))
 
     return app

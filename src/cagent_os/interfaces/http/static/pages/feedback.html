@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>反馈中心 · CagentOS</title>
+    <script>
+      (function(){var h=document.documentElement;var s;try{s=localStorage.getItem('cagentos-theme')}catch(e){}var d;if(s==='light')d=false;else if(s==='dark')d=true;else d=!window.matchMedia('(prefers-color-scheme: light)').matches;if(d){h.classList.add('dark');h.classList.remove('light')}else{h.classList.remove('dark');h.classList.add('light')}})();
+    </script>
+    <style id="theme-vars">/* tokens from chat.html — compact */:root{--radius-0:0px;--radius-2:2px;--radius-4:4px;--radius-6:6px;--radius-8:8px;--radius-10:10px;--radius-12:12px;--radius-16:16px;--radius-20:20px;--radius-24:24px;--radius-32:32px;--radius-full:999px;--radius-xs:var(--radius-2);--radius-sm:var(--radius-4);--radius-md:var(--radius-6);--radius-lg:var(--radius-8);--radius-xl:var(--radius-10);--border-width-default:1px;--spacer-0:0px;--spacer-2:2px;--spacer-3:3px;--spacer-4:4px;--spacer-6:6px;--spacer-8:8px;--spacer-10:10px;--spacer-12:12px;--spacer-16:16px;--spacer-20:20px;--spacer-24:24px;--spacer-32:32px;--spacer-40:40px;--spacer-48:48px;--spacer-64:64px;--icon-size-12:12px;--icon-size-14:14px;--icon-size-16:16px;--icon-size-20:20px;--icon-size-24:24px;--font-family-default:"SF Pro Text","PingFang SC",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--font-family-heading:"SF Pro","PingFang SC",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--font-family-metric:"Inter","SF Pro Text","PingFang SC",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--font-family-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;--font-weight-default:400;--font-weight-code:450;--font-weight-medium:500;--font-weight-strong:600;--font-family-base:var(--font-family-default);--font-family-heading-alias:var(--font-family-heading);--font-family-mono-alias:var(--font-family-mono);--body-xs-font-size:10px;--body-xs-font-weight:400;--body-xs-line-height:14px;--body-sm-font-size:11px;--body-sm-font-weight:400;--body-sm-line-height:16px;--body-md-font-size:12px;--body-md-font-weight:400;--body-md-line-height:18px;--body-base-font-size:14px;--body-base-font-weight:400;--body-base-line-height:20px;--bg-base-default:#FFFFFF;--bg-base-secondary:#F5F5F5;--bg-base-tertiary:#E5E5E5;--bg-overlay-l1:rgba(115,115,115,0.08);--bg-overlay-l2:rgba(115,115,115,0.12);--bg-overlay-l3:rgba(115,115,115,0.16);--bg-overlay-l4:rgba(115,115,115,0.20);--bg-white:#FFFFFF;--bg-menu:#FFFFFF;--bg-tooltip:#FFFFFF;--bg-invert:#262626;--bg-invert-hover:#404040;--bg-invert-active:#171717;--bg-invert-disabled:rgba(115,115,115,0.20);--bg-brand:#4B3FE3;--bg-brand-hover:#6A6FFF;--bg-brand-active:#3F31C6;--bg-brand-disabled:rgba(75,63,227,0.22);--bg-brand-popup:rgba(170,183,255,0.36);--text-default:#171717;--text-default-hover:#262626;--text-secondary:#404040;--text-secondary-hover:#171717;--text-tertiary:#737373;--text-disabled:#A1A1A1;--text-onbrand:#FFFFFF;--icon-default:#262626;--icon-default-hover:#171717;--icon-secondary:#404040;--icon-tertiary:#737373;--icon-disabled:#A1A1A1;--border-neutral-l1:rgba(115,115,115,0.12);--border-neutral-l2:rgba(115,115,115,0.18);--border-neutral-l3:rgba(115,115,115,0.36);--border-contrast:#000000;--border-brand:#4B3FE3;--status-primary-default:#2F74FF;--status-primary-hover:#4C88FF;--status-success-default:#15A877;--status-error-default:#E8463A;--status-alert-default:#FEA900;--status-error-surface-l1:rgba(232,70,58,0.12);--color-primary:var(--bg-brand);--color-primary-hover:var(--bg-brand-hover);--color-primary-disabled:var(--bg-brand-disabled);--color-primary-soft:var(--bg-brand-popup);--color-accent:var(--bg-brand);--color-foreground:var(--text-default);--color-muted-foreground:var(--text-secondary);--color-on-surface-variant:var(--text-secondary);--color-disabled-foreground:var(--text-disabled);--color-border:var(--border-neutral-l1);--color-border-strong:var(--border-neutral-l2);--color-border-stronger:var(--border-neutral-l3);--color-card:var(--bg-base-secondary);--color-surface:var(--bg-base-secondary);--color-surface-variant:var(--bg-base-tertiary);--color-info:var(--status-primary-default);--color-success:var(--status-success-default);--color-warning:var(--status-alert-default);--color-error:var(--status-error-default);--color-error-soft:var(--status-error-surface-l1);}html.dark{--bg-base-default:#0d1117;--bg-base-secondary:#151b23;--bg-base-tertiary:#0a0d13;--bg-overlay-l1:rgba(255,255,255,0.04);--bg-overlay-l2:rgba(255,255,255,0.08);--bg-overlay-l3:rgba(255,255,255,0.12);--bg-overlay-l4:rgba(255,255,255,0.16);--bg-white:#0d1117;--bg-menu:#151b23;--bg-tooltip:#1c2128;--bg-invert:#e6edf3;--bg-invert-hover:#d1d9e0;--bg-invert-active:#c1c9d1;--bg-invert-disabled:rgba(255,255,255,0.12);--text-default:#e6edf3;--text-secondary:#9198a1;--text-tertiary:#6e7681;--text-disabled:#424850;--icon-default:#c1c9d1;--icon-secondary:#9198a1;--icon-tertiary:#6e7681;--icon-disabled:#424850;--border-neutral-l1:rgba(255,255,255,0.08);--border-neutral-l2:rgba(255,255,255,0.12);--border-neutral-l3:rgba(255,255,255,0.24);--border-contrast:#ffffff;}</style>
+    <link rel="stylesheet" href="/static/assets/css/icons.css">
+    <style>
+      body { font-family: var(--font-family-default); background: var(--bg-base-default); color: var(--text-default); margin: 0; }
+      /* full sidebar CSS (copied from chat.html / roadmap.html for visual consistency) */
+      .app-shell { display: flex; min-height: 100vh; }
+      .app-sidebar {
+        width: 220px; height: 100vh; position: fixed; left: 0; top: 0; z-index: 20;
+        display: flex; flex-direction: column;
+        background: var(--bg-base-secondary); border-right: 1px solid var(--border-neutral-l1);
+        transition: width 0.25s ease;
+      }
+      .app-sidebar-logo { display: flex; align-items: center; gap: var(--spacer-12); padding: var(--spacer-16); position: relative; }
+      .app-sidebar-logo .sidebar-logo-icon { display: inline-block; width: 28px; height: 28px; flex-shrink: 0; color: var(--bg-brand); background-color: currentColor; }
+      .app-sidebar-logo-text { display: flex; flex-direction: column; min-width: 0; }
+      .app-sidebar-logo-text .logo-title { font-family: var(--font-family-heading); font-size: var(--heading-sm-font-size); font-weight: 600; line-height: 1.2; color: var(--text-default); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .app-sidebar-logo-text .logo-subtitle { font-family: var(--font-family-default); font-size: var(--body-sm-font-size); line-height: 1.4; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .sidebar-collapse-btn { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: none; border-radius: var(--radius-6); background: transparent; color: var(--icon-tertiary); cursor: pointer; margin-left: auto; flex-shrink: 0; }
+      .sidebar-collapse-btn:hover { background: var(--bg-overlay-l1); color: var(--icon-default); }
+      .sidebar-collapse-icon { display: inline-block; width: 16px; height: 16px; background-color: currentColor; }
+      .app-sidebar.collapsed { width: 56px; }
+      .app-sidebar.collapsed .app-sidebar-logo { justify-content: center; padding: var(--spacer-16) var(--spacer-8); }
+      .app-sidebar.collapsed .app-sidebar-logo-text, .app-sidebar.collapsed .sidebar-logo-icon, .app-sidebar.collapsed .sidebar-nav-label, .app-sidebar.collapsed .app-sidebar-footer { display: none; }
+      .app-sidebar.collapsed .sidebar-collapse-btn { margin-left: 0; transform: rotate(180deg); }
+      .app-sidebar.collapsed .sidebar-nav-item { justify-content: center; padding: var(--spacer-8); }
+      .app-sidebar.collapsed .app-sidebar-nav { padding: var(--spacer-8) var(--spacer-4); }
+      .app-shell.sidebar-collapsed .app-main { margin-left: 56px; }
+      .app-sidebar-nav { flex: 1; min-height: 0; overflow-y: auto; padding: var(--spacer-8) var(--spacer-8); }
+      .sidebar-nav-item { display: flex; align-items: center; gap: var(--spacer-8); padding: var(--spacer-8) var(--spacer-12); margin-bottom: var(--spacer-4); border-radius: var(--radius-6); cursor: pointer; text-decoration: none; color: var(--text-secondary); font-family: var(--font-family-default); font-size: var(--body-base-font-size); line-height: 1.4; transition: background-color 0.15s ease, color 0.15s ease; }
+      .sidebar-nav-item .sidebar-nav-icon { display: inline-block; width: 20px; height: 20px; flex-shrink: 0; color: var(--icon-default); background-color: currentColor; }
+      .sidebar-nav-item .sidebar-nav-label { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .sidebar-nav-item:hover { background: var(--bg-overlay-l1); color: var(--text-default); }
+      .sidebar-nav-item.active { background: var(--bg-overlay-l2); color: var(--text-default); font-weight: 500; }
+      .sidebar-nav-item.active .sidebar-nav-icon { color: var(--icon-brand); }
+      .sidebar-nav-tag { font-size: 10px; color: var(--text-tertiary); font-weight: 400; margin-left: 2px; }
+      .app-sidebar-footer { display: flex; flex-direction: column; gap: var(--spacer-8); padding: var(--spacer-12) var(--spacer-16); border-top: 1px solid var(--border-neutral-l1); }
+      .sidebar-status-row { display: flex; align-items: center; gap: var(--spacer-8); font-size: var(--body-sm-font-size); line-height: 1.4; color: var(--text-tertiary); white-space: nowrap; }
+      .sidebar-status-dot { width: 8px; height: 8px; flex-shrink: 0; border-radius: var(--radius-full); }
+      .sidebar-status-dot.is-success { background: var(--status-success-default); }
+      .sidebar-status-dot.is-alert { background: var(--status-alert-default); }
+      .sidebar-version { margin-top: var(--spacer-4); font-family: var(--font-family-mono); font-size: var(--body-xs-font-size); color: var(--text-tertiary); }
+      .app-main { flex: 1; margin-left: 220px; overflow-y: auto; transition: margin-left 0.25s ease; }
+      .content { max-width: 700px; padding: var(--spacer-48) var(--spacer-24) var(--spacer-64); margin: 0 auto; }
+      h1 { font-family: var(--font-family-heading); font-size: 24px; font-weight: 700; margin: 0 0 var(--spacer-8); }
+      .subtitle { color: var(--text-secondary); font-size: var(--body-base-font-size); margin-bottom: var(--spacer-24); }
+
+      /* ── Feedback form ── */
+      .feedback-form {
+        background: var(--bg-overlay-l1);
+        border: 1px solid var(--border-neutral-l1);
+        border-radius: var(--radius-12);
+        padding: var(--spacer-20);
+      }
+      .form-label { display: block; font-family: var(--font-family-heading); font-size: var(--body-base-font-size); font-weight: var(--font-weight-strong); color: var(--text-default); margin-bottom: var(--spacer-8); }
+      .type-row { display: flex; gap: var(--spacer-8); margin-bottom: var(--spacer-16); }
+      .type-btn {
+        flex: 1; padding: var(--spacer-10) var(--spacer-12);
+        border: 1px solid var(--border-neutral-l2); border-radius: var(--radius-8);
+        background: var(--bg-base-default); color: var(--text-secondary);
+        font-family: var(--font-family-default); font-size: var(--body-base-font-size); font-weight: var(--font-weight-medium);
+        cursor: pointer; transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+        display: flex; align-items: center; justify-content: center; gap: var(--spacer-4);
+      }
+      .type-btn:hover { border-color: var(--bg-brand); color: var(--bg-brand); }
+      .type-btn.selected {
+        border-color: var(--bg-brand); color: var(--text-onbrand);
+        background: var(--bg-brand);
+      }
+      .type-btn .type-emoji { font-size: 15px; }
+      .feedback-textarea {
+        width: 100%; min-height: 140px; resize: vertical;
+        font-family: var(--font-family-default); font-size: var(--body-base-font-size); line-height: 1.6;
+        color: var(--text-default); background: var(--bg-base-default);
+        border: 1px solid var(--border-neutral-l2); border-radius: var(--radius-8);
+        padding: var(--spacer-10) var(--spacer-12); box-sizing: border-box;
+        transition: border-color 0.15s ease;
+      }
+      .feedback-textarea:focus { outline: none; border-color: var(--border-brand); }
+      .char-counter { margin-top: var(--spacer-4); font-size: var(--body-sm-font-size); color: var(--text-tertiary); text-align: right; }
+      .char-counter.is-max { color: var(--status-error-default); }
+      .submit-btn {
+        margin-top: var(--spacer-16); padding: var(--spacer-10) var(--spacer-20);
+        border: none; border-radius: var(--radius-8);
+        background: var(--bg-brand); color: var(--text-onbrand);
+        font-family: var(--font-family-default); font-size: var(--body-base-font-size); font-weight: var(--font-weight-strong);
+        cursor: pointer; transition: background 0.15s ease;
+      }
+      .submit-btn:hover { background: var(--bg-brand-hover); }
+      .submit-btn:disabled { background: var(--bg-brand-disabled); cursor: not-allowed; }
+      .submit-btn.is-loading { opacity: 0.7; cursor: progress; }
+      .form-msg { margin-top: var(--spacer-12); font-size: var(--body-base-font-size); }
+      .form-msg.is-success { color: var(--status-success-default); }
+      .form-msg.is-error { color: var(--status-error-default); }
+
+      /* ── Admin section ── */
+      .section-divider { margin: var(--spacer-40) 0 var(--spacer-24); border-top: 1px solid var(--border-neutral-l1); }
+      .admin-title { font-family: var(--font-family-heading); font-size: 18px; font-weight: 700; color: var(--text-default); margin: 0 0 var(--spacer-12); }
+      .filter-row { display: flex; gap: var(--spacer-6); margin-bottom: var(--spacer-16); flex-wrap: wrap; }
+      .filter-btn {
+        padding: var(--spacer-4) var(--spacer-12); border: 1px solid var(--border-neutral-l2);
+        border-radius: var(--radius-full); background: var(--bg-base-default); color: var(--text-secondary);
+        font-size: var(--body-sm-font-size); cursor: pointer; transition: all 0.15s ease;
+      }
+      .filter-btn:hover { border-color: var(--bg-brand); color: var(--bg-brand); }
+      .filter-btn.active { background: var(--bg-overlay-l2); color: var(--text-default); border-color: var(--border-neutral-l3); font-weight: var(--font-weight-strong); }
+      .filter-count { font-size: var(--body-xs-font-size); color: var(--text-tertiary); margin-left: var(--spacer-2); }
+
+      .feedback-list { display: flex; flex-direction: column; gap: var(--spacer-10); }
+      .feedback-item {
+        position: relative; padding: var(--spacer-12) var(--spacer-16);
+        background: var(--bg-overlay-l1); border: 1px solid var(--border-neutral-l1);
+        border-radius: var(--radius-8); border-left: 3px solid var(--border-neutral-l3);
+      }
+      .feedback-item[data-category="bug"] { border-left-color: var(--status-error-default); }
+      .feedback-item[data-category="feature"] { border-left-color: var(--status-primary-default); }
+      .feedback-item[data-category="other"] { border-left-color: var(--text-tertiary); }
+      .item-head { display: flex; align-items: center; gap: var(--spacer-8); margin-bottom: var(--spacer-6); flex-wrap: wrap; }
+      .item-tag {
+        font-size: var(--body-xs-font-size); font-weight: var(--font-weight-strong);
+        padding: 1px 6px; border-radius: var(--radius-xs); white-space: nowrap;
+      }
+      .item-tag.bug { color: var(--status-error-default); background: var(--status-error-surface-l1); }
+      .item-tag.feature { color: var(--status-primary-default); background: rgba(47,116,255,0.12); }
+      .item-tag.other { color: var(--text-tertiary); background: var(--bg-overlay-l2); }
+      .item-user { font-size: var(--body-sm-font-size); font-weight: var(--font-weight-medium); color: var(--text-default); }
+      .item-time { font-size: var(--body-xs-font-size); color: var(--text-tertiary); }
+      .item-content { font-size: var(--body-base-font-size); line-height: 1.6; color: var(--text-secondary); white-space: pre-wrap; word-break: break-word; }
+      .item-actions { display: flex; align-items: center; gap: var(--spacer-8); margin-top: var(--spacer-8); padding-top: var(--spacer-8); border-top: 1px dashed var(--border-neutral-l1); }
+      .status-badge {
+        font-size: var(--body-xs-font-size); font-weight: var(--font-weight-strong);
+        padding: 2px 8px; border-radius: var(--radius-xs); cursor: pointer;
+        border: 1px dashed transparent; transition: border-color 0.15s ease;
+      }
+      .status-badge:hover { border-color: currentColor; }
+      .status-pending { color: var(--status-alert-default); background: rgba(254,169,0,0.12); }
+      .status-resolved { color: var(--status-success-default); background: rgba(21,168,119,0.12); }
+      .status-ignored { color: var(--text-tertiary); background: var(--bg-overlay-l2); }
+      .status-hint { font-size: var(--body-xs-font-size); color: var(--text-tertiary); }
+
+      .empty-state { padding: var(--spacer-32) var(--spacer-16); text-align: center; color: var(--text-tertiary); font-size: var(--body-base-font-size); }
+
+      .save-banner { position: fixed; bottom: var(--spacer-24); left: 50%; transform: translateX(-50%); padding: var(--spacer-8) var(--spacer-16); border-radius: var(--radius-lg); background: var(--bg-brand); color: #fff; font-size: var(--body-sm-font-size); box-shadow: 0 4px 16px rgba(75,63,227,0.3); opacity: 0; pointer-events: none; transition: opacity .2s ease; z-index: 50; }
+      .save-banner.show { opacity: 1; }
+
+      /* ── Responsive ── */
+      @media (max-width: 960px) {
+        .content { max-width: 100%; }
+        .app-sidebar { display: none; }
+        .app-main { margin-left: 0; width: 100%; }
+        .type-row { flex-direction: column; }
+      }
+
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(115, 115, 115, 0.28); border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(115, 115, 115, 0.45); }
+      html.dark ::-webkit-scrollbar-thumb { background: rgba(200, 200, 200, 0.18); }
+      html.dark ::-webkit-scrollbar-thumb:hover { background: rgba(200, 200, 200, 0.30); }
+    </style>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="app-sidebar">
+    <div class="app-sidebar-logo">
+      <span class="sidebar-logo-icon"><span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,#4B3FE3,#6A6FFF);text-align:center;line-height:28px;color:#fff;font-weight:700;font-size:14px;">C</span></span>
+      <span class="app-sidebar-logo-text">
+        <span class="logo-title">CagentOS</span>
+        <span class="logo-subtitle">投研工作台</span>
+      </span>
+    </div>
+    <nav class="app-sidebar-nav"></nav>
+    <div class="app-sidebar-footer">
+      <div class="sidebar-version">Beta · 2026</div>
+    </div>
+  </aside>
+
+  <div class="app-main">
+    <div class="content">
+      <h1>反馈中心</h1>
+      <p class="subtitle">告诉我们你的想法 &mdash; 功能建议、bug 反馈、或者随便聊聊</p>
+
+      <form class="feedback-form" id="feedback-form" autocomplete="off">
+        <label class="form-label">反馈类型</label>
+        <div class="type-row" id="type-row">
+          <button type="button" class="type-btn selected" data-type="bug"><span class="type-emoji">🐛</span> Bug</button>
+          <button type="button" class="type-btn" data-type="feature"><span class="type-emoji">💡</span> 功能建议</button>
+          <button type="button" class="type-btn" data-type="other"><span class="type-emoji">💬</span> 其他</button>
+        </div>
+
+        <label class="form-label" for="feedback-content">详细描述</label>
+        <textarea class="feedback-textarea" id="feedback-content" placeholder="详细描述你的反馈..." maxlength="5000"></textarea>
+        <div class="char-counter"><span id="char-count">0</span>/5000</div>
+
+        <button type="submit" class="submit-btn" id="submit-btn">提交反馈</button>
+        <div class="form-msg" id="form-msg"></div>
+      </form>
+
+      <div id="admin-section" style="display:none;">
+        <div class="section-divider"></div>
+        <h2 class="admin-title">反馈管理</h2>
+        <div class="filter-row" id="filter-row">
+          <button type="button" class="filter-btn active" data-filter="all">全部<span class="filter-count" id="count-all">0</span></button>
+          <button type="button" class="filter-btn" data-filter="pending">待处理<span class="filter-count" id="count-pending">0</span></button>
+          <button type="button" class="filter-btn" data-filter="resolved">已解决<span class="filter-count" id="count-resolved">0</span></button>
+        </div>
+        <div class="feedback-list" id="feedback-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="save-banner" id="save-banner">已保存</div>
+<script src="/static/assets/js/auth.js"></script>
+<link rel="stylesheet" href="/static/assets/css/icons.css">
+<script src="/static/assets/js/shell.js"></script>
+<script>
+  (async function () {
+    "use strict";
+
+    // ── Page init ──
+    const user = await Auth.requireUser();
+    if (!user) return;
+    Auth.renderUserBadge(user);
+    if (window.Shell) {
+      if (typeof Shell.renderSidebar === "function") Shell.renderSidebar({ activePage: "feedback" });
+      if (typeof Shell.wireNavClicks === "function") Shell.wireNavClicks();
+      if (typeof Shell.updateModelBadge === "function") Shell.updateModelBadge();
+    }
+
+    const isAdmin = Auth.isAdmin();
+    if (isAdmin) {
+      document.body.classList.add("is-admin");
+      document.getElementById("admin-section").style.display = "";
+    }
+
+    // ── Category & filter state ──
+    const CATEGORY_META = {
+      bug:     { label: "Bug" },
+      feature: { label: "功能建议" },
+      other:   { label: "其他" }
+    };
+    const STATUS_META = {
+      pending:  { label: "待处理", cls: "status-pending" },
+      resolved: { label: "已解决", cls: "status-resolved" },
+      ignored:  { label: "忽略",   cls: "status-ignored" }
+    };
+    const STATUS_CYCLE = ["pending", "resolved", "ignored"];
+
+    let selectedType = "bug";
+    let allFeedback = [];
+    let currentFilter = "all";
+
+    // ── Helpers ──
+    function escapeHtml(s) {
+      return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+      });
+    }
+
+    function formatTime(iso) {
+      if (!iso) return "";
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return escapeHtml(iso);
+      const pad = function (n) { return n < 10 ? "0" + n : "" + n; };
+      return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) +
+        " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+    }
+
+    function showBanner(msg, ok) {
+      const banner = document.getElementById("save-banner");
+      banner.textContent = msg;
+      banner.style.background = ok ? "var(--bg-brand)" : "var(--status-error-default)";
+      banner.classList.add("show");
+      setTimeout(function () { banner.classList.remove("show"); }, 1800);
+    }
+
+    // ── Type selection ──
+    document.querySelectorAll(".type-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        selectedType = btn.dataset.type;
+        document.querySelectorAll(".type-btn").forEach(function (b) { b.classList.remove("selected"); });
+        btn.classList.add("selected");
+      });
+    });
+
+    // ── Char counter ──
+    const textarea = document.getElementById("feedback-content");
+    const charCount = document.getElementById("char-count");
+    textarea.addEventListener("input", function () {
+      charCount.textContent = textarea.value.length;
+      charCount.parentElement.classList.toggle("is-max", textarea.value.length >= 5000);
+    });
+
+    // ── Submit feedback ──
+    async function submitFeedback() {
+      const content = textarea.value.trim();
+      const msgEl = document.getElementById("form-msg");
+      const submitBtn = document.getElementById("submit-btn");
+
+      if (!content) {
+        msgEl.className = "form-msg is-error";
+        msgEl.textContent = "请填写反馈内容";
+        textarea.focus();
+        return;
+      }
+      if (!selectedType) {
+        msgEl.className = "form-msg is-error";
+        msgEl.textContent = "请选择反馈类型";
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.classList.add("is-loading");
+      submitBtn.textContent = "提交中...";
+      msgEl.textContent = "";
+
+      try {
+        const resp = await Auth.fetch("/api/v1/feedback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ category: selectedType, content: content })
+        });
+        if (resp.ok) {
+          msgEl.className = "form-msg is-success";
+          msgEl.textContent = "感谢你的反馈！我们已经收到 ✨";
+          // clear form
+          textarea.value = "";
+          charCount.textContent = "0";
+          charCount.parentElement.classList.remove("is-max");
+          selectedType = "bug";
+          document.querySelectorAll(".type-btn").forEach(function (b) {
+            b.classList.toggle("selected", b.dataset.type === "bug");
+          });
+          if (isAdmin) loadFeedbackList();
+        } else {
+          const errBody = await resp.text().catch(function () { return ""; });
+          msgEl.className = "form-msg is-error";
+          msgEl.textContent = "提交失败 (" + resp.status + ")，请稍后再试";
+          console.error("[feedback] POST failed:", resp.status, errBody.slice(0, 200));
+        }
+      } catch (err) {
+        msgEl.className = "form-msg is-error";
+        msgEl.textContent = "网络异常：" + (err && err.message ? err.message : "未知错误");
+        console.error("[feedback] POST exception:", err);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("is-loading");
+        submitBtn.textContent = "提交反馈";
+      }
+    }
+
+    document.getElementById("feedback-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      submitFeedback();
+    });
+
+    // ── Admin: load feedback list ──
+    async function loadFeedbackList() {
+      const listEl = document.getElementById("feedback-list");
+      try {
+        const resp = await Auth.fetch("/api/v1/feedback", { method: "GET" });
+        if (!resp.ok) {
+          listEl.innerHTML = '<div class="empty-state">加载反馈列表失败 (' + resp.status + ')</div>';
+          console.error("[feedback] GET failed:", resp.status);
+          allFeedback = [];
+          updateCounts();
+          return;
+        }
+        const payload = await resp.json();
+        // expect array or {items: [...]}
+        let items = Array.isArray(payload) ? payload : (payload && payload.items) || [];
+        // sort by created_at descending
+        items.sort(function (a, b) {
+          const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return tb - ta;
+        });
+        allFeedback = items;
+        updateCounts();
+        renderList();
+      } catch (err) {
+        listEl.innerHTML = '<div class="empty-state">加载反馈列表异常：' + escapeHtml(err && err.message ? err.message : "") + "</div>";
+        console.error("[feedback] GET exception:", err);
+        allFeedback = [];
+        updateCounts();
+      }
+    }
+
+    function updateCounts() {
+      const count = function (status) {
+        return allFeedback.filter(function (f) { return status === "all" || f.status === status; }).length;
+      };
+      document.getElementById("count-all").textContent = count("all");
+      document.getElementById("count-pending").textContent = count("pending");
+      document.getElementById("count-resolved").textContent = count("resolved");
+    }
+
+    function renderList() {
+      const listEl = document.getElementById("feedback-list");
+      const filtered = currentFilter === "all"
+        ? allFeedback
+        : allFeedback.filter(function (f) { return f.status === currentFilter; });
+
+      if (!filtered.length) {
+        listEl.innerHTML = '<div class="empty-state">' + (currentFilter === "all" ? "还没有收到反馈" : "该分类下暂无反馈") + "</div>";
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(function (f) {
+        const cat = CATEGORY_META[f.category] ? f.category : "other";
+        const status = STATUS_META[f.status] ? f.status : "pending";
+        const catLabel = CATEGORY_META[cat].label;
+        const stMeta = STATUS_META[status];
+        return '<div class="feedback-item" data-category="' + escapeHtml(cat) + '" data-id="' + escapeHtml(f.id) + '">' +
+          '<div class="item-head">' +
+            '<span class="item-tag ' + escapeHtml(cat) + '">' + escapeHtml(catLabel) + "</span>" +
+            '<span class="item-user">' + escapeHtml(f.username || f.user || "匿名用户") + "</span>" +
+            '<span class="item-time">' + formatTime(f.created_at) + "</span>" +
+          "</div>" +
+          '<div class="item-content">' + escapeHtml(f.content) + "</div>" +
+          '<div class="item-actions">' +
+            '<span class="status-badge ' + stMeta.cls + '" data-status="' + escapeHtml(status) + '" title="点击切换状态">' + stMeta.label + "</span>" +
+            '<span class="status-hint">点击切换状态</span>' +
+          "</div>" +
+        "</div>";
+      }).join("");
+
+      // wire status toggle
+      listEl.querySelectorAll(".status-badge").forEach(function (badge) {
+        badge.addEventListener("click", function () {
+          const item = badge.closest(".feedback-item");
+          const id = item.dataset.id;
+          let cur = badge.dataset.status;
+          const idx = STATUS_CYCLE.indexOf(cur);
+          const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
+          updateStatus(id, next);
+        });
+      });
+    }
+
+    // ── Admin: filter buttons ──
+    document.querySelectorAll(".filter-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        currentFilter = btn.dataset.filter;
+        document.querySelectorAll(".filter-btn").forEach(function (b) { b.classList.remove("active"); });
+        btn.classList.add("active");
+        renderList();
+      });
+    });
+
+    // ── Admin: update feedback status ──
+    async function updateStatus(id, nextStatus) {
+      try {
+        const resp = await Auth.fetch("/api/v1/feedback/" + encodeURIComponent(id), {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: nextStatus })
+        });
+        if (resp.ok) {
+          // sync local state
+          const target = allFeedback.find(function (f) { return String(f.id) === String(id); });
+          if (target) target.status = nextStatus;
+          updateCounts();
+          renderList();
+          showBanner("状态已更新", true);
+        } else {
+          const errBody = await resp.text().catch(function () { return ""; });
+          console.error("[feedback] PATCH failed:", resp.status, errBody.slice(0, 200));
+          showBanner("更新失败 (" + resp.status + ")", false);
+        }
+      } catch (err) {
+        console.error("[feedback] PATCH exception:", err);
+        showBanner("更新异常: " + (err && err.message ? err.message : ""), false);
+      }
+    }
+
+    if (isAdmin) loadFeedbackList();
+  })();
+</script>
+</body>
+</html>
