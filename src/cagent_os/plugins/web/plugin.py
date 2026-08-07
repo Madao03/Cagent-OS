@@ -512,7 +512,7 @@ class WebPlugin(Plugin):
                 status="error",
                 error_code="browser_mode_unavailable",
                 content={
-                    "message": "微信文章抓取不可用（需要 Windows + WSL + Playwright 配置）。建议手动保存文章后通过知识库注入。",
+                    "message": "微信文章暂不支持自动抓取（服务器在海外，受微信访问限制）。请在本地浏览器打开文章，保存为 Markdown 后通过知识库注入。",
                     "fallback": "Try web.fetch — it may get partial content or search for mirrors.",
                 },
             )
