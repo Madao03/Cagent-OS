@@ -9,7 +9,7 @@ CagentOS — 面向金融投研场景的 Agent 操作系统。底层 Runtime 基
 - **Python**: >=3.11, **包名**: `cagent_os` (源码在 `src/cagent_os/`)
 - **数据库**: SQLite (`aiosqlite` + WAL 模式)
 - **LLM**: DeepSeek V4 Pro (默认),8 个 provider 框架就绪
-- **当前阶段**: **阶段 4a/4b + EDGAR LANE 1/2 + Crypto Data Adapters + Provenance System 完成 ✅** (2026-07-24)
+- **当前阶段**: **Beta 上线 ✅** (2026-08-07, cagentos.com, 邀请制内测)
 
 ## 常用命令
 
@@ -139,7 +139,7 @@ Multi-Agent Layer (multi_agent/)
 
 **Infra**: `docs.read` · `write.file` · `Skill` (技能加载)
 
-## 当前进度 — 阶段 4a/4b + EDGAR LANE 1/2 + Crypto Adapters + Web UI 完成 ✅
+## 当前进度 — Beta 上线 ✅ (2026-08-07, cagentos.com, 邀请制内测)
 
 ### 已就绪
 - ✅ AgentRuntime + Plugin 体系 + LLM 层完整可运行
@@ -175,7 +175,20 @@ Multi-Agent Layer (multi_agent/)
 - ✅ **精度继承闭环**: `2_sig_digits_from_billion` → derived fact → display hint `≈ 2.3%` (非 `2.2917%`)
 - ✅ **Bug 固化扩展**: 七次同模式 + dual-scale 字段级合并 (×1e9 固定) + 日期格式整体 non-data (含 `2025.10`/`Q4 2025` 片段) + derived 裸整数排除 + 绝对金额排除 (亿/元/$ 不能是派生值)
 
-### 待实现 (阶段 4d-4e)
+### Beta 上线新增 (2026-08-07)
+
+- ✅ **溯源 UI 系统**: 数据卡片 (hover/click 浮窗) + 溯源/未溯源标记 (虚线下划线/⚠️) + 派生链展开 (公式+父事实) + 信源分级 (🟢一手/🟡专业/🔴社交) + 原句展示 + 变体匹配 (billion↔B 等)
+- ✅ **浮窗持久化**: 点击固定 + ✕/Esc/外部点击关闭, hover 临时预览
+- ✅ **前端体验**: 对话切换轮询恢复 (800ms) + 增量回答渲染 + force re-render 修复空白 + 工具状态三档颜色 (绿✓/黄···/红✕) + 长 URL 换行
+- ✅ **Native Playwright (Linux)**: 原生 Chromium (不走 WSL 桥接) + 熔断 (3次失败→5分钟冷却) + 并发限制 (1实例, 4GB 服务器) + 微信原生尝试降级
+- ✅ **编码修复**: web.fetch UTF-8 强制 (华尔街见闻等中文站不再乱码)
+- ✅ **write.file HTTP 注册**: 分诊台账/速读卡落盘功能在 Web 端可用
+- ✅ **published_at 时效**: Tavily published_date 提取 + 卡片显示"X天前" + 超 30 天 ⚠️ 过时标记
+- ✅ **全局 icon 系统**: SVG mask 定义统一到 icons.css, 所有页面一致
+- ✅ **安全加固**: ufw 仅允许 22/80/443, 8000 端口仅监听 127.0.0.1, 数据备份验证通过
+- ✅ **侧边栏**: 开发路线图 + 反馈中心 (建设中)
+
+### 待实现 (阶段 4d-4e + Backlog)
 
 ## 上线前基线（2026-07-29, n=24 runs, 14 cases）
 

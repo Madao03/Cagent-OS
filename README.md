@@ -2,7 +2,7 @@
 
 > English | [中文](README.zh-CN.md)
 >
-> **Status: Pre-launch ✅ — 16 skills · 42+ capabilities · 10 data sources · Multi-agent + Cron + Web UI + RAG + Provenance + Auto-Eval**
+> **Status: Beta Online ✅ — Live at cagentos.com — 16 skills · 42+ capabilities · 10 data sources · Multi-agent + Cron + Web UI + RAG + Provenance + Playwright + Auto-Eval**
 > A self-contained financial research agent operating system built from scratch — not a LangChain wrapper.
 
 CagentOS is a Python framework for building AI agents that perform financial research. It implements a ReAct loop with event sourcing at its core, surrounded by a plugin-based tool system, cross-session memory, a provenance layer that traces every number to its source, and a data integrity layer designed specifically for financial data.
@@ -109,7 +109,7 @@ uvicorn cagent_os.interfaces.http.app:create_app --factory --host 0.0.0.0 --port
 - **MCP Client**: Multi-transport session manager (Anthropic official SDK)
 - **Memory system**: Hot memory (≤500 chars in system prompt) + Cold memory (SQLite 3 tables) + **LLM contradiction detection**
 - **Data Integrity Wall**: 10 sources → variance detection (>5% alert) → cross-validation → circuit breaker + akshare price fallback
-- **Browser fetch**: Playwright + Readability.js + Stealth anti-bot — fetches CDN-protected institutional research sites + WeChat articles
+- **Browser fetch**: Playwright + Readability.js + Stealth anti-bot — native Linux Playwright with circuit breaker (3 fails → 5min cooldown) + concurrency limiter (1 Chromium instance) + UTF-8 encoding fix for Chinese sites
 - **Skill Schemas**: Pydantic v2 I/O schemas for core skills + State 3-layer separation + permission matrix
 - **Golden Cases**: 14 evaluation benchmarks (including "data unavailable" anti-hallucination case)
 - **RAG Pipeline**: Qwen3-Embedding-8B + 6 chunking schemes + Reranker (cos 0.79→0.999) + NumPy vector store
@@ -166,6 +166,11 @@ uvicorn cagent_os.interfaces.http.app:create_app --factory --host 0.0.0.0 --port
 | — | Crypto Data Adapters (4 sources × 7 capabilities) | ✅ Done (2026-07-23) |
 | — | Provenance System (P0-c + P1 derivation chain) | ✅ Done (2026-07-24) |
 | — | Pre-launch baseline (n=24, 0% failed, 21.6% hallucination) | ✅ Done (2026-07-29) |
+| **Beta** | **Online launch: cagentos.com — invite-only beta** | **✅ Live (2026-08-07)** |
+| — | Provenance UI: data cards + traced/untraced markers + derived chain expansion + media tier + variant matching | ✅ Done |
+| — | Native Playwright on Linux (circuit breaker + concurrency limit + UTF-8 fix) | ✅ Done |
+| — | write.file enabled in HTTP server (knowledge persistence) | ✅ Done |
+| — | Frontend: conversation polling, force re-render, tool status colors, popover persistence, global icons, logo | ✅ Done |
 | 4d | Langfuse trace visualization | Planned |
 | 4e | Evaluation regression CI suite | Planned |
 | 5 | Self-improving flywheel (SFT/DPO) | Future |
@@ -212,7 +217,7 @@ Financial analysis lives or dies by the accuracy of its numbers. The provenance 
 | Multi-agent | Self-built Supervisor (asyncio.gather parallel + serial pipeline) |
 | Scheduling | CronAgent (FastAPI lifespan, daily 8:00 AM trigger) |
 | MCP | Anthropic official `mcp` SDK |
-| Browser fetch | Playwright + Readability.js + Stealth anti-bot |
+| Browser fetch | Playwright + Readability.js + Stealth anti-bot + circuit breaker + UTF-8 encoding fix |
 | RAG | Qwen3-Embedding-8B (1024-dim) + Qwen3-Reranker-8B + NumPy + 6 chunking schemes |
 | Evaluation | Golden Cases ×14 + 25-criterion LLM-Judge auto-scoring + Dashboard |
 | CLI | argparse-based REPL |
