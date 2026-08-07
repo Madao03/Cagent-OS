@@ -194,6 +194,9 @@ def create_app() -> FastAPI:
     registry.register_plugin(FinancialPlugin(settings=settings, toolkit=toolkit, data_layer=data_layer, rag_service=rag_service))
     registry.register_plugin(WebPlugin(settings=settings))
     registry.register_plugin(ReadPlugin(settings=settings))
+    # ★ Enable write.file for content triage / knowledge persistence
+    from cagent_os.plugins.write.plugin import WritePlugin
+    registry.register_plugin(WritePlugin(settings=settings))
     # Phase A: memory tools — let LLM read/write user's markdown memory
     from cagent_os.plugins.memory.plugin import MemoryPlugin
     registry.register_plugin(MemoryPlugin(memory_store))

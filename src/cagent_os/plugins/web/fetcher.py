@@ -62,6 +62,16 @@ class WebFetcher:
 
         response.raise_for_status()
         content_type = response.headers.get("content-type", "")
+
+        # ★ Fix encoding: requests defaults to ISO-8859-1 when Content-Type
+        # has no charset. Chinese sites (wallstreetcn, etc.) return UTF-8 but
+        # omit charset → mojibake. Force UTF-8 if no explicit charset.
+        if "charset" not in content_type.lower():
+            response.encoding = "utf-8"
+            # Also try apparent_encoding as fallback
+            if not response.text or any(ord(c) > 0xFFFD for c in response.text[:100]):
+                response.encoding = response.apparent_encoding or "utf-8"
+
         if "html" in content_type:
             return sanitize_html(response.text)
         return response.text
