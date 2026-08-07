@@ -48,8 +48,9 @@
       .sidebar-status-dot.is-success { background: var(--status-success-default); }
       .sidebar-status-dot.is-alert { background: var(--status-alert-default); }
       .sidebar-version { margin-top: var(--spacer-4); font-family: var(--font-family-mono); font-size: var(--body-xs-font-size); color: var(--text-tertiary); }
-      .app-main { flex: 1; margin-left: 220px; overflow-y: auto; transition: margin-left 0.25s ease; }
-      .content { max-width: 700px; padding: var(--spacer-48) var(--spacer-24) var(--spacer-64); margin: 0 auto; }
+      .app-main { flex: 1; margin-left: 220px; overflow-y: auto; transition: margin-left 0.25s ease; display: flex; }
+      .content { max-width: 700px; width: 100%; padding: var(--spacer-48) var(--spacer-24) var(--spacer-64); margin: auto; }
+      body.is-admin .content { margin: 0 auto; }
       h1 { font-family: var(--font-family-heading); font-size: 24px; font-weight: 700; margin: 0 0 var(--spacer-8); }
       .subtitle { color: var(--text-secondary); font-size: var(--body-base-font-size); margin-bottom: var(--spacer-24); }
 
