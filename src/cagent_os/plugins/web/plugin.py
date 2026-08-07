@@ -70,11 +70,35 @@ def _is_url_safe(url: str) -> tuple[bool, str]:
 
 # -- Playwright scripts paths (in WSL) ----------------------------------
 # Configurable via environment variables. None = not configured.
-# On Linux servers without WSL, browser mode returns immediately.
+# On Linux servers, browser mode uses native Playwright (no WSL).
 _IS_WINDOWS = os.name == "nt"
 _WSL_PYTHON = os.environ.get("CAGENTOS_WSL_PYTHON") or None
 _FETCH_WEIXIN_SCRIPT = os.environ.get("CAGENTOS_WSL_FETCH_SCRIPT") or None
 _FETCH_BROWSER_SCRIPT = os.environ.get("CAGENTOS_WSL_FETCH_BROWSER_SCRIPT") or None
+
+# -- Native Playwright (Linux) ─────────────────────────────────────────
+# Detect once at import time. On Linux with Playwright installed,
+# we run headless Chromium directly in-process — no WSL bridge needed.
+_PLAYWRIGHT_AVAILABLE = False
+if not _IS_WINDOWS:
+    try:
+        from playwright.sync_api import sync_playwright
+        _PLAYWRIGHT_AVAILABLE = True
+        logger.info("Native Playwright detected — browser mode available on Linux")
+    except ImportError:
+        pass
+
+# -- Browser circuit breaker ───────────────────────────────────────────
+# Same pattern as yfinance: N consecutive failures → cooldown.
+_BROWSER_CB_FAILS = 0
+_BROWSER_CB_THRESHOLD = 3
+_BROWSER_CB_COOLDOWN = 300  # 5 minutes
+_BROWSER_CB_LAST_FAIL = 0.0
+
+# -- Concurrency limiter: only 1 Chromium instance at a time (4GB server)
+import threading
+_BROWSER_SEMAPHORE = threading.Semaphore(1)
+_BROWSER_TIMEOUT_SEC = 30  # hard limit: browser launch (10s) + page load (20s)
 
 # -- Multi-modal vision API (for image.describe) ------------------------
 # Set CAGENTOS_VISION_API_KEY to activate; defaults to placeholder.
@@ -216,9 +240,18 @@ class WebPlugin(Plugin):
         return self._fetch_via_browser(url)
 
     def _fetch_via_browser(self, url: str) -> ToolResult:
-        """Fetch a URL via Playwright headless browser (WSL bridge)."""
-        # ★ Fast-fail on non-Windows platforms or unconfigured paths
-        if not _IS_WINDOWS or not _WSL_PYTHON or not _FETCH_BROWSER_SCRIPT:
+        """Fetch a URL via headless browser.
+
+        Linux: native Playwright (in-process, no WSL).
+        Windows: WSL bridge (existing code).
+        Other: fast-fail.
+        """
+        # ★ Route: native Playwright on Linux
+        if not _IS_WINDOWS:
+            return self._fetch_via_native_playwright(url)
+
+        # Windows path: WSL bridge (unchanged)
+        if not _WSL_PYTHON or not _FETCH_BROWSER_SCRIPT:
             return ToolResult(
                 status="error",
                 error_code="browser_mode_unavailable",
@@ -341,6 +374,111 @@ class WebPlugin(Plugin):
             },
         )
 
+    def _fetch_via_native_playwright(self, url: str) -> ToolResult:
+        """Fetch via native Playwright on Linux (no WSL bridge).
+
+        Includes circuit breaker, concurrency limiter (1), and hard timeout.
+        Returns cleaned text content — no image saving (Linux server mode).
+        """
+        import time
+
+        global _BROWSER_CB_FAILS, _BROWSER_CB_LAST_FAIL
+
+        # ★ Circuit breaker: check if in cooldown
+        if _BROWSER_CB_FAILS >= _BROWSER_CB_THRESHOLD:
+            elapsed = time.time() - _BROWSER_CB_LAST_FAIL
+            if elapsed < _BROWSER_CB_COOLDOWN:
+                remaining = int(_BROWSER_CB_COOLDOWN - elapsed)
+                logger.warning("Browser circuit breaker active, %ds remaining", remaining)
+                return ToolResult(
+                    status="error",
+                    error_code="browser_circuit_breaker",
+                    content={
+                        "url": url[:200],
+                        "message": f"浏览器模式暂时不可用（连续失败熔断，{remaining}s 后重试）。",
+                        "fallback": "Try financial.websearch to find mirrors or cached copies.",
+                    },
+                )
+            else:
+                _BROWSER_CB_FAILS = 0  # Reset after cooldown
+
+        if not _PLAYWRIGHT_AVAILABLE:
+            return ToolResult(
+                status="error",
+                error_code="browser_mode_unavailable",
+                content={
+                    "message": "浏览器模式不可用（未安装 Playwright）。请使用 HTTP 模式。",
+                    "fallback": "Plain HTTP fetch was also unsuccessful for this URL.",
+                },
+            )
+
+        # ★ Concurrency: only 1 Chromium at a time (4GB server)
+        if not _BROWSER_SEMAPHORE.acquire(timeout=2):
+            return ToolResult(
+                status="error",
+                error_code="browser_busy",
+                content={
+                    "url": url[:200],
+                    "message": "浏览器实例繁忙（并发限制），请稍后重试。",
+                    "fallback": "Try financial.websearch.",
+                },
+            )
+
+        try:
+            content = self._run_playwright_fetch(url)
+        except Exception as exc:
+            _BROWSER_CB_FAILS += 1
+            _BROWSER_CB_LAST_FAIL = time.time()
+            logger.warning("Native Playwright failed (fail #%d): %s", _BROWSER_CB_FAILS, str(exc)[:200])
+            return ToolResult(
+                status="error",
+                error_code="browser_fetch_failed",
+                content={
+                    "url": url[:200],
+                    "message": f"Browser fetch failed: {str(exc)[:200]}",
+                    "fallback": "Try financial.websearch to find mirrors or cached copies.",
+                },
+            )
+        finally:
+            _BROWSER_SEMAPHORE.release()
+
+        if not content or len(content) < 100:
+            return ToolResult(
+                status="error",
+                error_code="browser_fetch_empty",
+                content={
+                    "url": url[:200],
+                    "message": "Browser returned empty or very short content.",
+                    "fallback": "Try financial.websearch to find mirrors or cached copies.",
+                },
+            )
+
+        # Success — reset circuit breaker
+        _BROWSER_CB_FAILS = 0
+
+        logger.info("Native Playwright fetch OK url=%s size=%d", url[:80], len(content))
+        return ToolResult(status="ok", content=content)
+
+    def _run_playwright_fetch(self, url: str) -> str:
+        """Launch Chromium, navigate, extract text. Called with semaphore held."""
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                headless=True,
+                args=["--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"],
+            )
+            try:
+                page = browser.new_page()
+                page.goto(url, wait_until="domcontentloaded", timeout=20000)
+                # Wait a bit for JS-rendered content
+                page.wait_for_timeout(2000)
+                # Extract text content
+                content = page.inner_text("body")
+                return content
+            finally:
+                browser.close()
+
     def _handle_fetch_weixin(self, request: ToolRequest) -> ToolResult:
         url = str(request.arguments.get("url", "")).strip()
         if not url:
@@ -358,7 +496,17 @@ class WebPlugin(Plugin):
                 error_code="ssrf_blocked",
                 content={"message": f"URL blocked by SSRF protection: {reason}"},
             )
-        # ★ Fast-fail on non-Windows platforms or unconfigured paths
+        # ★ On Linux with native Playwright, try fetching weixin article text
+        if not _IS_WINDOWS and _PLAYWRIGHT_AVAILABLE:
+            # WeChat articles may work via native browser on some networks
+            try:
+                content = self._run_playwright_fetch(url)
+                if content and len(content) > 100:
+                    return ToolResult(status="ok", content=content)
+            except Exception as exc:
+                logger.warning("Native Playwright weixin fetch failed: %s", str(exc)[:200])
+
+        # ★ Fast-fail on non-Windows without Playwright, or after native attempt failed
         if not _IS_WINDOWS or not _WSL_PYTHON or not _FETCH_WEIXIN_SCRIPT:
             return ToolResult(
                 status="error",
