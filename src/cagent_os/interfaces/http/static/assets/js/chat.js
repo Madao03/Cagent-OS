@@ -1652,9 +1652,7 @@
     // placeholder items don't flash during the async auth check below.
     clearMockContent();
 
-    // Data source status — runs independently of auth (public endpoint)
-    // ★ Must await before auth redirect, otherwise page navigation aborts fetch
-    try { await refreshDataSources(); } catch(e) {}
+    // Data source status refresh interval (independent of auth)
     setInterval(refreshDataSources, 60000);
 
     // Require authentication — redirects to /login if no token
@@ -1664,12 +1662,12 @@
 
     wireInput();
     wireNewConversation();
-    // Load conversation history into the sidebar
-    try {
-      await loadConversationList();
-    } catch (err) {
-      console.warn("[chat.js] loadConversationList failed:", err);
-    }
+
+    // Load conversation history + data sources IN PARALLEL (were serial, causing ~4s delay)
+    await Promise.all([
+      loadConversationList().catch(err => console.warn("[chat.js] loadConversationList failed:", err)),
+      refreshDataSources().catch(() => {}),
+    ]);
 
     // ★ Auto-submit pending query from welcome page
     const urlParams = new URLSearchParams(window.location.search);
