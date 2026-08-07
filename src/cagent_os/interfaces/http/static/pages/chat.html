@@ -1599,12 +1599,20 @@ pre {
   .react-step-status-ok { background: var(--status-success-surface-l1); color: var(--status-success-default); }
   .react-step-status-running { background: var(--status-alert-surface-l1); color: var(--status-alert-active); }
   .react-step-status-error { background: var(--status-error-surface-l1); color: var(--status-error-default); }
-  .react-step-status-running .react-step-status-icon { animation: pulse-dot 1.5s ease-in-out infinite; }
+  .react-step-status-running .react-step-status-icon {
+    animation: pulse-dot 1.5s ease-in-out infinite;
+    width: 14px;
+    height: 14px;
+    display: inline-block;
+    vertical-align: middle;
+  }
   @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
   .react-step-status-icon {
     width: 12px;
     height: 12px;
     flex-shrink: 0;
+    display: inline-block;
+    vertical-align: middle;
   }
   .react-step-elapsed {
     font-family: var(--font-family-mono);
