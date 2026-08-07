@@ -1,0 +1,37 @@
+# ══ CagentOS systemd service ══
+# 安装: sudo cp deploy/cagentos.service /etc/systemd/system/
+# 启动: sudo systemctl daemon-reload && sudo systemctl enable --now cagentos
+# 日志: journalctl -u cagentos -f
+
+[Unit]
+Description=CagentOS Financial Research Agent
+After=network.target
+
+[Service]
+Type=simple
+User=cagent
+Group=cagent
+
+WorkingDirectory=/opt/cagent-os
+EnvironmentFile=/opt/cagent-os/.env
+
+# ★ 关键: 绑定 127.0.0.1, 不是 0.0.0.0
+# 如果绑 0.0.0.0, 即使 ufw 关了 8000, 某些配置下仍可被公网访问
+# 绑本地回环 → 只能通过 Caddy 反代访问, 鉴权和限流不可绕过
+# --timeout-keep-alive 防止切换页面时并发请求被阻塞导致 502
+ExecStart=/opt/cagent-os/.venv/bin/uvicorn cagent_os.interfaces.http.app:create_app --factory --host 127.0.0.1 --port 8000 --timeout-keep-alive 65
+
+# 崩溃自动重启, 5 秒间隔
+Restart=always
+RestartSec=5
+
+# 日志输出到 systemd journal
+StandardOutput=journal
+StandardError=journal
+
+# 安全限制: 无新权限 + 独立 tmp
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
