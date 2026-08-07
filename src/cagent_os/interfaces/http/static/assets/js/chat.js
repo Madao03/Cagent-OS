@@ -139,11 +139,12 @@
     let statusText = payload.tool_status || "running";
     let iconName = "check-small"; // default: success
     let statusClass = "react-step-status-ok";
+    let useSpinner = false;
 
     if (payload.phase === "tool_call") {
       statusText = "调用中";
-      iconName = "cue_loading";
       statusClass = "react-step-status-running";
+      useSpinner = true;
     } else if (payload.phase === "tool_result") {
       if (payload.tool_status === "error" || payload.phase === "tool_result" && payload.tool_message) {
         statusText = "失败";
@@ -156,13 +157,19 @@
       }
     } else if (payload.phase === "tool_plan") {
       statusText = "调用中";
-      iconName = "cue_loading";
       statusClass = "react-step-status-running";
+      useSpinner = true;
     }
 
-    statusIcon.setAttribute("data-icon", iconName);
     statusSpan.classList.add(statusClass);
-    statusSpan.appendChild(statusIcon);
+    if (useSpinner) {
+      // ★ CSS-only spinner instead of SVG icon for running state
+      const spinner = el("span", "react-step-spinner");
+      statusSpan.appendChild(spinner);
+    } else {
+      statusIcon.setAttribute("data-icon", iconName);
+      statusSpan.appendChild(statusIcon);
+    }
     statusSpan.appendChild(el("span", "", statusText));
     header.appendChild(statusSpan);
     step.appendChild(header);
