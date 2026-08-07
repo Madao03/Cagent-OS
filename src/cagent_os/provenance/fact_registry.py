@@ -593,7 +593,7 @@ class FactRegistry:
                                 if item_key in ("content", "text", "text_preview", "snippet", "formatted_context", "body"):
                                     cit_url = item.get("url", "") or item.get("source", "")
                                     cit_title = item.get("title", "")
-                                    cit_date = item.get("date", "") or item.get("published_at", "")
+                                    cit_date = item.get("date", "") or item.get("published_at", "") or item.get("published_date", "")
                                     facts.append(Fact(
                                         id=self.next_id(),
                                         kind="verified_citation",
@@ -619,7 +619,7 @@ class FactRegistry:
                 if key in ("content", "text", "text_preview", "snippet", "formatted_context", "body"):
                     cit_url = data.get("url", "") or data.get("source", "") or arguments.get("url", "")
                     cit_title = data.get("title", "") or arguments.get("title", "")
-                    cit_date = data.get("date", "") or data.get("published_at", "") or arguments.get("published_at", "")
+                    cit_date = data.get("date", "") or data.get("published_at", "") or data.get("published_date", "") or arguments.get("published_at", "")
                     facts.append(Fact(
                         id=self.next_id(),
                         kind="verified_citation",

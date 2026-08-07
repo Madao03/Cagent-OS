@@ -528,6 +528,7 @@ class FinancialToolkit:
                     "title": item.get("title", ""),
                     "url": item.get("url", ""),
                     "snippet": item.get("content", "")[:500],
+                    "published_date": item.get("published_date", ""),
                 })
         except Exception:
             logger.debug("Tavily search failed for query: %s", query, exc_info=True)

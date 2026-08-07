@@ -741,10 +741,27 @@
       html += `<div class="prov-card-row" style="flex-direction:column;align-items:flex-start"><span class="prov-card-label">原句</span><span class="prov-card-row-val" style="font-size:11px;color:var(--text-secondary);font-style:italic;margin-top:2px">"${escapeHtml(fact.citation_sentence)}"</span></div>`;
     }
 
-    // ★ Clickable URL
+    // ★ Published date with staleness warning
+    if (fact.published_at) {
+      let dateLabel = fact.published_at.slice(0, 10);
+      let staleWarn = "";
+      try {
+        const pubDate = new Date(fact.published_at);
+        const daysAgo = Math.floor((Date.now() - pubDate) / 86400000);
+        if (daysAgo > 0) dateLabel += `（${daysAgo} 天前）`;
+        if (daysAgo > 30) staleWarn = ' ⚠️ 可能过时';
+      } catch {}
+      html += `<div class="prov-card-row"><span class="prov-card-label">发布</span><span class="prov-card-row-val" style="font-size:11px;color:var(--text-secondary)">${escapeHtml(dateLabel)}${staleWarn}</span></div>`;
+    }
+
+    // ★ Clickable URL (knowledge_base paths are local files → render as plain text, not a dead link)
     if (fact.url) {
       const shortUrl = fact.url.length > 50 ? fact.url.substring(0, 47) + "..." : fact.url;
-      html += `<div class="prov-card-row"><span class="prov-card-label">链接</span><a href="${escapeHtml(fact.url)}" target="_blank" rel="noopener" style="font-size:11px;color:var(--color-primary);text-decoration:none">${escapeHtml(shortUrl)} →</a></div>`;
+      if (fact.source === "knowledge_base") {
+        html += `<div class="prov-card-row"><span class="prov-card-label">文档</span><span class="prov-card-row-val" style="font-size:11px;color:var(--text-secondary)">${escapeHtml(shortUrl)}</span></div>`;
+      } else {
+        html += `<div class="prov-card-row"><span class="prov-card-label">链接</span><a href="${escapeHtml(fact.url)}" target="_blank" rel="noopener" style="font-size:11px;color:var(--color-primary);text-decoration:none">${escapeHtml(shortUrl)} →</a></div>`;
+      }
     }
 
     // ★ Derived expansion: show formula + parent fact references
