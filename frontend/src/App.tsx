@@ -19,6 +19,7 @@ const PAGES: Record<string, { title: string; render: () => JSX.Element }> = {
 
 function App() {
   const [path, setPath] = useState(window.location.pathname.replace(/^\/app\/?/, "").replace(/^\/+/, ""));
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     const onPop = () => setPath(window.location.pathname.replace(/^\/app\/?/, "").replace(/^\/+/, ""));
@@ -27,7 +28,6 @@ function App() {
   }, []);
 
   const pageKey = Object.keys(PAGES).find((k) => path.startsWith(k));
-
   const page = pageKey ? PAGES[pageKey] : null;
 
   // Sidebar nav (shared with vanilla pages via shell.js)
@@ -43,8 +43,8 @@ function App() {
   ];
 
   return (
-    <div className="app-shell">
-      <aside className="app-sidebar">
+    <div className={`app-shell${collapsed ? " sidebar-collapsed" : ""}`}>
+      <aside className={`app-sidebar${collapsed ? " collapsed" : ""}`}>
         <div className="app-sidebar-logo">
           <span
             className="sidebar-logo-icon"
@@ -57,6 +57,14 @@ function App() {
             <span className="logo-title">CagentOS</span>
             <span className="logo-subtitle">投研工作台</span>
           </span>
+          <button
+            className="sidebar-collapse-btn"
+            aria-label="收起侧边栏"
+            title="收起侧边栏"
+            onClick={() => setCollapsed(!collapsed)}
+          >
+            <span data-icon="arrow-collapse" className="sidebar-collapse-icon" />
+          </button>
         </div>
         <nav className="app-sidebar-nav">
           {navItems.map((item) => (
@@ -72,8 +80,8 @@ function App() {
                 }
               }}
             >
+              <span data-icon={item.icon} className="sidebar-nav-icon" />
               <span className="sidebar-nav-label">
-                <span data-icon={item.icon} className="sidebar-nav-icon" />
                 {item.label}
                 {item.disabled && <sup className="sidebar-nav-tag">建设中</sup>}
               </span>
