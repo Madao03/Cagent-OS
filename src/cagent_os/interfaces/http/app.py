@@ -518,4 +518,8 @@ def create_app() -> FastAPI:
     from cagent_os.interfaces.http.routes_feedback import build_feedback_router
     app.include_router(build_feedback_router(_project_root / "data" / "feedback.db"))
 
+    # Opinion bank + message feedback API (user private + admin telemetry)
+    from cagent_os.interfaces.http.routes_opinions import build_opinions_router
+    app.include_router(build_opinions_router(_project_root / "data" / "opinions.db"))
+
     return app
