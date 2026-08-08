@@ -65,6 +65,7 @@ function App() {
                 item.disabled ? " disabled" : ""
               }`}
               href={item.href || "#"}
+              title={item.label}
               onClick={(e) => {
                 if (item.disabled) {
                   e.preventDefault();

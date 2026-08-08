@@ -51,7 +51,7 @@
       const active = id === current ? " active" : "";
       const disabled = item.disabled ? " disabled" : "";
       const sup = item.disabled ? '<sup class="sidebar-nav-tag">建设中</sup>' : "";
-      html += `<a class="sidebar-nav-item${active}${disabled}" data-dom-id="nav-${id}" data-nav-key="${id}" href="#" title="${item.disabled ? "建设中" : ""}">` +
+      html += `<a class="sidebar-nav-item${active}${disabled}" data-dom-id="nav-${id}" data-nav-key="${id}" href="#" title="${item.disabled ? item.label + " (建设中)" : item.label}">` +
         `<span data-icon="${item.icon}" class="sidebar-nav-icon" aria-hidden="true"></span>` +
         `<span class="sidebar-nav-label">${item.label}${sup}</span>` +
         `</a>`;

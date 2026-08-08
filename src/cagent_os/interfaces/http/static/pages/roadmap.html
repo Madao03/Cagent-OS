@@ -141,7 +141,7 @@
       <h1>开发路线图</h1>
       <p class="subtitle">CagentOS 正在持续进化 &mdash; 这里记录已交付的能力、正在打磨的功能，以及下一步的计划。</p>
       <div id="board" class="board"></div>
-      <div class="feedback-hint">想要什么功能？<a href="#" id="feedback-link">去反馈 →</a></div>
+      <div class="feedback-hint">想要什么功能？<a href="/feedback">去反馈 →</a></div>
     </div>
   </div>
 </div>
@@ -164,12 +164,6 @@
 
     const isAdmin = Auth.isAdmin();
     if (isAdmin) document.body.classList.add("is-admin");
-
-    // ── Feedback link (route not yet built) ──
-    document.getElementById("feedback-link").addEventListener("click", function (e) {
-      e.preventDefault();
-      alert("反馈功能开发中，敬请期待 ✨");
-    });
 
     // ── Fallback data (used when /api/v1/roadmap is unavailable) ──
     const FALLBACK = {
