@@ -22,17 +22,8 @@ function App() {
   const pageKey = Object.keys(PAGES).find((k) => path.startsWith(k));
   const page = pageKey ? PAGES[pageKey] : null;
 
-  // Sidebar nav (shared with vanilla pages via shell.js)
-  const navItems = [
-    { key: "chat", label: "对话面板", icon: "chat", disabled: false, href: "/" },
-    { key: "brief", label: "每日简报", icon: "calendar", disabled: true },
-    { key: "dashboard", label: "定制化看板", icon: "monitor", disabled: true },
-    { key: "opinions", label: "观点库", icon: "brain", disabled: false, href: "/app/opinions" },
-    { key: "knowledge", label: "共享知识库", icon: "doc", disabled: false, href: "/knowledge" },
-    { key: "roadmap", label: "开发路线图", icon: "design-flow", disabled: false, href: "/roadmap" },
-    { key: "feedback", label: "反馈中心", icon: "ai_bulb", disabled: false, href: "/feedback" },
-    { key: "about", label: "关于", icon: "info", disabled: false, href: "/about" },
-  ];
+  // Shared nav config from nav-config.js (loaded in main.tsx)
+  const navItems: any[] = (window as any).CAGENT_NAV_ITEMS || [];
 
   return (
     <div className={`app-shell${collapsed ? " sidebar-collapsed" : ""}`}>
@@ -61,8 +52,8 @@ function App() {
         <nav className="app-sidebar-nav">
           {navItems.map((item) => (
             <a
-              key={item.key}
-              className={`sidebar-nav-item${pageKey === item.key ? " active" : ""}${
+              key={item.id}
+              className={`sidebar-nav-item${pageKey === item.id ? " active" : ""}${
                 item.disabled ? " disabled" : ""
               }`}
               href={item.href || "#"}
