@@ -1,14 +1,7 @@
 /** API helper — wraps fetch with JWT auth token from localStorage. */
 
 function getToken(): string | null {
-  try {
-    const raw = localStorage.getItem("cagentos_auth");
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      return parsed.access_token || null;
-    }
-  } catch {}
-  return null;
+  return localStorage.getItem("cagentos_jwt") || null;
 }
 
 export async function api<T = any>(
