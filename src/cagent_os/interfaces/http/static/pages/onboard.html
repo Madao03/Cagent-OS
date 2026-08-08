@@ -73,11 +73,11 @@ html.dark ::-webkit-scrollbar-thumb:hover { background: rgba(200,200,200,0.30); 
 <body>
 <div class="card">
   <h1>你主要关注哪些？</h1>
-  <p class="sub">随便写，可跳过。这能帮我更快理解你的语境�?/p>
-  <textarea id="input" placeholder="比如：A股半导体、美股科技、BTC/ETH、港�?.."></textarea>
-  <p class="sub" style="margin-top:var(--spacer-4);">不会问你持仓或成本，也不会问投资偏好�?/p>
+  <p class="sub">随便写，可跳过。这能帮我更快理解你的语境。</p>
+  <textarea id="input" placeholder="比如：A股半导体、美股科技、BTC/ETH、港股..."></textarea>
+  <p class="sub" style="margin-top:var(--spacer-4);">不会问你持仓或成本，也不会问投资偏好。</p>
   <div class="actions">
-    <button class="btn btn-primary" id="saveBtn">保存并开�?/button>
+    <button class="btn btn-primary" id="saveBtn">保存并开始</button>
     <button class="btn btn-secondary" id="skipBtn">跳过</button>
   </div>
   <div class="status" id="status"></div>
@@ -96,7 +96,7 @@ async function doSave() {
   var btn = document.getElementById("saveBtn");
   if (!text) { doSkip(); return; }
   btn.disabled = true;
-  btn.textContent = "保存�?..";
+  btn.textContent = "保存中...";
 
   try {
     var resp = await fetch("/api/v1/profile", {
@@ -116,13 +116,13 @@ async function doSave() {
       statusEl.textContent = "保存失败，请重试";
       statusEl.className = "status err";
       btn.disabled = false;
-      btn.textContent = "保存并开�?;
+      btn.textContent = "保存并开始";
     }
   } catch(e) {
     statusEl.textContent = "网络错误";
     statusEl.className = "status err";
     btn.disabled = false;
-    btn.textContent = "保存并开�?;
+    btn.textContent = "保存并开始";
   }
 }
 

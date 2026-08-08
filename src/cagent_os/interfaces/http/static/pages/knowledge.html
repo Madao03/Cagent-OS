@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>知识�?/title>
+    <title>知识库</title>
     <link rel="stylesheet" href="/static/css/tokens.css?v=2">
     <link rel="stylesheet" href="/static/css/sidebar.css?v=2">
     <link rel="stylesheet" href="/static/assets/css/icons.css">
     <script src="/static/js/nav-config.js"></script>
     <style id="component-vars">
-/* ══════════════════════════════════════════════════════════════�?
-   components.css �?Design System Component and Atom Definitions
+/* ═══════════════════════════════════════════════════════════════
+   components.css — Design System Component and Atom Definitions
    Component sections mirror preview/component-*.html marker blocks.
    Stable atoms live here so downstream pages do not depend on preview shell CSS.
-   ══════════════════════════════════════════════════════════════�?*/
+   ═══════════════════════════════════════════════════════════════ */
 
 /* ── Shared Atoms ───────────────────────────────────────────── */
 .icon,
@@ -628,7 +628,7 @@ pre {
   }
     </style>
     <style id="page-style">
-  /* ===== Page: 知识�?(Knowledge Base) �?triage ledger + RAG article + memory ===== */
+  /* ===== Page: 知识库 (Knowledge Base) — triage ledger + RAG article + memory ===== */
 
   /* ---- Compat tokens referenced by app-shell partial / task spec ---- */
   :root {
@@ -767,11 +767,11 @@ pre {
         <span class="sidebar-logo-icon" aria-hidden="true"><span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,#4B3FE3,#6A6FFF);text-align:center;line-height:28px;color:#fff;font-weight:700;font-size:14px;font-family:var(--font-family-mono,monospace)">C</span></span>
         <span class="app-sidebar-logo-text">
           <span class="logo-title">CagentOS</span>
-          <span class="logo-subtitle">投研工作�?/span>
+          <span class="logo-subtitle">投研工作台</span>
         </span>
       </div>
 
-      <nav class="app-sidebar-nav" data-dom-id="sidebar-nav" aria-label="主导�?></nav>
+      <nav class="app-sidebar-nav" data-dom-id="sidebar-nav" aria-label="主导航"></nav>
 
       <div class="app-sidebar-footer" data-dom-id="sidebar-status">
         <div class="sidebar-status-row">
@@ -780,7 +780,7 @@ pre {
         </div>
         <div class="sidebar-status-row">
           <span class="sidebar-status-dot is-success" aria-hidden="true"></span>
-          <span>5 数据�?正常</span>
+          <span>5 数据源 正常</span>
         </div>
         <div class="sidebar-status-row">
           <span class="sidebar-status-dot is-alert" aria-hidden="true"></span>
@@ -793,7 +793,7 @@ pre {
     <div class="app-main">
       <header class="app-topbar">
         <div class="app-topbar-left">
-          <h1 class="app-page-title" data-dom-id="page-title">知识�?/h1>
+          <h1 class="app-page-title" data-dom-id="page-title">知识库</h1>
         </div>
         <div class="app-topbar-right">
           <span class="ds-tag ds-tag-primary">Model: gpt-4o</span>
@@ -815,13 +815,13 @@ pre {
           <div class="kb-left" id="kb-triage-panel">
             <div style="padding: var(--spacer-16); border-bottom: 1px solid var(--border-neutral-l1);">
               <div style="font-family: var(--font-family-heading); font-size: var(--heading-sm-font-size); font-weight: 600; color: var(--text-default);">分诊台账</div>
-              <div id="kb-triage-count" style="font-family: var(--font-family-metric); font-size: var(--body-sm-font-size); color: var(--text-tertiary); margin-top: var(--spacer-4);">0 �?/div>
+              <div id="kb-triage-count" style="font-family: var(--font-family-metric); font-size: var(--body-sm-font-size); color: var(--text-tertiary); margin-top: var(--spacer-4);">0 条</div>
             </div>
             <div id="kb-triage-tabs" style="display: flex; gap: var(--spacer-4); padding: var(--spacer-8) var(--spacer-12); border-bottom: 1px solid var(--border-neutral-l1);">
               <span data-level="ALL" style="padding: var(--spacer-4) var(--spacer-8); border-radius: var(--radius-4); background: var(--bg-brand-surface-l1); color: var(--bg-brand); font-size: var(--body-sm-font-size); font-weight: 500; cursor: pointer;">全部</span>
-              <span data-level="A" style="padding: var(--spacer-4) var(--spacer-8); border-radius: var(--radius-4); color: var(--text-secondary); font-size: var(--body-sm-font-size); cursor: pointer;">A�?/span>
-              <span data-level="B" style="padding: var(--spacer-4) var(--spacer-8); border-radius: var(--radius-4); color: var(--text-secondary); font-size: var(--body-sm-font-size); cursor: pointer;">B�?/span>
-              <span data-level="C" style="padding: var(--spacer-4) var(--spacer-8); border-radius: var(--radius-4); color: var(--text-secondary); font-size: var(--body-sm-font-size); cursor: pointer;">C�?/span>
+              <span data-level="A" style="padding: var(--spacer-4) var(--spacer-8); border-radius: var(--radius-4); color: var(--text-secondary); font-size: var(--body-sm-font-size); cursor: pointer;">A级</span>
+              <span data-level="B" style="padding: var(--spacer-4) var(--spacer-8); border-radius: var(--radius-4); color: var(--text-secondary); font-size: var(--body-sm-font-size); cursor: pointer;">B级</span>
+              <span data-level="C" style="padding: var(--spacer-4) var(--spacer-8); border-radius: var(--radius-4); color: var(--text-secondary); font-size: var(--body-sm-font-size); cursor: pointer;">C级</span>
             </div>
             <div id="kb-triage-list" style="flex: 1; overflow-y: auto; padding: var(--spacer-8);">
               <!-- Mock items removed by knowledge.js on boot; real data loaded from /api/v1/knowledge/triage -->
@@ -835,14 +835,14 @@ pre {
             <!-- RAG search bar -->
             <div style="padding: var(--spacer-16); border-bottom: 1px solid var(--border-neutral-l1);">
               <div style="display: flex; gap: var(--spacer-12);">
-                <input class="ds-input" type="text" placeholder="搜索知识�?.." style="flex: 1;">
+                <input class="ds-input" type="text" placeholder="搜索知识库..." style="flex: 1;">
                 <button class="ds-btn ds-btn-primary"><span data-icon="Search"></span> 搜索</button>
               </div>
               <div id="kb-rag-status" style="font-family: var(--font-family-mono); font-size: var(--body-sm-font-size); color: var(--text-tertiary); margin-top: var(--spacer-8);">RAG · loading...</div>
             </div>
             <!-- Breadcrumb + back-to-search button (visible only when viewing an article) -->
             <div id="kb-breadcrumb-bar" style="display: none; padding: var(--spacer-8) var(--spacer-16); font-family: var(--font-family-mono); font-size: var(--body-sm-font-size); color: var(--text-tertiary); border-bottom: 1px solid var(--border-neutral-l1); align-items: center; gap: var(--spacer-12);">
-              <a id="kb-back-to-search" href="#" style="color: var(--bg-brand); text-decoration: none; cursor: pointer;">�?返回搜索</a>
+              <a id="kb-back-to-search" href="#" style="color: var(--bg-brand); text-decoration: none; cursor: pointer;">← 返回搜索</a>
               <span id="kb-breadcrumb"></span>
             </div>
             <!-- Main content area: either search results or article view (mutually exclusive) -->

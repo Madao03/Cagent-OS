@@ -140,7 +140,7 @@
       <span class="sidebar-logo-icon"><span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,#4B3FE3,#6A6FFF);text-align:center;line-height:28px;color:#fff;font-weight:700;font-size:14px;">C</span></span>
       <span class="app-sidebar-logo-text">
         <span class="logo-title">CagentOS</span>
-        <span class="logo-subtitle">投研工作�?/span>
+        <span class="logo-subtitle">投研工作台</span>
       </span>
     </div>
     <nav class="app-sidebar-nav"></nav>
@@ -152,7 +152,7 @@
   <div class="app-main">
     <div class="content">
       <h1>反馈中心</h1>
-      <p class="subtitle">告诉我们你的想法 &mdash; 功能建议、bug 反馈、或者随便聊�?/p>
+      <p class="subtitle">告诉我们你的想法 &mdash; 功能建议、bug 反馈、或者随便聊聊</p>
 
       <form class="feedback-form" id="feedback-form" autocomplete="off">
         <label class="form-label">反馈类型</label>
@@ -175,15 +175,15 @@
         <h2 class="admin-title">反馈管理</h2>
         <div class="filter-row" id="filter-row">
           <button type="button" class="filter-btn active" data-filter="all">全部<span class="filter-count" id="count-all">0</span></button>
-          <button type="button" class="filter-btn" data-filter="pending">待处�?span class="filter-count" id="count-pending">0</span></button>
-          <button type="button" class="filter-btn" data-filter="resolved">已解�?span class="filter-count" id="count-resolved">0</span></button>
+          <button type="button" class="filter-btn" data-filter="pending">待处理<span class="filter-count" id="count-pending">0</span></button>
+          <button type="button" class="filter-btn" data-filter="resolved">已解决<span class="filter-count" id="count-resolved">0</span></button>
         </div>
         <div class="feedback-list" id="feedback-list"></div>
       </div>
     </div>
   </div>
 </div>
-<div class="save-banner" id="save-banner">已保�?/div>
+<div class="save-banner" id="save-banner">已保存</div>
 <script src="/static/assets/js/auth.js"></script>
 <link rel="stylesheet" href="/static/assets/css/icons.css">
 <script src="/static/assets/js/shell.js"></script>
@@ -214,8 +214,8 @@
       other:   { label: "其他" }
     };
     const STATUS_META = {
-      pending:  { label: "待处�?, cls: "status-pending" },
-      resolved: { label: "已解�?, cls: "status-resolved" },
+      pending:  { label: "待处理", cls: "status-pending" },
+      resolved: { label: "已解决", cls: "status-resolved" },
       ignored:  { label: "忽略",   cls: "status-ignored" }
     };
     const STATUS_CYCLE = ["pending", "resolved", "ignored"];
@@ -273,7 +273,7 @@
 
       if (!content) {
         msgEl.className = "form-msg is-error";
-        msgEl.textContent = "请填写反馈内�?;
+        msgEl.textContent = "请填写反馈内容";
         textarea.focus();
         return;
       }
@@ -285,7 +285,7 @@
 
       submitBtn.disabled = true;
       submitBtn.classList.add("is-loading");
-      submitBtn.textContent = "提交�?..";
+      submitBtn.textContent = "提交中...";
       msgEl.textContent = "";
 
       try {
@@ -296,7 +296,7 @@
         });
         if (resp.ok) {
           msgEl.className = "form-msg is-success";
-          msgEl.textContent = "感谢你的反馈！我们已经收�?�?;
+          msgEl.textContent = "感谢你的反馈！我们已经收到 ✨";
           // clear form
           textarea.value = "";
           charCount.textContent = "0";
@@ -314,7 +314,7 @@
         }
       } catch (err) {
         msgEl.className = "form-msg is-error";
-        msgEl.textContent = "网络异常�? + (err && err.message ? err.message : "未知错误");
+        msgEl.textContent = "网络异常：" + (err && err.message ? err.message : "未知错误");
         console.error("[feedback] POST exception:", err);
       } finally {
         submitBtn.disabled = false;
@@ -353,7 +353,7 @@
         updateCounts();
         renderList();
       } catch (err) {
-        listEl.innerHTML = '<div class="empty-state">加载反馈列表异常�? + escapeHtml(err && err.message ? err.message : "") + "</div>";
+        listEl.innerHTML = '<div class="empty-state">加载反馈列表异常：' + escapeHtml(err && err.message ? err.message : "") + "</div>";
         console.error("[feedback] GET exception:", err);
         allFeedback = [];
         updateCounts();
@@ -376,7 +376,7 @@
         : allFeedback.filter(function (f) { return f.status === currentFilter; });
 
       if (!filtered.length) {
-        listEl.innerHTML = '<div class="empty-state">' + (currentFilter === "all" ? "还没有收到反�? : "该分类下暂无反馈") + "</div>";
+        listEl.innerHTML = '<div class="empty-state">' + (currentFilter === "all" ? "还没有收到反馈" : "该分类下暂无反馈") + "</div>";
         return;
       }
 
@@ -393,8 +393,8 @@
           "</div>" +
           '<div class="item-content">' + escapeHtml(f.content) + "</div>" +
           '<div class="item-actions">' +
-            '<span class="status-badge ' + stMeta.cls + '" data-status="' + escapeHtml(status) + '" title="点击切换状�?>' + stMeta.label + "</span>" +
-            '<span class="status-hint">点击切换状�?/span>' +
+            '<span class="status-badge ' + stMeta.cls + '" data-status="' + escapeHtml(status) + '" title="点击切换状态">' + stMeta.label + "</span>" +
+            '<span class="status-hint">点击切换状态</span>' +
           "</div>" +
         "</div>";
       }).join("");

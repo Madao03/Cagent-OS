@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>每日简�?/title>
+    <title>每日简报</title>
     <style id="theme-vars">
 /**
  * TraeWork design library tokens
  * Light-mode canonical tokens in parser-friendly standard structure.
  *
  * Source of truth:
- * - /Users/bytedance/Desktop/样板�?TraeWork skill.md
+ * - /Users/bytedance/Desktop/样板间/TraeWork skill.md
  *
  * Notes:
  * - Token values are preserved from the current TraeWork Light system.
@@ -502,11 +502,11 @@
 
     </style>
     <style id="component-vars">
-/* ══════════════════════════════════════════════════════════════�?
-   components.css �?Design System Component and Atom Definitions
+/* ═══════════════════════════════════════════════════════════════
+   components.css — Design System Component and Atom Definitions
    Component sections mirror preview/component-*.html marker blocks.
    Stable atoms live here so downstream pages do not depend on preview shell CSS.
-   ══════════════════════════════════════════════════════════════�?*/
+   ═══════════════════════════════════════════════════════════════ */
 
 /* ── Shared Atoms ───────────────────────────────────────────── */
 .icon,
@@ -1064,7 +1064,7 @@ pre {
     </style>
     <style id="app-shell-style">
   /* =========================================================================
-     CagentOS App Shell �?shared sidebar + topbar partial
+     CagentOS App Shell — shared sidebar + topbar partial
      Light mode only. All values reference the TRAE Work design-library CSS
      variables inlined into each leaf page's <head> via fill-html-head.mjs.
      This <style> lives in <body>; it only owns shell-layout rules and must
@@ -1306,7 +1306,7 @@ pre {
   }
     </style>
     <style id="page-style">
-  /* ===== Page: 每日简�?(Daily Brief) �?report archive + viewer ===== */
+  /* ===== Page: 每日简报 (Daily Brief) — report archive + viewer ===== */
 
   /* ---- Compat tokens referenced by app-shell partial / task spec ---- */
   :root {
@@ -1516,11 +1516,11 @@ pre {
         <span class="sidebar-logo-icon" aria-hidden="true"><span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,#4B3FE3,#6A6FFF);text-align:center;line-height:28px;color:#fff;font-weight:700;font-size:14px;font-family:var(--font-family-mono,monospace)">C</span></span>
         <span class="app-sidebar-logo-text">
           <span class="logo-title">CagentOS</span>
-          <span class="logo-subtitle">投研工作�?/span>
+          <span class="logo-subtitle">投研工作台</span>
         </span>
       </div>
 
-      <nav class="app-sidebar-nav" data-dom-id="sidebar-nav" aria-label="主导�?></nav>
+      <nav class="app-sidebar-nav" data-dom-id="sidebar-nav" aria-label="主导航"></nav>
 
       <div class="app-sidebar-footer" data-dom-id="sidebar-status">
         <div class="sidebar-status-row">
@@ -1529,7 +1529,7 @@ pre {
         </div>
         <div class="sidebar-status-row">
           <span class="sidebar-status-dot is-success" aria-hidden="true"></span>
-          <span>5 数据�?正常</span>
+          <span>5 数据源 正常</span>
         </div>
         <div class="sidebar-status-row">
           <span class="sidebar-status-dot is-alert" aria-hidden="true"></span>
@@ -1542,7 +1542,7 @@ pre {
     <div class="app-main">
       <header class="app-topbar">
         <div class="app-topbar-left">
-          <h1 class="app-page-title" data-dom-id="page-title">每日简�?/h1>
+          <h1 class="app-page-title" data-dom-id="page-title">每日简报</h1>
         </div>
         <div class="app-topbar-right">
           <span class="ds-tag ds-tag-primary">Model: gpt-4o</span>
@@ -1564,7 +1564,7 @@ pre {
           <div class="brief-left">
             <div style="padding: var(--spacer-16); border-bottom: 1px solid var(--border-neutral-l1);">
               <div style="font-family: var(--font-family-heading); font-size: var(--heading-sm-font-size); font-weight: 600; color: var(--text-default);">报告归档</div>
-              <div style="font-size: var(--body-sm-font-size); color: var(--text-tertiary); margin-top: var(--spacer-4);">6 �?/div>
+              <div style="font-size: var(--body-sm-font-size); color: var(--text-tertiary); margin-top: var(--spacer-4);">6 份</div>
             </div>
             <div style="flex: 1; overflow-y: auto; padding: var(--spacer-8);">
               <!-- Report item 1 - ACTIVE -->
@@ -1575,7 +1575,7 @@ pre {
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <span style="font-family: var(--font-family-mono); font-size: var(--body-sm-font-size); color: var(--text-tertiary);">2026-07-14</span>
-                  <span style="font-size: var(--body-sm-font-size); color: var(--status-success-default);">已生�?/span>
+                  <span style="font-size: var(--body-sm-font-size); color: var(--status-success-default);">已生成</span>
                 </div>
               </div>
               <!-- Report item 2 -->
@@ -1586,7 +1586,7 @@ pre {
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <span style="font-family: var(--font-family-mono); font-size: var(--body-sm-font-size); color: var(--text-tertiary);">2026-07-13</span>
-                  <span style="font-size: var(--body-sm-font-size); color: var(--status-success-default);">已生�?/span>
+                  <span style="font-size: var(--body-sm-font-size); color: var(--status-success-default);">已生成</span>
                 </div>
               </div>
               <!-- Report item 3 -->
@@ -1597,7 +1597,7 @@ pre {
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <span style="font-family: var(--font-family-mono); font-size: var(--body-sm-font-size); color: var(--text-tertiary);">2026-07-12</span>
-                  <span style="font-size: var(--body-sm-font-size); color: var(--status-success-default);">已生�?/span>
+                  <span style="font-size: var(--body-sm-font-size); color: var(--status-success-default);">已生成</span>
                 </div>
               </div>
               <!-- Report item 4 -->
@@ -1608,7 +1608,7 @@ pre {
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <span style="font-family: var(--font-family-mono); font-size: var(--body-sm-font-size); color: var(--text-tertiary);">2026-07-08</span>
-                  <span style="font-size: var(--body-sm-font-size); color: var(--status-success-default);">已生�?/span>
+                  <span style="font-size: var(--body-sm-font-size); color: var(--status-success-default);">已生成</span>
                 </div>
               </div>
               <!-- Report item 5 -->
@@ -1619,7 +1619,7 @@ pre {
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <span style="font-family: var(--font-family-mono); font-size: var(--body-sm-font-size); color: var(--text-tertiary);">2026-07-01</span>
-                  <span style="font-size: var(--body-sm-font-size); color: var(--status-success-default);">已生�?/span>
+                  <span style="font-size: var(--body-sm-font-size); color: var(--status-success-default);">已生成</span>
                 </div>
               </div>
               <!-- Report item 6 - FAILED -->
@@ -1659,9 +1659,9 @@ pre {
               <div style="font-family: var(--font-family-heading); font-size: var(--heading-md-font-size); font-weight: 600; color: var(--text-default);">加密市场日报 · 2026-07-14</div>
               <div style="font-family: var(--font-family-mono); font-size: var(--body-sm-font-size); color: var(--text-tertiary); margin-top: var(--spacer-8);">生成时间 09:00:12 · CronAgent · Model: gpt-4o</div>
               <div style="display: flex; gap: var(--spacer-8); margin-top: var(--spacer-8);">
-                <span class="ds-tag">5 数据�?/span>
+                <span class="ds-tag">5 数据源</span>
                 <span class="ds-tag">3 RAG 引用</span>
-                <span class="ds-tag ds-tag-success">Red-Team �?/span>
+                <span class="ds-tag ds-tag-success">Red-Team ✓</span>
               </div>
             </div>
 
@@ -1682,7 +1682,7 @@ pre {
                   <tr><td>BNB</td><td style="font-family: var(--font-family-metric);">$589.40</td><td style="font-family: var(--font-family-metric); color: var(--status-error-default);">-0.4%</td><td style="font-family: var(--font-family-metric); color: var(--status-success-default);">+1.2%</td></tr>
                 </tbody>
               </table>
-              <div style="font-family: var(--font-family-mono); font-size: var(--body-sm-font-size); color: var(--text-tertiary); margin-top: var(--spacer-8);">数据�? yfinance + akshare</div>
+              <div style="font-family: var(--font-family-mono); font-size: var(--body-sm-font-size); color: var(--text-tertiary); margin-top: var(--spacer-8);">数据源: yfinance + akshare</div>
             </div>
 
             <!-- Section 2: 市场情绪 -->
@@ -1699,25 +1699,25 @@ pre {
                 <span style="font-size: var(--body-sm-font-size); color: var(--text-tertiary);">0 恐惧</span>
                 <span style="font-size: var(--body-sm-font-size); color: var(--text-tertiary);">100 贪婪</span>
               </div>
-              <div style="font-family: var(--font-family-mono); font-size: var(--body-sm-font-size); color: var(--text-tertiary); margin-top: var(--spacer-8);">数据�? alternative.me</div>
+              <div style="font-family: var(--font-family-mono); font-size: var(--body-sm-font-size); color: var(--text-tertiary); margin-top: var(--spacer-8);">数据源: alternative.me</div>
             </div>
 
-            <!-- Section 3: 资金�?-->
+            <!-- Section 3: 资金面 -->
             <div class="ds-card report-section">
-              <div style="font-family: var(--font-family-heading); font-size: var(--body-lg-font-size); font-weight: 600; color: var(--text-default); margin-bottom: var(--spacer-8);">资金�?/div>
+              <div style="font-family: var(--font-family-heading); font-size: var(--body-lg-font-size); font-weight: 600; color: var(--text-default); margin-bottom: var(--spacer-8);">资金面</div>
               <div class="metric-row">
                 <span style="font-size: var(--body-base-font-size); color: var(--text-secondary);">BTC ETF 净流入</span>
                 <span style="font-family: var(--font-family-metric); font-size: var(--body-base-font-size); color: var(--status-success-default);">+$245M</span>
               </div>
               <div class="metric-row">
-                <span style="font-size: var(--body-base-font-size); color: var(--text-secondary);">稳定coin市�?/span>
+                <span style="font-size: var(--body-base-font-size); color: var(--text-secondary);">稳定coin市值</span>
                 <span style="font-family: var(--font-family-metric); font-size: var(--body-base-font-size); color: var(--text-default);">+0.8% · $138.2B</span>
               </div>
               <div class="metric-row">
                 <span style="font-size: var(--body-base-font-size); color: var(--text-secondary);">交易所净流出</span>
                 <span style="font-family: var(--font-family-metric); font-size: var(--body-base-font-size); color: var(--status-success-default);">-$320M</span>
               </div>
-              <div style="font-size: var(--body-sm-font-size); color: var(--text-tertiary); margin-top: var(--spacer-4);">净流出为看涨信�?/div>
+              <div style="font-size: var(--body-sm-font-size); color: var(--text-tertiary); margin-top: var(--spacer-4);">净流出为看涨信号</div>
             </div>
 
             <!-- Section 4: DeFi -->
@@ -1738,21 +1738,21 @@ pre {
             <div class="ds-card report-section">
               <div style="font-family: var(--font-family-heading); font-size: var(--body-lg-font-size); font-weight: 600; color: var(--text-default); margin-bottom: var(--spacer-8);">重要新闻</div>
               <div class="news-item">
-                <div style="font-size: var(--body-base-font-size); color: var(--text-default);">SEC 批准以太坊现�?ETF,7�?3日开始交�?/div>
+                <div style="font-size: var(--body-base-font-size); color: var(--text-default);">SEC 批准以太坊现货 ETF,7月23日开始交易</div>
                 <div style="display: flex; gap: var(--spacer-8); margin-top: var(--spacer-4);">
                   <span class="ds-tag">PANews</span>
                   <span style="font-family: var(--font-family-mono); font-size: var(--body-sm-font-size); color: var(--text-tertiary);">2h ago</span>
                 </div>
               </div>
               <div class="news-item">
-                <div style="font-size: var(--body-base-font-size); color: var(--text-default);">BlackRock 增加 BTC ETF 持仓�?350K BTC</div>
+                <div style="font-size: var(--body-base-font-size); color: var(--text-default);">BlackRock 增加 BTC ETF 持仓至 350K BTC</div>
                 <div style="display: flex; gap: var(--spacer-8); margin-top: var(--spacer-4);">
                   <span class="ds-tag">Jin10</span>
                   <span style="font-family: var(--font-family-mono); font-size: var(--body-sm-font-size); color: var(--text-tertiary);">5h ago</span>
                 </div>
               </div>
               <div class="news-item">
-                <div style="font-size: var(--body-base-font-size); color: var(--text-default);">Vitalik 提出 PoS 质押率上限提�?/div>
+                <div style="font-size: var(--body-base-font-size); color: var(--text-default);">Vitalik 提出 PoS 质押率上限提案</div>
                 <div style="display: flex; gap: var(--spacer-8); margin-top: var(--spacer-4);">
                   <span class="ds-tag">PANews</span>
                   <span style="font-family: var(--font-family-mono); font-size: var(--body-sm-font-size); color: var(--text-tertiary);">8h ago</span>
@@ -1764,7 +1764,7 @@ pre {
             <div class="ds-card report-section">
               <div style="font-family: var(--font-family-heading); font-size: var(--body-lg-font-size); font-weight: 600; color: var(--text-default); margin-bottom: var(--spacer-8);">宏观速览</div>
               <div class="metric-row">
-                <span style="font-size: var(--body-base-font-size); color: var(--text-secondary);">美联储利�?/span>
+                <span style="font-size: var(--body-base-font-size); color: var(--text-secondary);">美联储利率</span>
                 <span style="font-family: var(--font-family-metric); font-size: var(--body-base-font-size);">5.25-5.50%</span>
               </div>
               <div class="metric-row">
@@ -1772,16 +1772,16 @@ pre {
                 <span style="font-family: var(--font-family-metric); font-size: var(--body-base-font-size);">3.2%</span>
               </div>
               <div class="metric-row">
-                <span style="font-size: var(--body-base-font-size); color: var(--text-secondary);">10Y 收益�?/span>
+                <span style="font-size: var(--body-base-font-size); color: var(--text-secondary);">10Y 收益率</span>
                 <span style="font-family: var(--font-family-metric); font-size: var(--body-base-font-size);">4.32%</span>
               </div>
-              <div style="font-family: var(--font-family-mono); font-size: var(--body-sm-font-size); color: var(--text-tertiary); margin-top: var(--spacer-8);">数据�? FRED</div>
+              <div style="font-family: var(--font-family-mono); font-size: var(--body-sm-font-size); color: var(--text-tertiary); margin-top: var(--spacer-8);">数据源: FRED</div>
             </div>
 
             <!-- Section 7: 综合判断 -->
             <div class="ds-card report-section">
               <div style="font-family: var(--font-family-heading); font-size: var(--body-lg-font-size); font-weight: 600; color: var(--text-default); margin-bottom: var(--spacer-8);">综合判断</div>
-              <p style="font-size: var(--body-base-font-size); color: var(--text-secondary); line-height: 1.7;">市场整体处于<strong>贪婪区间</strong>,恐贪指数 72 表明短期情绪过热。资金面正向(BTC ETF 流入 +$245M,稳定coin市值增�?,但交易所净流出 -$320M 表明长期持有者仍在积累。利率倒挂持续(10Y-2Y -43bp),宏观环境对高估值资产不利。建�?strong>适度减仓</strong>,关注 BTC <span style="font-family: var(--font-family-metric);">$62,000</span> 支撑位�?/p>
+              <p style="font-size: var(--body-base-font-size); color: var(--text-secondary); line-height: 1.7;">市场整体处于<strong>贪婪区间</strong>,恐贪指数 72 表明短期情绪过热。资金面正向(BTC ETF 流入 +$245M,稳定coin市值增长),但交易所净流出 -$320M 表明长期持有者仍在积累。利率倒挂持续(10Y-2Y -43bp),宏观环境对高估值资产不利。建议<strong>适度减仓</strong>,关注 BTC <span style="font-family: var(--font-family-metric);">$62,000</span> 支撑位。</p>
             </div>
 
             <!-- Red-Team 风险警示 -->
@@ -1790,8 +1790,8 @@ pre {
                 <span data-icon="info" style="color: var(--status-error-default);"></span>
                 <span style="font-family: var(--font-family-heading); font-size: var(--body-lg-font-size); font-weight: 600; color: var(--status-error-default);">Red-Team 风险警示</span>
               </div>
-              <div style="font-size: var(--body-sm-font-size); color: var(--text-default); padding: var(--spacer-4) 0;">恐贪指数 72 处于贪婪区间,历史上该水平�?30 天回调概�?<span style="font-family: var(--font-family-metric); font-weight: 600;">65%</span></div>
-              <div style="font-size: var(--body-sm-font-size); color: var(--text-default); padding: var(--spacer-4) 0;">BTC ETF 流入虽为�?但较前周下降 <span style="font-family: var(--font-family-metric); font-weight: 600;">40%</span>,动能减弱</div>
+              <div style="font-size: var(--body-sm-font-size); color: var(--text-default); padding: var(--spacer-4) 0;">恐贪指数 72 处于贪婪区间,历史上该水平后 30 天回调概率 <span style="font-family: var(--font-family-metric); font-weight: 600;">65%</span></div>
+              <div style="font-size: var(--body-sm-font-size); color: var(--text-default); padding: var(--spacer-4) 0;">BTC ETF 流入虽为正,但较前周下降 <span style="font-family: var(--font-family-metric); font-weight: 600;">40%</span>,动能减弱</div>
             </div>
           </div>
 
