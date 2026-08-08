@@ -248,6 +248,19 @@ def create_app() -> FastAPI:
         response.headers["X-Request-Id"] = request_id
         return response
 
+    # ★ Slow request detection (advisor recommendation)
+    @app.middleware("http")
+    async def slow_request_detector(request: Request, call_next):
+        import time as _timing_mod
+        t = _timing_mod.perf_counter()
+        response = await call_next(request)
+        dur = _timing_mod.perf_counter() - t
+        if dur > 1.0:
+            logger.warning(
+                "SLOW REQUEST %s %s %.2fs", request.method, request.url.path, dur
+            )
+        return response
+
     @app.exception_handler(KeyError)
     def handle_key_error(request: Request, exc: KeyError) -> JSONResponse:
         detail = exc.args[0] if exc.args else "resource not found"
