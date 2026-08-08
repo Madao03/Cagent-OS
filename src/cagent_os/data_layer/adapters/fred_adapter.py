@@ -11,6 +11,7 @@ Docs: https://fred.stlouisfed.org/docs/api/fred/
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import datetime, timezone
 from typing import Any
@@ -232,7 +233,7 @@ class FredAdapter(DataSourceAdapter):
             url += f"&observation_end={params['observation_end']}"
 
         try:
-            resp = requests.get(url, timeout=15)
+            resp = await asyncio.to_thread(requests.get, url, timeout=15)
             resp.raise_for_status()
             data = resp.json()
 
@@ -288,7 +289,7 @@ class FredAdapter(DataSourceAdapter):
                 f"&api_key={self._api_key}"
                 f"&file_type=json&limit=1&sort_order=desc"
             )
-            resp = requests.get(url, timeout=10)
+            resp = await asyncio.to_thread(requests.get, url, timeout=10)
             resp.raise_for_status()
             data = resp.json()
             if data.get("observations"):
@@ -323,7 +324,7 @@ class FredAdapter(DataSourceAdapter):
             f"&file_type=json"
         )
         try:
-            resp = requests.get(url, timeout=10)
+            resp = await asyncio.to_thread(requests.get, url, timeout=10)
             resp.raise_for_status()
             data = resp.json()
             ser = data.get("seriess", [{}])[0]
