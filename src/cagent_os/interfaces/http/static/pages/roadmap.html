@@ -427,21 +427,47 @@
           const status = btn.dataset.status;
           const container = document.querySelector('.column-cards[data-status="' + status + '"]');
           const id = "new-" + Date.now();
-          const tmp = document.createElement("div");
-          tmp.innerHTML = renderCard({ id: id, title: "新卡片", desc: "点击编辑添加描述", priority: status === "done" ? "P1" : status === "in_progress" ? "P1" : "P2", eta: null, children: null }, status);
-          const node = tmp.firstElementChild;
+          // Map group id to status for priorityBadge
+          var cardStatus = status === "live" ? "done" : status === "near" ? "in_progress" : "planned";
+          var defaultPrio = cardStatus === "done" ? "P1" : cardStatus === "in_progress" ? "P1" : "P2";
+          var tmp = document.createElement("div");
+          tmp.innerHTML = renderCard({ id: id, title: "新卡片", desc: "点击编辑添加描述", priority: defaultPrio, eta: "", children: [] }, cardStatus);
+          var node = tmp.firstElementChild;
           container.appendChild(node);
           node.classList.add("editing");
           node.querySelector(".card-title-input").focus();
-          // rewire for this node
+          // rewire save button
           node.querySelector(".save-btn").addEventListener("click", function () {
-            const title = node.querySelector(".card-title-input").value.trim();
-            const desc = node.querySelector(".card-desc-input").value.trim();
+            var title = node.querySelector(".card-title-input").value.trim();
+            var desc = node.querySelector(".card-desc-input").value.trim();
             if (title) node.querySelector(".card-title-view").textContent = title;
             node.querySelector(".card-desc-view").textContent = desc;
             node.classList.remove("editing");
             saveBoard();
           });
+          // rewire priority badge click (admin only)
+          var badge = node.querySelector(".card-priority.is-admin");
+          if (badge) {
+            badge.addEventListener("click", function (e) {
+              e.stopPropagation();
+              var current = badge.dataset.priority || "P2";
+              var next = current === "P0" ? "P1" : current === "P1" ? "P2" : "P0";
+              badge.dataset.priority = next;
+              var pb = priorityBadge(cardStatus, next);
+              badge.textContent = pb.text;
+              badge.className = "card-priority " + pb.cls + " is-admin";
+              saveBoard();
+            });
+          }
+          // rewire edit button
+          var editBtn = node.querySelector(".edit-btn");
+          if (editBtn) {
+            editBtn.addEventListener("click", function () {
+              node.classList.add("editing");
+              var ti = node.querySelector(".card-title-input");
+              if (ti) ti.focus();
+            });
+          }
         });
       });
     }

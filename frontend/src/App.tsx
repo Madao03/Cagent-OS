@@ -32,14 +32,14 @@ function App() {
 
   // Sidebar nav (shared with vanilla pages via shell.js)
   const navItems = [
-    { key: "chat", label: "对话面板", icon: "💬", disabled: false, href: "/" },
-    { key: "brief", label: "每日简报", icon: "📅", disabled: true },
-    { key: "dashboard", label: "定制化看板", icon: "📊", disabled: true },
-    { key: "opinions", label: "观点库", icon: "🧠", disabled: false, href: "/app/opinions" },
-    { key: "knowledge", label: "共享知识库", icon: "📚", disabled: false, href: "/knowledge" },
-    { key: "roadmap", label: "开发路线图", icon: "🗺️", disabled: false, href: "/roadmap" },
-    { key: "feedback", label: "反馈中心", icon: "💡", disabled: false, href: "/feedback" },
-    { key: "about", label: "关于", icon: "ℹ️", disabled: false, href: "/about" },
+    { key: "chat", label: "对话面板", icon: "agent", disabled: false, href: "/" },
+    { key: "brief", label: "每日简报", icon: "calendar", disabled: true },
+    { key: "dashboard", label: "定制化看板", icon: "monitor", disabled: true },
+    { key: "opinions", label: "观点库", icon: "brain", disabled: false, href: "/app/opinions" },
+    { key: "knowledge", label: "共享知识库", icon: "doc", disabled: false, href: "/knowledge" },
+    { key: "roadmap", label: "开发路线图", icon: "design-flow", disabled: false, href: "/roadmap" },
+    { key: "feedback", label: "反馈中心", icon: "ai_bulb", disabled: false, href: "/feedback" },
+    { key: "about", label: "关于", icon: "info", disabled: false, href: "/about" },
   ];
 
   return (
@@ -73,7 +73,7 @@ function App() {
               }}
             >
               <span className="sidebar-nav-label">
-                <span style={{ marginRight: 6 }}>{item.icon}</span>
+                <span data-icon={item.icon} className="sidebar-nav-icon" style={{ marginRight: 8, display: "inline-block", width: 20, height: 20, flexShrink: 0, backgroundColor: "currentColor" }} />
                 {item.label}
                 {item.disabled && <sup className="sidebar-nav-tag">建设中</sup>}
               </span>
