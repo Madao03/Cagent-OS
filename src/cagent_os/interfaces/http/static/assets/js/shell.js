@@ -20,15 +20,16 @@
 
   // ── Sidebar nav definition — single source of truth ──
   // Rendered by shell.js on every page. Never duplicate in HTML.
-  const NAV_ITEMS = [
-    { key: "chat", label: "对话面板", icon: "chat", disabled: false, page: "/" },
-    { key: "brief", label: "每日简报", icon: "calendar", disabled: true, page: "/brief" },
-    { key: "dashboard", label: "定制化看板", icon: "monitor", disabled: true, page: null },
-    { key: "opinions", label: "观点库", icon: "brain", disabled: false, page: "/app/opinions" },
-    { key: "knowledge", label: "共享知识库", icon: "doc", disabled: false, page: "/knowledge" },
-    { key: "roadmap", label: "开发路线图", icon: "design-flow", disabled: false, page: "/roadmap" },
-    { key: "feedback", label: "反馈中心", icon: "ai_bulb", disabled: false, page: "/feedback" },
-    { key: "about", label: "关于", icon: "info", disabled: false, page: "/about" },
+  // Use global nav config (shared with React sidebar)
+  const NAV_ITEMS = window.CAGENT_NAV_ITEMS || [
+    { id: "chat", label: "对话面板", icon: "chat", disabled: false, href: "/" },
+    { id: "brief", label: "每日简报", icon: "calendar", disabled: true, href: "/brief" },
+    { id: "dashboard", label: "定制化看板", icon: "monitor", disabled: true, href: null },
+    { id: "opinions", label: "观点库", icon: "brain", disabled: false, href: "/app/opinions" },
+    { id: "knowledge", label: "共享知识库", icon: "doc", disabled: false, href: "/knowledge" },
+    { id: "roadmap", label: "开发路线图", icon: "design-flow", disabled: false, href: "/roadmap" },
+    { id: "feedback", label: "反馈中心", icon: "ai_bulb", disabled: false, href: "/feedback" },
+    { id: "about", label: "关于", icon: "info", disabled: false, href: "/about" },
   ];
 
   function _currentPage() {
@@ -46,11 +47,11 @@
     const current = _currentPage();
     let html = "";
     for (const item of NAV_ITEMS) {
-      const active = item.key === current ? " active" : "";
+      const id = item.id || item.key;
+      const active = id === current ? " active" : "";
       const disabled = item.disabled ? " disabled" : "";
       const sup = item.disabled ? '<sup class="sidebar-nav-tag">建设中</sup>' : "";
-      const style = item.disabled ? ' style="opacity:0.6;cursor:default;"' : "";
-      html += `<a class="sidebar-nav-item${active}${disabled}" data-dom-id="nav-${item.key}" data-nav-key="${item.key}" href="#"${style} title="${item.disabled ? "建设中" : ""}">` +
+      html += `<a class="sidebar-nav-item${active}${disabled}" data-dom-id="nav-${id}" data-nav-key="${id}" href="#" title="${item.disabled ? "建设中" : ""}">` +
         `<span data-icon="${item.icon}" class="sidebar-nav-icon" aria-hidden="true"></span>` +
         `<span class="sidebar-nav-label">${item.label}${sup}</span>` +
         `</a>`;

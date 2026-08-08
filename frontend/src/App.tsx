@@ -11,7 +11,15 @@ const PAGES: Record<string, { title: string; render: () => JSX.Element }> = {
 
 function App() {
   const [path, setPath] = useState(window.location.pathname.replace(/^\/app\/?/, "").replace(/^\/+/, ""));
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return localStorage.getItem("cagentos-sidebar-collapsed") === "1"; } catch { return false; }
+  });
+
+  const toggleCollapsed = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    try { localStorage.setItem("cagentos-sidebar-collapsed", next ? "1" : "0"); } catch {}
+  };
 
   useEffect(() => {
     const onPop = () => setPath(window.location.pathname.replace(/^\/app\/?/, "").replace(/^\/+/, ""));
@@ -44,7 +52,7 @@ function App() {
             className="sidebar-collapse-btn"
             aria-label="收起侧边栏"
             title="收起侧边栏"
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={() => toggleCollapsed()}
           >
             <span data-icon="arrow-collapse" className="sidebar-collapse-icon" />
           </button>

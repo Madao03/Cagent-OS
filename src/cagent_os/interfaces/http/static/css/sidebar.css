@@ -197,6 +197,23 @@
   color: var(--icon-brand);
 }
 
+.sidebar-nav-item.disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.sidebar-nav-item.disabled:hover {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.sidebar-nav-tag {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-weight: 400;
+  margin-left: 2px;
+}
+
 /* ── Sidebar status footer ────────────────────────────────────── */
 .app-sidebar-footer {
   display: flex;
