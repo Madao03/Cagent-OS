@@ -205,12 +205,23 @@ body {
   gap: var(--spacer-8);
   padding: var(--spacer-8) var(--spacer-12);
   margin-bottom: var(--spacer-4);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-6);
   cursor: pointer;
   text-decoration: none;
   color: var(--text-secondary);
+  font-family: var(--font-family-default);
   font-size: var(--body-base-font-size);
-  transition: background 0.15s, color 0.15s;
+  line-height: 1.4;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-nav-item .sidebar-nav-icon {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--icon-default);
+  background-color: currentColor;
 }
 
 .sidebar-nav-item:hover {
@@ -222,6 +233,10 @@ body {
   background: var(--bg-brand-surface-l1);
   color: var(--text-default);
   font-weight: 500;
+}
+
+.sidebar-nav-item.active .sidebar-nav-icon {
+  color: var(--icon-brand);
 }
 
 .sidebar-nav-item.disabled {

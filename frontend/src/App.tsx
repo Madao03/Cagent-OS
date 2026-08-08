@@ -73,7 +73,7 @@ function App() {
               }}
             >
               <span className="sidebar-nav-label">
-                <span data-icon={item.icon} className="sidebar-nav-icon" style={{ marginRight: 8, display: "inline-block", width: 20, height: 20, flexShrink: 0, backgroundColor: "currentColor" }} />
+                <span data-icon={item.icon} className="sidebar-nav-icon" />
                 {item.label}
                 {item.disabled && <sup className="sidebar-nav-tag">建设中</sup>}
               </span>
