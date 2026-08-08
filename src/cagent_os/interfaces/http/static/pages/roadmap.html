@@ -74,11 +74,9 @@
       .card-title { font-family: var(--font-family-heading); font-weight: var(--font-weight-strong); font-size: 13px; color: var(--text-default); line-height: 1.4; }
       .card-priority { font-size: var(--body-xs-font-size); font-weight: var(--font-weight-strong); white-space: nowrap; flex-shrink: 0; padding: 1px 5px; border-radius: var(--radius-xs); }
       .prio-done { color: var(--text-tertiary); background: var(--bg-overlay-l1); }
-      .prio-p0-ip { color: #F97316; background: rgba(249,115,22,0.10); }
-      .prio-p1-ip { color: #EAB308; background: rgba(234,179,8,0.12); }
-      .prio-p0-planned { color: var(--status-error-default); background: var(--status-error-surface-l1); }
-      .prio-p1-planned { color: #F97316; background: rgba(249,115,22,0.10); }
-      .prio-p2-planned { color: var(--text-tertiary); background: var(--bg-overlay-l1); }
+      .prio-p0 { color: #fff; background: #E8463A; }
+      .prio-p1 { color: #F97316; background: rgba(249,115,22,0.12); }
+      .prio-p2 { color: var(--text-tertiary); background: var(--bg-overlay-l1); }
       /* priority selector (admin) */
       .card-priority.is-admin { cursor: pointer; border: 1px dashed transparent; }
       .card-priority.is-admin:hover { border-color: currentColor; }
@@ -279,15 +277,10 @@
 
     // ── Priority badge resolver ──
     function priorityBadge(status, priority) {
-      if (status === "done") return { text: priority + " ✅", cls: "prio-done" };
-      if (status === "in_progress") {
-        if (priority === "P0") return { text: "P0", cls: "prio-p0-ip" };
-        return { text: priority || "P1", cls: "prio-p1-ip" };
-      }
-      // planned
-      if (priority === "P0") return { text: "P0", cls: "prio-p0-planned" };
-      if (priority === "P1") return { text: "P1", cls: "prio-p1-planned" };
-      return { text: priority || "P2", cls: "prio-p2-planned" };
+      if (status === "done") return { text: (priority || "P2") + " ✅", cls: "prio-done" };
+      if (priority === "P0") return { text: "P0", cls: "prio-p0" };
+      if (priority === "P1") return { text: "P1", cls: "prio-p1" };
+      return { text: priority || "P2", cls: "prio-p2" };
     }
 
     function escapeHtml(s) {
@@ -332,6 +325,7 @@
         '<div class="card-actions">' +
         '<button class="mini-btn edit-btn" type="button">编辑</button>' +
         '<button class="mini-btn primary save-btn" type="button">保存</button>' +
+        (isAdmin ? '<button class="mini-btn delete-btn" type="button" style="margin-left:auto;color:var(--status-error-default);">删除</button>' : '') +
         "</div>" +
         "</div>";
     }
@@ -410,6 +404,15 @@
         });
       });
 
+      // delete card (admin only)
+      document.querySelectorAll(".card .delete-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          if (!confirm("确定删除这张卡片？")) return;
+          btn.closest(".card").remove();
+          saveBoard();
+        });
+      });
+
       // children checkbox toggle (admin only)
       document.querySelectorAll('.card-children input[type="checkbox"]').forEach(function (cb) {
         cb.addEventListener("change", function () {
@@ -466,6 +469,15 @@
               node.classList.add("editing");
               var ti = node.querySelector(".card-title-input");
               if (ti) ti.focus();
+            });
+          }
+          // rewire delete button
+          var delBtn = node.querySelector(".delete-btn");
+          if (delBtn) {
+            delBtn.addEventListener("click", function () {
+              if (!confirm("确定删除这张卡片？")) return;
+              node.remove();
+              saveBoard();
             });
           }
         });
