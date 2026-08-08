@@ -1,19 +1,11 @@
 import { useState, useEffect } from "react";
+import Opinions from "./pages/Opinions";
 
 /** Simple page registry — add new React pages here. */
 const PAGES: Record<string, { title: string; render: () => JSX.Element }> = {
   opinions: {
     title: "观点库",
-    render: () => (
-      <div className="react-page">
-        <h1>观点库</h1>
-        <p className="subtitle">在这里查看和管理你保存的观点。</p>
-        <div className="placeholder-card">
-          <p>观点库功能开发中…</p>
-          <p className="hint">React 基建已就绪，即将接入后端 API。</p>
-        </div>
-      </div>
-    ),
+    render: () => <Opinions />,
   },
 };
 
