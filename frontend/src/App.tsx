@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 /** Simple page registry — add new React pages here. */
 const PAGES: Record<string, { title: string; render: () => JSX.Element }> = {
@@ -18,24 +18,28 @@ const PAGES: Record<string, { title: string; render: () => JSX.Element }> = {
 };
 
 function App() {
-  const location = useLocation();
+  const [path, setPath] = useState(window.location.pathname.replace(/^\/app\/?/, "").replace(/^\/+/, ""));
 
-  // Extract page key from pathname: /app/opinions → "opinions"
-  const path = location.pathname.replace(/^\/app\/?/, "").replace(/^\/+/, "");
+  useEffect(() => {
+    const onPop = () => setPath(window.location.pathname.replace(/^\/app\/?/, "").replace(/^\/+/, ""));
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
   const pageKey = Object.keys(PAGES).find((k) => path.startsWith(k));
 
   const page = pageKey ? PAGES[pageKey] : null;
 
   // Sidebar nav (shared with vanilla pages via shell.js)
   const navItems = [
-    { key: "chat", label: "对话面板", disabled: false, href: "/" },
-    { key: "brief", label: "每日简报", disabled: true },
-    { key: "dashboard", label: "定制化看板", disabled: true },
-    { key: "opinions", label: "观点库", disabled: false, href: "/app/opinions" },
-    { key: "knowledge", label: "共享知识库", disabled: false, href: "/knowledge" },
-    { key: "roadmap", label: "开发路线图", disabled: false, href: "/roadmap" },
-    { key: "feedback", label: "反馈中心", disabled: false, href: "/feedback" },
-    { key: "about", label: "关于", disabled: false, href: "/about" },
+    { key: "chat", label: "对话面板", icon: "💬", disabled: false, href: "/" },
+    { key: "brief", label: "每日简报", icon: "📅", disabled: true },
+    { key: "dashboard", label: "定制化看板", icon: "📊", disabled: true },
+    { key: "opinions", label: "观点库", icon: "🧠", disabled: false, href: "/app/opinions" },
+    { key: "knowledge", label: "共享知识库", icon: "📚", disabled: false, href: "/knowledge" },
+    { key: "roadmap", label: "开发路线图", icon: "🗺️", disabled: false, href: "/roadmap" },
+    { key: "feedback", label: "反馈中心", icon: "💡", disabled: false, href: "/feedback" },
+    { key: "about", label: "关于", icon: "ℹ️", disabled: false, href: "/about" },
   ];
 
   return (
@@ -69,6 +73,7 @@ function App() {
               }}
             >
               <span className="sidebar-nav-label">
+                <span style={{ marginRight: 6 }}>{item.icon}</span>
                 {item.label}
                 {item.disabled && <sup className="sidebar-nav-tag">建设中</sup>}
               </span>

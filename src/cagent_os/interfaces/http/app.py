@@ -261,34 +261,53 @@ def create_app() -> FastAPI:
     def health_check() -> dict:
         return {"status": "healthy"}
 
-    # ── Data source status (cached, async background refresh) ───
+    # ── Data source status (stale-while-revalidate) ───
     _ds_cache: dict | None = None
     _ds_cache_ts: float = 0.0
-    _ds_cache_ttl: float = 30.0  # refresh every 30s
+    _ds_cache_ttl: float = 60.0  # cache valid for 60s
+    _ds_refreshing: bool = False  # prevent concurrent refreshes
     import time as _time_module
+    import asyncio as _ds_asyncio
 
-    async def _refresh_ds_cache() -> dict:
-        nonlocal _ds_cache, _ds_cache_ts
-        if _ds_cache is not None and (_time_module.time() - _ds_cache_ts) < _ds_cache_ttl:
+    async def _refresh_ds_cache_background() -> None:
+        """Refresh cache in background — never blocks the request."""
+        nonlocal _ds_cache, _ds_cache_ts, _ds_refreshing
+        if _ds_refreshing:
+            return
+        _ds_refreshing = True
+        try:
+            results = await data_layer.health_check_all()
+            sources = []
+            for name, h in results.items():
+                sources.append({
+                    "name": name,
+                    "available": h.available,
+                    "latency_ms": round(h.latency_ms, 1) if h.latency_ms else None,
+                    "error": h.error_message,
+                })
+            _ds_cache = {"sources": sources, "total": len(sources),
+                         "available": sum(1 for s in sources if s["available"])}
+            _ds_cache_ts = _time_module.time()
+        except Exception as exc:
+            logger.warning("Background DS refresh failed: %s", exc)
+        finally:
+            _ds_refreshing = False
+
+    def _get_ds_cached_or_refresh() -> dict:
+        """Return cached data immediately; trigger background refresh if stale."""
+        now = _time_module.time()
+        if _ds_cache is None or (now - _ds_cache_ts) > _ds_cache_ttl:
+            # Trigger background refresh (non-blocking)
+            _ds_asyncio.ensure_future(_refresh_ds_cache_background())
+        # Return whatever we have (even if stale), or a loading placeholder
+        if _ds_cache is not None:
             return _ds_cache
-        results = await data_layer.health_check_all()
-        sources = []
-        for name, h in results.items():
-            sources.append({
-                "name": name,
-                "available": h.available,
-                "latency_ms": round(h.latency_ms, 1) if h.latency_ms else None,
-                "error": h.error_message,
-            })
-        _ds_cache = {"sources": sources, "total": len(sources),
-                      "available": sum(1 for s in sources if s["available"])}
-        _ds_cache_ts = _time_module.time()
-        return _ds_cache
+        return {"sources": [], "total": 0, "available": 0, "loading": True}
 
     @app.get("/api/v1/data-sources")
     async def list_data_sources() -> dict:
-        """Return health status for all registered data adapters (cached)."""
-        return await _refresh_ds_cache()
+        """Return health status for all registered data adapters (cached, instant)."""
+        return _get_ds_cached_or_refresh()
 
     # ── Phase 4b: Cron scheduler ──────────────────────────────────────
     @app.on_event("startup")
