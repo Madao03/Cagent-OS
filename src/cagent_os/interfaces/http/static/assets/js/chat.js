@@ -490,6 +490,12 @@
     isSending = true;
     setSendButtonState(true);
 
+    // ★ Prepend quote if active
+    if (activeQuote) {
+      text = "> " + activeQuote.split("\n").join("\n> ") + "\n\n" + text;
+      _clearActiveQuote();
+    }
+
     renderUserMessage(text);
 
     // Update sidebar title immediately — first message becomes the conversation name
@@ -590,6 +596,8 @@
             disc.textContent = "内容由 AI 生成，不构成投资建议。数据请自行核实。";
             shell.root.appendChild(disc);
           }
+          // ★ Attach like/dislike buttons
+          _attachMessageActions(shell);
         }
       );
     } catch (err) {
@@ -1252,6 +1260,189 @@
         _hideSelectionMenu();
       }
     });
+  }
+
+  // ───────────────────────────────────────────────────────────────
+  // Opinion bank + message feedback interactions
+  // ───────────────────────────────────────────────────────────────
+
+  function _handleTextSelection(e) {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || sel.toString().trim().length < 2) {
+      _hideSelectionMenu();
+      return;
+    }
+    // Only trigger inside assistant bubbles
+    const bubble = e.target.closest(".chat-assistant-bubble");
+    if (!bubble) {
+      _hideSelectionMenu();
+      return;
+    }
+    const range = sel.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    const selectedText = sel.toString().trim();
+    if (!selectedText || selectedText.length > 5000) return;
+    _showSelectionMenu(rect, selectedText, bubble);
+  }
+
+  function _showSelectionMenu(rect, text, bubble) {
+    _hideSelectionMenu();
+    const menu = document.createElement("div");
+    menu.className = "text-selection-menu";
+    menu.innerHTML =
+      '<button data-action="save">📌 存入观点库</button>' +
+      '<button data-action="quote">📎 引用</button>' +
+      '<button data-action="report">🚩 报错</button>';
+    // Position above selection
+    const top = rect.top + window.scrollY - 42;
+    const left = rect.left + window.scrollX + rect.width / 2;
+    menu.style.position = "fixed";
+    menu.style.top = (rect.top < 50 ? rect.bottom + 8 : rect.top - 42) + "px";
+    menu.style.left = Math.max(8, Math.min(rect.left + rect.width / 2 - 100, window.innerWidth - 220)) + "px";
+    document.body.appendChild(menu);
+    _selectionMenu = menu;
+
+    menu.querySelectorAll("button").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const action = btn.dataset.action;
+        _hideSelectionMenu();
+        const msgEl = bubble.closest(".chat-msg-assistant");
+        const msgId = msgEl ? msgEl.dataset.msgId || crypto.randomUUID() : crypto.randomUUID();
+        if (msgEl) msgEl.dataset.msgId = msgId;
+        if (action === "save") _saveOpinion(text, msgId);
+        else if (action === "quote") _showQuoteCard(text);
+        else if (action === "report") _reportSelection(text, msgId);
+        window.getSelection().removeAllRanges();
+      });
+    });
+  }
+
+  function _hideSelectionMenu() {
+    if (_selectionMenu) {
+      _selectionMenu.remove();
+      _selectionMenu = null;
+    }
+  }
+
+  function _saveOpinion(text, msgId) {
+    // Show category picker
+    const picker = document.createElement("div");
+    picker.className = "text-selection-menu opinion-category-picker";
+    picker.style.position = "fixed";
+    picker.style.top = "50%";
+    picker.style.left = "50%";
+    picker.style.transform = "translate(-50%, -50%)";
+    picker.style.flexDirection = "column";
+    picker.style.zIndex = "1001";
+    picker.innerHTML =
+      '<div style="font-size:12px;color:var(--text-secondary);padding:4px 8px;">选择分类</div>' +
+      '<div style="display:flex;gap:4px;">' +
+      '<button data-cat="fact">📊 事实</button>' +
+      '<button data-cat="opinion">💭 观点</button>' +
+      '<button data-cat="framework">🔧 框架</button>' +
+      '<button data-cat="cancel" style="opacity:0.5;">取消</button>' +
+      "</div>";
+    document.body.appendChild(picker);
+    picker.querySelectorAll("button").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        const cat = btn.dataset.cat;
+        picker.remove();
+        if (cat === "cancel") return;
+        try {
+          const resp = await Auth.fetch("/api/v1/opinions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              conversation_id: CONVERSATION_ID,
+              message_id: msgId,
+              selected_text: text,
+              category: cat,
+            }),
+          });
+          if (resp.ok) _toast("已存入观点库");
+          else _toast("保存失败");
+        } catch { _toast("网络错误"); }
+      });
+    });
+  }
+
+  function _reportSelection(text, msgId) {
+    const reason = prompt("请描述问题（可选）：", "");
+    if (reason === null) return; // user cancelled
+    Auth.fetch("/api/v1/feedback/message", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message_id: msgId,
+        conversation_id: CONVERSATION_ID,
+        feedback_type: "report",
+        report_reason: reason || text.slice(0, 200),
+      }),
+    }).then(function (r) { _toast(r.ok ? "已提交报错" : "提交失败"); })
+      .catch(function () { _toast("网络错误"); });
+  }
+
+  function _showQuoteCard(text) {
+    activeQuote = text;
+    const existing = document.getElementById("active-quote");
+    if (existing) existing.remove();
+    const inputBar = document.querySelector(".chat-input-bar");
+    const card = document.createElement("div");
+    card.className = "quote-card";
+    card.id = "active-quote";
+    card.innerHTML =
+      '<div class="quote-card-text">' + escapeHtml(text) + "</div>" +
+      '<button class="quote-card-remove" title="移除引用">×</button>';
+    card.querySelector(".quote-card-remove").addEventListener("click", _clearActiveQuote);
+    if (inputBar) inputBar.parentNode.insertBefore(card, inputBar);
+    else document.body.appendChild(card);
+  }
+
+  function _clearActiveQuote() {
+    activeQuote = null;
+    const card = document.getElementById("active-quote");
+    if (card) card.remove();
+  }
+
+  function _attachMessageActions(shell) {
+    const msgId = crypto.randomUUID();
+    shell.root.dataset.msgId = msgId;
+    const bar = document.createElement("div");
+    bar.className = "msg-actions";
+    bar.innerHTML =
+      '<button class="msg-action-btn" data-action="like" title="有帮助">👍</button>' +
+      '<button class="msg-action-btn" data-action="dislike" title="没帮助">👎</button>';
+    shell.root.appendChild(bar);
+    bar.querySelectorAll(".msg-action-btn").forEach(function (btn) {
+      btn.addEventListener("click", async function () {
+        if (btn.classList.contains("active")) {
+          btn.classList.remove("active");
+          return;
+        }
+        // Mutually exclusive
+        bar.querySelectorAll(".msg-action-btn").forEach(function (b) { b.classList.remove("active"); });
+        btn.classList.add("active");
+        try {
+          await Auth.fetch("/api/v1/feedback/message", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message_id: msgId,
+              conversation_id: CONVERSATION_ID,
+              feedback_type: btn.dataset.action,
+            }),
+          });
+        } catch (e) { console.warn("[chat] feedback failed:", e); }
+      });
+    });
+  }
+
+  function _toast(msg) {
+    const t = document.createElement("div");
+    t.textContent = msg;
+    t.style.cssText = "position:fixed;bottom:60px;left:50%;transform:translateX(-50%);padding:8px 16px;background:var(--bg-base-default,#333);color:var(--text-default,#fff);border-radius:6px;font-size:13px;z-index:2000;box-shadow:0 2px 12px rgba(0,0,0,0.15);transition:opacity .3s;";
+    document.body.appendChild(t);
+    setTimeout(function () { t.style.opacity = "0"; setTimeout(function () { t.remove(); }, 300); }, 2000);
   }
 
   // ───────────────────────────────────────────────────────────────
