@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CagentOS</title>
+  <script>
+    (function(){var h=document.documentElement;var s;try{s=localStorage.getItem('cagentos-theme')}catch(e){}var d;if(s==='light')d=false;else if(s==='dark')d=true;else d=!window.matchMedia('(prefers-color-scheme: light)').matches;if(d){h.classList.add('dark');h.classList.remove('light')}else{h.classList.remove('dark');h.classList.add('light')}})();
+  </script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>

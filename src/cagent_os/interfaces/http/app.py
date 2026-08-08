@@ -425,6 +425,18 @@ def create_app() -> FastAPI:
                 return FileResponse(str(p))
             return RedirectResponse(url="/")
 
+        # React SPA — serves any /app/* route from static/react/index.html
+        react_index = static_dir / "react" / "index.html"
+
+        @app.get("/app/{rest:path}")
+        async def serve_react(rest: str = ""):
+            if react_index.exists():
+                return FileResponse(str(react_index))
+            return JSONResponse(
+                {"detail": "React app not built. Run: cd frontend && npm install && npm run build"},
+                status_code=503,
+            )
+
         @app.get("/legacy")
         async def serve_legacy():
             p = static_dir / "legacy.html"

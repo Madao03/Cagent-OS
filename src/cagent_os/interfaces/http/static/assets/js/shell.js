@@ -24,7 +24,7 @@
     { key: "chat", label: "对话面板", icon: "chat", disabled: false, page: "/" },
     { key: "brief", label: "每日简报", icon: "calendar", disabled: true, page: "/brief" },
     { key: "dashboard", label: "定制化看板", icon: "monitor", disabled: true, page: null },
-    { key: "opinions", label: "观点库", icon: "brain", disabled: true, page: null },
+    { key: "opinions", label: "观点库", icon: "brain", disabled: false, page: "/app/opinions" },
     { key: "knowledge", label: "共享知识库", icon: "doc", disabled: false, page: "/knowledge" },
     { key: "roadmap", label: "开发路线图", icon: "design-flow", disabled: false, page: "/roadmap" },
     { key: "feedback", label: "反馈中心", icon: "ai_bulb", disabled: false, page: "/feedback" },
@@ -35,6 +35,7 @@
     const p = window.location.pathname;
     if (p.includes("about.html") || p.includes("/about")) return "about";
     if (p.includes("knowledge.html") || p.includes("/knowledge")) return "knowledge";
+    if (p.includes("/app/")) return "opinions";
     if (p.includes("brief.html") || p.includes("/brief")) return "brief";
     if (p.includes("roadmap.html") || p.includes("/roadmap")) return "roadmap";
     if (p.includes("feedback.html") || p.includes("/feedback")) return "feedback";
@@ -142,6 +143,7 @@
         if (key === "chat") window.location.href = "/";
         else if (key === "brief") window.location.href = "/brief";
         else if (key === "knowledge") window.location.href = "/knowledge";
+        else if (key === "opinions") window.location.href = "/app/opinions";
         else if (key === "roadmap") window.location.href = "/roadmap";
         else if (key === "feedback") window.location.href = "/feedback";
         else if (key === "about") { try { sessionStorage.removeItem("cagentos_from_welcome"); } catch(e) {} window.location.href = "/about"; }
