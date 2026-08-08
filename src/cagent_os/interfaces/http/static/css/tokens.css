@@ -223,6 +223,8 @@
   --bg-brand-active: #3F31C6;
   --bg-brand-disabled: rgba(75, 63, 227, 0.22);
   --bg-brand-popup: rgba(170, 183, 255, 0.36);
+  --bg-brand-surface-l1: rgba(75, 63, 227, 0.08);
+  --bg-brand-surface-l2: rgba(75, 63, 227, 0.12);
   --color-primary: var(--bg-brand);
   --color-primary-hover: var(--bg-brand-hover);
   --color-primary-disabled: var(--bg-brand-disabled);

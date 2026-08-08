@@ -23,7 +23,7 @@
     background: var(--bg);
     color: var(--text);
     font-family: var(--font);
-    font-size: 28px;                       /* ← ×2 from 14px */
+    font-size: 28px;                       /* �?×2 from 14px */
     height: 100vh; display: flex; flex-direction: column;
     overflow: hidden;
   }
@@ -116,9 +116,9 @@
 <main id="chat"></main>
 
 <footer>
-  <span class="prompt blink">❯</span>
+  <span class="prompt blink">�?/span>
   <input id="input" type="text" placeholder="输入你的问题..." autofocus>
-  <button id="send-btn" onclick="send()">发送</button>
+  <button id="send-btn" onclick="send()">发�?/button>
 </footer>
 
 <script>
@@ -200,7 +200,7 @@ function addStep(toolName, args, status, elapsed) {
   const div = document.createElement('div');
   div.className = 'msg step';
   const argsStr = typeof args === 'string' ? args.substring(0, 80) : JSON.stringify(args || {}).substring(0, 80);
-  const statusIcon = status === 'ok' ? '✅' : status === 'error' ? '❌' : '⏳';
+  const statusIcon = status === 'ok' ? '�? : status === 'error' ? '�? : '�?;
   const timeStr = elapsed ? ` (${elapsed}ms)` : '';
   div.innerHTML = `<span class="step-num">${statusIcon}</span> <b>${toolName}</b>${timeStr}<br><span style="font-size:18px;color:var(--text-dim)">${argsStr}</span>`;
   chat.appendChild(div);
@@ -279,7 +279,7 @@ async function send() {
         }
       }
       if (!assistantDiv.innerHTML.trim()) {
-        assistantDiv.innerHTML = '(空回复)';
+        assistantDiv.innerHTML = '(空回�?';
       }
     } catch(e) {
       addMsg('error', '[ERROR] ' + e.message);
@@ -324,7 +324,7 @@ fetch('/health')
 
 // ── Welcome ──
 addMsg('system', '╔════════════════════════════════╗');
-addMsg('system', '║  CagentOS v0.2 — Phase 4 Demo  ║');
+addMsg('system', '�? CagentOS v0.2 �?Phase 4 Demo  �?);
 addMsg('system', '╚════════════════════════════════╝');
 
 // ── Keyboard shortcuts ──

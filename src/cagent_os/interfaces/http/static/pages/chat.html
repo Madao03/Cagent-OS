@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>对话面板</title>
-    <link rel="stylesheet" href="/static/css/tokens.css?v=1">
-    <link rel="stylesheet" href="/static/css/sidebar.css?v=1">
+    <link rel="stylesheet" href="/static/css/tokens.css?v=2">
+    <link rel="stylesheet" href="/static/css/sidebar.css?v=2">
     <script src="/static/js/nav-config.js"></script>
     <style id="component-vars">
-/* ═══════════════════════════════════════════════════════════════
-   components.css — Design System Component and Atom Definitions
+/* ══════════════════════════════════════════════════════════════�?
+   components.css �?Design System Component and Atom Definitions
    Component sections mirror preview/component-*.html marker blocks.
    Stable atoms live here so downstream pages do not depend on preview shell CSS.
-   ═══════════════════════════════════════════════════════════════ */
+   ══════════════════════════════════════════════════════════════�?*/
 
 /* ── Shared Atoms ───────────────────────────────────────────── */
 .icon,
@@ -618,7 +618,7 @@ pre {
   }
     </style>
     <style id="page-style">
-  /* ===== Page: 对话面板 (Chat Panel) — three-column research chat ===== */
+  /* ===== Page: 对话面板 (Chat Panel) �?three-column research chat ===== */
 
   /* ---- Compat tokens referenced by app-shell partial / task spec ---- */
   :root {
@@ -845,11 +845,11 @@ pre {
     color: var(--status-success-default);
     font-size: var(--body-sm-font-size);
   }
-  /* ★ Status-specific styling */
+  /* �?Status-specific styling */
   .react-step-status-ok { background: var(--status-success-surface-l1); color: var(--status-success-default); }
   .react-step-status-running { background: var(--status-alert-surface-l1); color: var(--status-alert-active); }
   .react-step-status-error { background: var(--status-error-surface-l1); color: var(--status-error-default); }
-  /* ★ CSS-only spinner for running state */
+  /* �?CSS-only spinner for running state */
   .react-step-spinner {
     display: inline-block;
     width: 10px;
@@ -1178,7 +1178,7 @@ pre {
     font-weight: 600;
     color: var(--text-default);
   }
-  /* 建设中灰化（参考侧栏 WIP 样式） */
+  /* 建设中灰化（参考侧�?WIP 样式�?*/
   .ctx-card.is-wip {
     opacity: 0.6;
   }
@@ -1536,13 +1536,13 @@ pre {
     color: var(--text-default);
   }
 
-  /* Untraced number marker — inline warning */
+  /* Untraced number marker �?inline warning */
   .prov-untraced {
     border-bottom: 1px dashed var(--status-error-default);
     cursor: help;
   }
   .prov-untraced::after {
-    content: " ⚠";
+    content: " �?;
     font-size: 10px;
     color: var(--status-error-default);
     vertical-align: super;
@@ -1606,14 +1606,14 @@ pre {
         <span class="sidebar-logo-icon" aria-hidden="true"><span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,#4B3FE3,#6A6FFF);text-align:center;line-height:28px;color:#fff;font-weight:700;font-size:14px;font-family:var(--font-family-mono,monospace)">C</span></span>
         <span class="app-sidebar-logo-text">
           <span class="logo-title">CagentOS</span>
-          <span class="logo-subtitle">投研工作台</span>
+          <span class="logo-subtitle">投研工作�?/span>
         </span>
-        <button class="sidebar-collapse-btn" aria-label="收起侧边栏" title="收起侧边栏">
+        <button class="sidebar-collapse-btn" aria-label="收起侧边�? title="收起侧边�?>
           <span data-icon="arrow-collapse" class="sidebar-collapse-icon" aria-hidden="true"></span>
         </button>
       </div>
 
-      <nav class="app-sidebar-nav" data-dom-id="sidebar-nav" aria-label="主导航"></nav>
+      <nav class="app-sidebar-nav" data-dom-id="sidebar-nav" aria-label="主导�?></nav>
 
       <div class="app-sidebar-footer" data-dom-id="sidebar-status">
         <div class="sidebar-status-row">
@@ -1622,7 +1622,7 @@ pre {
         </div>
         <div class="sidebar-status-row">
           <span class="sidebar-status-dot is-success" aria-hidden="true"></span>
-          <span>5 数据源 正常</span>
+          <span>5 数据�?正常</span>
         </div>
         <div class="sidebar-status-row">
           <span class="sidebar-status-dot is-alert" aria-hidden="true"></span>
@@ -1666,10 +1666,10 @@ pre {
 
             <div class="chat-conv-list">
               <div class="chat-conv-item is-active">
-                <span class="chat-conv-title">NVDA 估值分析</span>
+                <span class="chat-conv-title">NVDA 估值分�?/span>
                 <div class="chat-conv-meta">
                   <span class="chat-conv-date">14:32</span>
-                  <span class="ds-tag ds-tag-primary">估值分析</span>
+                  <span class="ds-tag ds-tag-primary">估值分�?/span>
                 </div>
               </div>
               <div class="chat-conv-item">
@@ -1680,7 +1680,7 @@ pre {
                 </div>
               </div>
               <div class="chat-conv-item">
-                <span class="chat-conv-title">美联储议息预判</span>
+                <span class="chat-conv-title">美联储议息预�?/span>
                 <div class="chat-conv-meta">
                   <span class="chat-conv-date">昨日 16:45</span>
                   <span class="ds-tag">宏观</span>
@@ -1690,14 +1690,14 @@ pre {
                 <span class="chat-conv-title">MSTR mNAV 分析</span>
                 <div class="chat-conv-meta">
                   <span class="chat-conv-date">昨日 09:20</span>
-                  <span class="ds-tag">估值分析</span>
+                  <span class="ds-tag">估值分�?/span>
                 </div>
               </div>
             </div>
 
             <div class="chat-skill">
               <div class="chat-skill-label-row">
-                <span class="chat-skill-label">技能</span>
+                <span class="chat-skill-label">技�?/span>
                 <span class="chat-skill-count">15</span>
               </div>
               <div class="chat-skill-value">financial.research.deep_analysis</div>
@@ -1710,7 +1710,7 @@ pre {
             <div class="chat-thread">
               <!-- User message -->
               <div class="chat-msg-user">
-                分析 NVDA 当前估值是否合理,对比历史估值区间和同业
+                分析 NVDA 当前估值是否合�?对比历史估值区间和同业
               </div>
 
               <!-- ReAct step 1 -->
@@ -1754,7 +1754,7 @@ pre {
                     <span class="react-step-elapsed">0.8s</span>
                   </span>
                 </div>
-                <div class="react-step-args">query="NVDA 估值 历史 PE" top_k=5</div>
+                <div class="react-step-args">query="NVDA 估�?历史 PE" top_k=5</div>
                 <div class="react-step-result">命中 <span class="t-metric">3</span> 条知识库记录 (relevance: <span class="t-metric">0.89</span>)</div>
               </div>
 
@@ -1769,8 +1769,8 @@ pre {
                     <span class="react-step-elapsed">0.3s</span>
                   </span>
                 </div>
-                <div class="react-step-args">topic="NVDA 估值"</div>
-                <div class="react-step-result">召回 <span class="t-metric">2</span> 条活跃论点</div>
+                <div class="react-step-args">topic="NVDA 估�?</div>
+                <div class="react-step-result">召回 <span class="t-metric">2</span> 条活跃论�?/div>
               </div>
 
               <!-- Assistant message -->
@@ -1780,14 +1780,14 @@ pre {
                   <span class="chat-assistant-name">Researcher Agent</span>
                 </div>
                 <div class="chat-assistant-bubble">
-                  <h2 class="chat-md-heading">NVDA 估值分析</h2>
-                  <p class="chat-md-p"><strong>当前估值</strong>: NVDA 营收 <span class="t-metric">$22.1B (+265% YoY)</span>, P/E <span class="t-metric">65.2x</span>, 远高于半导体行业中位数 <span class="t-metric">22.3x</span></p>
-                  <p class="chat-md-p"><strong>历史对比</strong>: 当前 P/E 处于 5 年 <span class="t-metric">85 分位</span>, 前次高点 (2024Q1) P/E <span class="t-metric">78x</span> 后回调 <span class="t-metric">28%</span></p>
+                  <h2 class="chat-md-heading">NVDA 估值分�?/h2>
+                  <p class="chat-md-p"><strong>当前估�?/strong>: NVDA 营收 <span class="t-metric">$22.1B (+265% YoY)</span>, P/E <span class="t-metric">65.2x</span>, 远高于半导体行业中位�?<span class="t-metric">22.3x</span></p>
+                  <p class="chat-md-p"><strong>历史对比</strong>: 当前 P/E 处于 5 �?<span class="t-metric">85 分位</span>, 前次高点 (2024Q1) P/E <span class="t-metric">78x</span> 后回�?<span class="t-metric">28%</span></p>
                   <p class="chat-md-p"><strong>利率环境</strong>: 10Y-2Y 利差 <span class="t-metric">-43bp</span> (深度倒挂), 高估值成长股承压</p>
-                  <p class="chat-md-p"><strong>RAG 参考</strong>: 知识库中 NVDA AI 垄断溢价论点置信度 <span class="t-metric">78%</span>, 但需关注周期性风险</p>
-                  <p class="chat-md-p"><strong>综合判断</strong>: 当前估值存在 <span class="risk-text">高估风险</span>。AI 需求支撑长期逻辑, 但利率倒挂 + 历史分位偏高建议等待回调至 P/E <span class="t-metric">50x</span> 以下再建仓。</p>
+                  <p class="chat-md-p"><strong>RAG 参�?/strong>: 知识库中 NVDA AI 垄断溢价论点置信�?<span class="t-metric">78%</span>, 但需关注周期性风�?/p>
+                  <p class="chat-md-p"><strong>综合判断</strong>: 当前估值存�?<span class="risk-text">高估风险</span>。AI 需求支撑长期逻辑, 但利率倒挂 + 历史分位偏高建议等待回调�?P/E <span class="t-metric">50x</span> 以下再建仓�?/p>
                   <div class="chat-md-tags">
-                    <span class="ds-tag ds-tag-alert">高风险</span>
+                    <span class="ds-tag ds-tag-alert">高风�?/span>
                     <span class="ds-tag">等待回调</span>
                     <span class="ds-tag ds-tag-primary">AI 垄断溢价</span>
                   </div>
@@ -1797,11 +1797,11 @@ pre {
 
             <!-- Message input bar -->
             <div class="chat-input-bar">
-              <textarea class="chat-input" placeholder="输入分析请求...按 Enter 发送" rows="1"></textarea>
+              <textarea class="chat-input" placeholder="输入分析请求...�?Enter 发�? rows="1"></textarea>
               <span class="chat-model-selector">gpt-4o · 0.3</span>
               <button class="ds-btn ds-btn-primary" type="button">
                 <span data-icon="arrow-right" aria-hidden="true"></span>
-                <span>发送</span>
+                <span>发�?/span>
               </button>
             </div>
           </div>
@@ -1811,7 +1811,7 @@ pre {
             <!-- Data Sources card -->
             <div class="ds-card ctx-card" id="data-sources-card" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
               <div class="ctx-card-head" style="flex-shrink:0;">
-                <span class="ctx-card-title">数据源状态</span>
+                <span class="ctx-card-title">数据源状�?/span>
                 <span class="ctx-card-meta">14:32:05</span>
               </div>
               <div class="data-sources-body" style="flex:1;overflow-y:auto;min-height:0;">
@@ -1837,7 +1837,7 @@ pre {
                 <span class="src-state">
                   <span class="src-dot is-ok" aria-hidden="true"></span>
                   <span>在线</span>
-                  <span class="src-extra">NVDA ✓</span>
+                  <span class="src-extra">NVDA �?/span>
                 </span>
               </div>
               <div class="src-row">
@@ -1845,7 +1845,7 @@ pre {
                 <span class="src-state">
                   <span class="src-dot is-ok" aria-hidden="true"></span>
                   <span>在线</span>
-                  <span class="src-extra">A股 ✓</span>
+                  <span class="src-extra">A�?�?/span>
                 </span>
               </div>
               <div class="src-row">
@@ -1862,33 +1862,33 @@ pre {
             <!-- Agent Progress card -->
             <div class="ds-card ctx-card is-wip">
               <div class="ctx-card-head">
-                <span class="ctx-card-title">多 Agent 协作</span>
-                <span class="ctx-card-tag">建设中</span>
+                <span class="ctx-card-title">�?Agent 协作</span>
+                <span class="ctx-card-tag">建设�?/span>
               </div>
               <div class="agent-row">
                 <span data-icon="check-small" class="agent-icon is-success" aria-hidden="true"></span>
                 <span class="agent-name">Supervisor</span>
-                <span class="agent-state">已完成</span>
+                <span class="agent-state">已完�?/span>
               </div>
               <div class="agent-row">
                 <span data-icon="check-small" class="agent-icon is-success" aria-hidden="true"></span>
                 <span class="agent-name">DataCollector</span>
-                <span class="agent-state">已完成 · <span class="agent-elapsed">3.4s</span></span>
+                <span class="agent-state">已完�?· <span class="agent-elapsed">3.4s</span></span>
               </div>
               <div class="agent-row">
                 <span data-icon="check-small" class="agent-icon is-success" aria-hidden="true"></span>
                 <span class="agent-name">Researcher</span>
-                <span class="agent-state">已完成 · <span class="agent-elapsed">8.7s</span></span>
+                <span class="agent-state">已完�?· <span class="agent-elapsed">8.7s</span></span>
               </div>
               <div class="agent-row">
                 <span data-icon="check-small" class="agent-icon is-success" aria-hidden="true"></span>
                 <span class="agent-name">Red-Team</span>
-                <span class="agent-state">已完成 · <span class="agent-elapsed">2.1s</span></span>
+                <span class="agent-state">已完�?· <span class="agent-elapsed">2.1s</span></span>
               </div>
               <div class="agent-row">
                 <span data-icon="clock_time" class="agent-icon is-alert" aria-hidden="true"></span>
                 <span class="agent-name">Editor</span>
-                <span class="agent-state is-alert">进行中...</span>
+                <span class="agent-state is-alert">进行�?..</span>
               </div>
             </div>
           </div>
@@ -1937,7 +1937,7 @@ pre {
   if (!card) return;
   const body = card.querySelector('.data-sources-body');
   if (!body) return;
-  const NAMES = {edgar:'SEC EDGAR','fin-skill':'fin-skill MCP',fred:'FRED',yfinance:'yfinance',coinmetrics:'Coin Metrics',defillama:'DeFi Llama',binance_derivatives:'Binance 衍生品',fear_greed:'恐贪指数','akshare-stock':'akshare (行情)','akshare-futures':'akshare (期货)','akshare-financials':'akshare (财报)'};
+  const NAMES = {edgar:'SEC EDGAR','fin-skill':'fin-skill MCP',fred:'FRED',yfinance:'yfinance',coinmetrics:'Coin Metrics',defillama:'DeFi Llama',binance_derivatives:'Binance 衍生�?,fear_greed:'恐贪指数','akshare-stock':'akshare (行情)','akshare-futures':'akshare (期货)','akshare-financials':'akshare (财报)'};
   fetch('/api/v1/data-sources').then(r=>r.json()).then(d=>{
     body.innerHTML='';
     const meta=card.querySelector('.ctx-card-meta');

@@ -178,7 +178,7 @@
 .sidebar-nav-tag {
   font-size: 10px;
   color: var(--text-tertiary);
-  font-weight: var(--font-weight-regular);
+  font-weight: 400;
   margin-left: 2px;
 }
 

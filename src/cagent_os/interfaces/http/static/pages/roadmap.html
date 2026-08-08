@@ -7,8 +7,8 @@
     <script>
       (function(){var h=document.documentElement;var s;try{s=localStorage.getItem('cagentos-theme')}catch(e){}var d;if(s==='light')d=false;else if(s==='dark')d=true;else d=!window.matchMedia('(prefers-color-scheme: light)').matches;if(d){h.classList.add('dark');h.classList.remove('light')}else{h.classList.remove('dark');h.classList.add('light')}})();
     </script>
-    <link rel="stylesheet" href="/static/css/tokens.css?v=1">
-    <link rel="stylesheet" href="/static/css/sidebar.css?v=1">
+    <link rel="stylesheet" href="/static/css/tokens.css?v=2">
+    <link rel="stylesheet" href="/static/css/sidebar.css?v=2">
     <link rel="stylesheet" href="/static/assets/css/icons.css">
     <script src="/static/js/nav-config.js"></script>
     <style>
@@ -127,7 +127,7 @@
       <span class="sidebar-logo-icon"><span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,#4B3FE3,#6A6FFF);text-align:center;line-height:28px;color:#fff;font-weight:700;font-size:14px;">C</span></span>
       <span class="app-sidebar-logo-text">
         <span class="logo-title">CagentOS</span>
-        <span class="logo-subtitle">投研工作台</span>
+        <span class="logo-subtitle">投研工作�?/span>
       </span>
     </div>
     <nav class="app-sidebar-nav"></nav>
@@ -139,13 +139,13 @@
   <div class="app-main">
     <div class="content">
       <h1>开发路线图</h1>
-      <p class="subtitle">CagentOS 正在持续进化 &mdash; 这里记录已交付的能力、正在打磨的功能，以及下一步的计划。</p>
+      <p class="subtitle">CagentOS 正在持续进化 &mdash; 这里记录已交付的能力、正在打磨的功能，以及下一步的计划�?/p>
       <div id="board" class="board"></div>
-      <div class="feedback-hint">想要什么功能？<a href="#" id="feedback-link">去反馈 →</a></div>
+      <div class="feedback-hint">想要什么功能？<a href="#" id="feedback-link">去反�?�?/a></div>
     </div>
   </div>
 </div>
-<div class="save-banner" id="save-banner">已保存</div>
+<div class="save-banner" id="save-banner">已保�?/div>
 <script src="/static/assets/js/auth.js"></script>
 <link rel="stylesheet" href="/static/assets/css/icons.css">
 <script src="/static/assets/js/shell.js"></script>
@@ -168,7 +168,7 @@
     // ── Feedback link (route not yet built) ──
     document.getElementById("feedback-link").addEventListener("click", function (e) {
       e.preventDefault();
-      alert("反馈功能开发中，敬请期待 ✨");
+      alert("反馈功能开发中，敬请期�?�?);
     });
 
     // ── Fallback data (used when /api/v1/roadmap is unavailable) ──
@@ -176,50 +176,50 @@
       groups: [
         {
           status: "done",
-          title: "✅ 已上线",
+          title: "�?已上�?,
           cards: [
-            { id: "d1", title: "AgentRuntime 核心引擎", desc: "ReAct 循环 + Event Sourcing，Plugin 体系 + 8 provider LLM 路由 + 白名单 ToolGuard。", priority: "P0", eta: null, children: null },
-            { id: "d2", title: "数字溯源系统 (Provenance)", desc: "字段级事实注册 + 中文量级归一化 + 三遍校验 + 路由感知反馈，每个数字都可追溯。", priority: "P0", eta: null,
+            { id: "d1", title: "AgentRuntime 核心引擎", desc: "ReAct 循环 + Event Sourcing，Plugin 体系 + 8 provider LLM 路由 + 白名�?ToolGuard�?, priority: "P0", eta: null, children: null },
+            { id: "d2", title: "数字溯源系统 (Provenance)", desc: "字段级事实注�?+ 中文量级归一�?+ 三遍校验 + 路由感知反馈，每个数字都可追溯�?, priority: "P0", eta: null,
               children: [
-                { text: "FactRegistry 字段级注册 + precision 传播", done: true },
-                { text: "派生计算链（AST 安全求值 + 继承规则）", done: true },
-                { text: "XPEV Q4 基线：0% 幻觉率，三跑全 ANSWERED", done: true },
-                { text: "溯源 UI（浮窗 + 派生链展开 + 信源分级）", done: true }
+                { text: "FactRegistry 字段级注�?+ precision 传播", done: true },
+                { text: "派生计算链（AST 安全求�?+ 继承规则�?, done: true },
+                { text: "XPEV Q4 基线�?% 幻觉率，三跑�?ANSWERED", done: true },
+                { text: "溯源 UI（浮�?+ 派生链展开 + 信源分级�?, done: true }
               ]
             },
-            { id: "d3", title: "SEC EDGAR 双通道", desc: "LANE 1 companyfacts XBRL 结构化 + LANE 2 业绩新闻稿抽取，含 S3 零成本分类器与离线物化缓存。", priority: "P0", eta: null, children: null },
-            { id: "d4", title: "Crypto 数据矩阵", desc: "DeFiLlama + Coin Metrics + Binance + 恐贪指数，4 源 × 7 capability，全免费无 key。", priority: "P1", eta: null, children: null },
-            { id: "d5", title: "多 Agent 编排", desc: "Supervisor 自研编排器 + DataCollector/Researcher/Red-Team/Editor 四 Agent + Cron 定时日报。", priority: "P1", eta: null, children: null },
-            { id: "d6", title: "Web UI (Phase 4c)", desc: "对话/简报/知识库三合一页面 + JWT auth + 静态资源托管，Beta 已上线 cagentos.com。", priority: "P0", eta: "2026-08-07", children: null },
-            { id: "d7", title: "共享知识库 (RAG)", desc: "6-scheme 分块 + Qwen3 Embedding/Reranker + 语义检索，已归档 29 篇深度研报。", priority: "P1", eta: null, children: null }
+            { id: "d3", title: "SEC EDGAR 双通道", desc: "LANE 1 companyfacts XBRL 结构�?+ LANE 2 业绩新闻稿抽取，�?S3 零成本分类器与离线物化缓存�?, priority: "P0", eta: null, children: null },
+            { id: "d4", title: "Crypto 数据矩阵", desc: "DeFiLlama + Coin Metrics + Binance + 恐贪指数�? �?× 7 capability，全免费�?key�?, priority: "P1", eta: null, children: null },
+            { id: "d5", title: "�?Agent 编排", desc: "Supervisor 自研编排�?+ DataCollector/Researcher/Red-Team/Editor �?Agent + Cron 定时日报�?, priority: "P1", eta: null, children: null },
+            { id: "d6", title: "Web UI (Phase 4c)", desc: "对话/简�?知识库三合一页面 + JWT auth + 静态资源托管，Beta 已上�?cagentos.com�?, priority: "P0", eta: "2026-08-07", children: null },
+            { id: "d7", title: "共享知识�?(RAG)", desc: "6-scheme 分块 + Qwen3 Embedding/Reranker + 语义检索，已归�?29 篇深度研报�?, priority: "P1", eta: null, children: null }
           ]
         },
         {
           status: "in_progress",
           title: "🔨 近期",
           cards: [
-            { id: "i1", title: "阶段 4d-4e 收尾", desc: "完善多 Agent 协作链路与评测自动化，推进 25-criterion LLM-Judge 回归套件。", priority: "P0", eta: "2026 Q3", children: null },
-            { id: "i2", title: "反馈中心", desc: "侧栏已占位，用户反馈收集与处理流程建设中。", priority: "P1", eta: "2026 Q3", children: null },
-            { id: "i3", title: "EDGAR LANE 2 深层 HTML", desc: "ex992 / 港交所式嵌套 HTML 解析，覆盖 XPEV Q1/Q2 等业绩稿。", priority: "P1", eta: null,
+            { id: "i1", title: "阶段 4d-4e 收尾", desc: "完善�?Agent 协作链路与评测自动化，推�?25-criterion LLM-Judge 回归套件�?, priority: "P0", eta: "2026 Q3", children: null },
+            { id: "i2", title: "反馈中心", desc: "侧栏已占位，用户反馈收集与处理流程建设中�?, priority: "P1", eta: "2026 Q3", children: null },
+            { id: "i3", title: "EDGAR LANE 2 深层 HTML", desc: "ex992 / 港交所式嵌�?HTML 解析，覆�?XPEV Q1/Q2 等业绩稿�?, priority: "P1", eta: null,
               children: [
-                { text: "S3 Phase 2 LLM 兜底分类器", done: true },
+                { text: "S3 Phase 2 LLM 兜底分类�?, done: true },
                 { text: "S4-S8 表格解析", done: true },
                 { text: "ex992 深层嵌套 HTML 提取", done: false },
-                { text: "非 12 月财年对齐（AAPL/NVDA）", done: false }
+                { text: "�?12 月财年对齐（AAPL/NVDA�?, done: false }
               ]
             },
-            { id: "i4", title: "图片多模态", desc: "image.describe 骨架就绪，等待 API key 激活。", priority: "P2", eta: null, children: null }
+            { id: "i4", title: "图片多模�?, desc: "image.describe 骨架就绪，等�?API key 激活�?, priority: "P2", eta: null, children: null }
           ]
         },
         {
           status: "planned",
-          title: "📋 计划中",
+          title: "📋 计划�?,
           cards: [
-            { id: "p1", title: "Fact 独立索引表 (P2)", desc: "按 (ticker, period, caliber) 跨会话查询，需一次性从 events 反解析回填历史 facts。", priority: "P1", eta: null, children: null },
-            { id: "p2", title: "A 股分红入等式", desc: "ΔRE 完整性：纳入分配股利项，避免跨越分红除息日时差出一个分红量级误报。", priority: "P2", eta: null, children: null },
-            { id: "p3", title: "覆盖率分类显示", desc: "拆分「结构化 / 引用 / 未溯源」三类，避免把新闻引用误读为质量问题。", priority: "P2", eta: null, children: null },
-            { id: "p4", title: "定制化看板", desc: "用户可配置的个性化数据看板，侧栏已占位。", priority: "P1", eta: "2026 Q4", children: null },
-            { id: "p5", title: "观点库", desc: "沉淀分析观点与判断记录，支持回溯验证，侧栏已占位。", priority: "P2", eta: "2026 Q4", children: null }
+            { id: "p1", title: "Fact 独立索引�?(P2)", desc: "�?(ticker, period, caliber) 跨会话查询，需一次性从 events 反解析回填历�?facts�?, priority: "P1", eta: null, children: null },
+            { id: "p2", title: "A 股分红入等式", desc: "ΔRE 完整性：纳入分配股利项，避免跨越分红除息日时差出一个分红量级误报�?, priority: "P2", eta: null, children: null },
+            { id: "p3", title: "覆盖率分类显�?, desc: "拆分「结构化 / 引用 / 未溯源」三类，避免把新闻引用误读为质量问题�?, priority: "P2", eta: null, children: null },
+            { id: "p4", title: "定制化看�?, desc: "用户可配置的个性化数据看板，侧栏已占位�?, priority: "P1", eta: "2026 Q4", children: null },
+            { id: "p5", title: "观点�?, desc: "沉淀分析观点与判断记录，支持回溯验证，侧栏已占位�?, priority: "P2", eta: "2026 Q4", children: null }
           ]
         }
       ]
@@ -242,7 +242,7 @@
 
     // ── Priority badge resolver ──
     function priorityBadge(status, priority) {
-      if (status === "done") return { text: (priority || "P2") + " ✅", cls: "prio-done" };
+      if (status === "done") return { text: (priority || "P2") + " �?, cls: "prio-done" };
       if (priority === "P0") return { text: "P0", cls: "prio-p0" };
       if (priority === "P1") return { text: "P1", cls: "prio-p1" };
       return { text: priority || "P2", cls: "prio-p2" };
@@ -274,11 +274,11 @@
 
     function renderCard(card, status) {
       const badge = priorityBadge(status, card.priority);
-      const eta = card.eta ? '<div class="card-eta">⏱ ' + escapeHtml(card.eta) + "</div>" : "";
+      const eta = card.eta ? '<div class="card-eta">�?' + escapeHtml(card.eta) + "</div>" : "";
       const children = renderChildren(card);
       const prioCls = badge.cls + (isAdmin ? " is-admin" : "");
       return '<div class="card has-handle" data-status="' + status + '" data-id="' + escapeHtml(card.id) + '">' +
-        '<span class="drag-handle" title="拖动">≡</span>' +
+        '<span class="drag-handle" title="拖动">�?/span>' +
         '<div class="card-head">' +
         '<span class="card-title card-title-view">' + escapeHtml(card.title) + "</span>" +
         '<input class="card-title-input" value="' + escapeHtml(card.title) + '">' +
@@ -333,7 +333,7 @@
 
       if (!isAdmin) return;
 
-      // priority selector (admin only) — click to cycle P0→P1→P2→P0
+      // priority selector (admin only) �?click to cycle P0→P1→P2→P0
       document.querySelectorAll(".card-priority.is-admin").forEach(function (badge) {
         badge.addEventListener("click", function (e) {
           e.stopPropagation();
@@ -372,7 +372,7 @@
       // delete card (admin only)
       document.querySelectorAll(".card .delete-btn").forEach(function (btn) {
         btn.addEventListener("click", function () {
-          if (!confirm("确定删除这张卡片？")) return;
+          if (!confirm("确定删除这张卡片�?)) return;
           btn.closest(".card").remove();
           saveBoard();
         });
@@ -399,7 +399,7 @@
           var cardStatus = status === "live" ? "done" : status === "near" ? "in_progress" : "planned";
           var defaultPrio = cardStatus === "done" ? "P1" : cardStatus === "in_progress" ? "P1" : "P2";
           var tmp = document.createElement("div");
-          tmp.innerHTML = renderCard({ id: id, title: "新卡片", desc: "点击编辑添加描述", priority: defaultPrio, eta: "", children: [] }, cardStatus);
+          tmp.innerHTML = renderCard({ id: id, title: "新卡�?, desc: "点击编辑添加描述", priority: defaultPrio, eta: "", children: [] }, cardStatus);
           var node = tmp.firstElementChild;
           container.appendChild(node);
           node.classList.add("editing");
@@ -440,7 +440,7 @@
           var delBtn = node.querySelector(".delete-btn");
           if (delBtn) {
             delBtn.addEventListener("click", function () {
-              if (!confirm("确定删除这张卡片？")) return;
+              if (!confirm("确定删除这张卡片�?)) return;
               node.remove();
               saveBoard();
             });
@@ -509,7 +509,7 @@
           body: JSON.stringify(payload)
         });
         if (resp.ok) {
-          showBanner("已保存", true);
+          showBanner("已保�?, true);
         } else {
           const errBody = await resp.text();
           console.error("[roadmap] PUT failed:", resp.status, errBody);
@@ -550,7 +550,7 @@
             const newStatus = evt.to.getAttribute("data-status");
             card.setAttribute("data-status", newStatus);
             const badge = card.querySelector(".card-priority");
-            const rawPrio = (badge.textContent || "").replace(/\s*✅/, "").trim();
+            const rawPrio = (badge.textContent || "").replace(/\s*�?, "").trim();
             const pb = priorityBadge(newStatus, rawPrio);
             badge.textContent = pb.text;
             badge.className = "card-priority " + pb.cls;

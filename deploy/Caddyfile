@@ -1,0 +1,41 @@
+# ══ CagentOS Caddyfile ══
+# 替换 your-domain.com 为你的实际域名
+# 安装: sudo cp deploy/Caddyfile /etc/caddy/Caddyfile
+# 重载: sudo systemctl reload caddy
+#
+# Caddy 自动申请/续期 Let's Encrypt 证书 — 零配置 HTTPS
+# 前提: 域名 DNS A 记录已指向本机 IP, 80/443 端口可访问
+
+your-domain.com {
+	# ── 反向代理到本地 FastAPI (只绑 127.0.0.1:8000) ──
+	reverse_proxy 127.0.0.1:8000 {
+		# SSE 流式输出: 立即 flush, 不缓冲
+		# 确保对话中 ReAct step 卡片实时显示, 而不是等 240s 一次性出来
+		flush_interval -1
+
+		# 240s 墙钟兜底: Caddy 默认无读写超时限制 (0 = 无限)
+		# 如果将来调短, 这里要显式配: transport http { read_timeout 300s }
+	}
+
+	# ── 压缩 ──
+	encode zstd gzip
+
+	# ── 静态资源缓存 (icons/css/js) ──
+	@static path /static/*
+	header @static Cache-Control "public, max-age=86400"
+
+	# ── 安全头 ──
+	header {
+		X-Frame-Options DENY
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+
+	# ── Admin API 只允许内网访问 ──
+	# 外网请求 /api/v1/admin/* 直接 403
+	@admin path /api/v1/admin/*
+	handle @admin {
+		@notlocal not remote_ip 127.0.0.1/8 10.0.0.0/8
+		abort @notlocal
+	}
+}

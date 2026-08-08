@@ -174,7 +174,7 @@
     <div class="login-logo">
       <span class="login-logo-icon"><span style="display:inline-block;width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,#4B3FE3,#6A6FFF);text-align:center;line-height:48px;color:#fff;font-weight:700;font-size:24px;font-family:monospace">C</span></span>
       <span class="login-logo-title">CagentOS</span>
-      <div class="login-logo-subtitle">金融投研 Agent 工作台 · 内测</div>
+      <div class="login-logo-subtitle">金融投研 Agent 工作�?· 内测</div>
     </div>
 
     <div class="login-tabs">
@@ -187,36 +187,36 @@
       <div class="login-field" id="invitation-field">
         <label class="login-label">邀请码 *</label>
         <input class="login-input" type="text" id="invitation_code"
-               placeholder="8 位邀请码,如 CNWA56TJ"
+               placeholder="8 位邀请码,�?CNWA56TJ"
                autocomplete="off" maxlength="20"
                style="text-transform: uppercase;">
       </div>
 
       <!-- Common: username -->
       <div class="login-field">
-        <label class="login-label">用户名 *</label>
+        <label class="login-label">用户�?*</label>
         <input class="login-input" type="text" id="username"
-               placeholder="3-30 位字母/数字/_-."
+               placeholder="3-30 位字�?数字/_-."
                autocomplete="username" required>
       </div>
 
       <!-- Common: PIN (required for both register and login) -->
       <div class="login-field">
-        <label class="login-label">PIN 码 * <span style="color: var(--text-tertiary); font-size: 11px;">(4-6 位数字)</span></label>
+        <label class="login-label">PIN �?* <span style="color: var(--text-tertiary); font-size: 11px;">(4-6 位数�?</span></label>
         <input class="login-input" type="password" id="pin"
-               placeholder="如 1234"
+               placeholder="�?1234"
                inputmode="numeric" pattern="[0-9]*" maxlength="6"
                autocomplete="current-pin" required>
       </div>
 
-      <button class="login-btn" type="submit" id="submit-btn">注册并进入</button>
+      <button class="login-btn" type="submit" id="submit-btn">注册并进�?/button>
       <div class="login-error" id="error"></div>
       <div class="login-success" id="success"></div>
     </form>
 
     <div class="login-hint">
-      内测阶段凭邀请码 + 用户名 + PIN 码注册<br>
-      <span style="opacity: 0.7">Token 有效期 30 天,过期后用用户名 + PIN 重新登录</span>
+      内测阶段凭邀请码 + 用户�?+ PIN 码注�?br>
+      <span style="opacity: 0.7">Token 有效�?30 �?过期后用用户�?+ PIN 重新登录</span>
     </div>
   </div>
 
@@ -231,7 +231,7 @@
       // Hide invitation field on login mode
       document.getElementById("invitation-field").style.display = newMode === "register" ? "block" : "none";
       document.getElementById("invitation_code").required = newMode === "register";
-      document.getElementById("submit-btn").textContent = newMode === "register" ? "注册并进入" : "登录";
+      document.getElementById("submit-btn").textContent = newMode === "register" ? "注册并进�? : "登录";
       document.getElementById("error").textContent = "";
       document.getElementById("success").textContent = "";
     }
@@ -244,7 +244,7 @@
       errEl.textContent = "";
       succEl.textContent = "";
       btn.disabled = true;
-      btn.textContent = mode === "register" ? "注册中…" : "登录中…";
+      btn.textContent = mode === "register" ? "注册中�? : "登录中�?;
 
       const username = document.getElementById("username").value.trim();
       const pin = document.getElementById("pin").value.trim();
@@ -267,7 +267,7 @@
         if (!resp.ok) {
           errEl.textContent = data.detail || `Error ${resp.status}`;
           btn.disabled = false;
-          btn.textContent = mode === "register" ? "注册并进入" : "登录";
+          btn.textContent = mode === "register" ? "注册并进�? : "登录";
           return;
         }
         // Success: store token + user, redirect
@@ -282,7 +282,7 @@
       } catch (err) {
         errEl.textContent = String(err);
         btn.disabled = false;
-        btn.textContent = mode === "register" ? "注册并进入" : "登录";
+        btn.textContent = mode === "register" ? "注册并进�? : "登录";
       }
     }
 
