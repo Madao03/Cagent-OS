@@ -171,6 +171,12 @@ uvicorn cagent_os.interfaces.http.app:create_app --factory --host 0.0.0.0 --port
 | — | Native Playwright on Linux (circuit breaker + concurrency limit + UTF-8 fix) | ✅ Done |
 | — | write.file enabled in HTTP server (knowledge persistence) | ✅ Done |
 | — | Frontend: conversation polling, force re-render, tool status colors, popover persistence, global icons, logo | ✅ Done |
+| — | Roadmap page (kanban board with drag-sort + priority + admin CRUD) | ✅ Done (2026-08-08) |
+| — | Feedback center (user submit + admin manage + status tracking) | ✅ Done (2026-08-08) |
+| — | Opinion bank + message feedback (selection menu: save/quote/report + like/dislike) | ✅ Done (2026-08-08) |
+| — | React infrastructure (Vite + TypeScript + shared design tokens, serves at /app/*) | ✅ Done (2026-08-08) |
+| — | React opinion bank page (list/search/filter/category/edit/delete) | ✅ Done (2026-08-08) |
+| — | Ops: uvicorn 2 workers + Caddy 120s timeout + stale-while-revalidate DS cache | ✅ Done (2026-08-08) |
 | 4d | Langfuse trace visualization | Planned |
 | 4e | Evaluation regression CI suite | Planned |
 | 5 | Self-improving flywheel (SFT/DPO) | Future |
@@ -222,7 +228,8 @@ Financial analysis lives or dies by the accuracy of its numbers. The provenance 
 | Evaluation | Golden Cases ×14 + 25-criterion LLM-Judge auto-scoring + Dashboard |
 | CLI | argparse-based REPL |
 | HTTP | FastAPI + SSE streaming + JWT auth |
-| Web UI | HTML + vanilla JS (chat / brief / knowledge browser) |
+| Web UI | HTML + vanilla JS (chat / brief / knowledge browser) + React SPA (opinion bank) |
+| React frontend | Vite + React 18 + TypeScript + React Router (opinion bank page, serves at /app/*) |
 
 ## License
 

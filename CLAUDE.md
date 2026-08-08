@@ -183,10 +183,22 @@ Multi-Agent Layer (multi_agent/)
 - ✅ **Native Playwright (Linux)**: 原生 Chromium (不走 WSL 桥接) + 熔断 (3次失败→5分钟冷却) + 并发限制 (1实例, 4GB 服务器) + 微信原生尝试降级
 - ✅ **编码修复**: web.fetch UTF-8 强制 (华尔街见闻等中文站不再乱码)
 - ✅ **write.file HTTP 注册**: 分诊台账/速读卡落盘功能在 Web 端可用
-- ✅ **published_at 时效**: Tavily published_date 提取 + 卡片显示"X天前" + 超 30 天 ⚠️ 过时标记
+- ✅ **published_at 时效**: Tavily published_date 提取 + 卡片显示"X天前" + 超 15 天 ⚠️ 过时标记
 - ✅ **全局 icon 系统**: SVG mask 定义统一到 icons.css, 所有页面一致
 - ✅ **安全加固**: ufw 仅允许 22/80/443, 8000 端口仅监听 127.0.0.1, 数据备份验证通过
-- ✅ **侧边栏**: 开发路线图 + 反馈中心 (建设中)
+- ✅ **侧边栏**: 开发路线图 + 反馈中心 + 观点库 + 关于页面
+
+### Beta+ 迭代 (2026-08-08)
+
+- ✅ **开发路线图 page** (`/roadmap`): 看板视图 (3列: 进行中/近期/远期) + 拖拽排序 (SortableJS) + P0/P1/P2 优先级 + admin CRUD + 暗色模式
+- ✅ **反馈中心 page** (`/feedback`): 用户提交 (🐛Bug/💡功能建议/💬其他) + admin 管理 (状态切换: 待处理/已解决/忽略) + 表单垂直居中 (普通用户) / 靠上 (admin)
+- ✅ **观点库 + 消息反馈 API**: `routes_opinions.py` (opinions CRUD + message feedback upsert) + `routes_feedback.py` (用户反馈 + admin 管理)
+- ✅ **chat 浮层交互**: 选中文字弹浮层 (📌存入观点库 / 📎引用 / 🚩报错) + 回答底部 👍/👎 + 引用卡片 (输入框上方显示 quote, 发送时带 `> 引用` 前缀) + toast 提示
+- ✅ **React 基建**: `frontend/` 目录 (Vite + React 18 + TypeScript), 构建产物输出到 `static/react/`, uvicorn 静态托管, `/app/*` 路由
+- ✅ **React 观点库 page** (`/app/opinions`): 列表/搜索/分类过滤/分类切换/备注编辑/删除, 复用 vanilla 的 `data-icon` + CSS mask 系统
+- ✅ **运维优化**: uvicorn `--workers 2` (单核 → 双核并行) + Caddy `transport http { read/write_timeout 120s }` + data-sources stale-while-revalidate (立即返回旧缓存 + 后台异步刷新, TTL 60s)
+- ✅ **侧栏统一**: 所有页面 (vanilla + React) 统一渐变紫 C logo + icon 系统 + 暗色模式底色 (#151b23) + 折叠按钮
+- ✅ **React 设计系统**: `frontend/src/styles/tokens.css` 提取自 chat.html (单一真相源, React 页面引用, 待后续迁移时全局面用)
 
 ### 待实现 (阶段 4d-4e + Backlog)
 
