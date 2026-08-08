@@ -21,6 +21,32 @@
   "use strict";
 
   // ───────────────────────────────────────────────────────────────
+  // Opinion library — global state
+  // ───────────────────────────────────────────────────────────────
+  let activeQuote = null;
+  let _selectionMenu = null;
+
+  // Inject styles for action bar, selection menu, quote card, opinion picker
+  const _opinionStyleEl = document.createElement("style");
+  _opinionStyleEl.textContent = `
+    .msg-actions { display:flex; gap:var(--spacer-4); margin-top:var(--spacer-8); padding-left:var(--spacer-32); }
+    .msg-action-btn { background:none; border:none; cursor:pointer; font-size:16px; padding:var(--spacer-4); border-radius:var(--radius-sm); opacity:0.5; transition:opacity .15s; }
+    .msg-action-btn:hover { opacity:1; background:var(--bg-overlay-l1); }
+    .msg-action-btn.active { opacity:1; background:var(--bg-overlay-l2); }
+    .text-selection-menu { position:fixed; z-index:1000; display:flex; gap:2px; background:var(--bg-base-default,#fff); border:1px solid var(--border-neutral-l2); border-radius:var(--radius-md); box-shadow:0 4px 16px rgba(0,0,0,0.12); padding:4px; }
+    .text-selection-menu button { background:none; border:none; cursor:pointer; padding:var(--spacer-4) var(--spacer-8); border-radius:var(--radius-sm); font-size:var(--body-sm-font-size,12px); color:var(--text-default); white-space:nowrap; }
+    .text-selection-menu button:hover { background:var(--bg-overlay-l1); }
+    .quote-card { display:flex; align-items:flex-start; gap:var(--spacer-8); margin:0 var(--spacer-16) var(--spacer-8); padding:var(--spacer-8) var(--spacer-12); background:var(--bg-overlay-l1); border-left:3px solid var(--bg-brand); border-radius:var(--radius-sm); font-size:var(--body-sm-font-size,12px); color:var(--text-secondary); }
+    .quote-card-text { flex:1; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
+    .quote-card-remove { background:none; border:none; cursor:pointer; color:var(--text-tertiary); font-size:16px; padding:0 var(--spacer-4); flex-shrink:0; }
+    .quote-card-remove:hover { color:var(--text-default); }
+    .opinion-category-picker { display:flex; gap:var(--spacer-4); margin-top:var(--spacer-8); }
+    .opinion-category-picker button { padding:var(--spacer-4) var(--spacer-12); border:1px solid var(--border-neutral-l2); border-radius:var(--radius-sm); background:transparent; cursor:pointer; font-size:var(--body-sm-font-size,12px); }
+    .opinion-category-picker button:hover { background:var(--bg-overlay-l1); }
+  `;
+  document.head.appendChild(_opinionStyleEl);
+
+  // ───────────────────────────────────────────────────────────────
   // Config
   // ───────────────────────────────────────────────────────────────
   const API_BASE = "";  // same origin; static + API both served by FastAPI
@@ -1212,6 +1238,18 @@
       if (text.trim()) {
         textarea.value = "";
         sendMessage(text);
+      }
+    });
+
+    // ★ Text selection → show opinion library floating menu
+    const chatThread = document.querySelector(".chat-thread");
+    if (chatThread) {
+      chatThread.addEventListener("mouseup", _handleTextSelection);
+    }
+    // Hide selection menu when clicking outside of it
+    document.addEventListener("mousedown", (e) => {
+      if (_selectionMenu && !_selectionMenu.contains(e.target)) {
+        _hideSelectionMenu();
       }
     });
   }
