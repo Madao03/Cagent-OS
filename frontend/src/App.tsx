@@ -1,4 +1,4 @@
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 /** Simple page registry — add new React pages here. */
 const PAGES: Record<string, { title: string; render: () => JSX.Element }> = {
@@ -19,11 +19,10 @@ const PAGES: Record<string, { title: string; render: () => JSX.Element }> = {
 
 function App() {
   const location = useLocation();
-  const navigate = useNavigate();
 
-  // Hash router: /#/opinions → "opinions"
-  const hash = location.hash.replace(/^#\/?/, "") || location.pathname.replace(/^\//, "");
-  const pageKey = Object.keys(PAGES).find((k) => hash.startsWith(k));
+  // Extract page key from pathname: /app/opinions → "opinions"
+  const path = location.pathname.replace(/^\/app\/?/, "").replace(/^\/+/, "");
+  const pageKey = Object.keys(PAGES).find((k) => path.startsWith(k));
 
   const page = pageKey ? PAGES[pageKey] : null;
 
@@ -32,7 +31,7 @@ function App() {
     { key: "chat", label: "对话面板", disabled: false, href: "/" },
     { key: "brief", label: "每日简报", disabled: true },
     { key: "dashboard", label: "定制化看板", disabled: true },
-    { key: "opinions", label: "观点库", disabled: false, href: "#/opinions" },
+    { key: "opinions", label: "观点库", disabled: false, href: "/app/opinions" },
     { key: "knowledge", label: "共享知识库", disabled: false, href: "/knowledge" },
     { key: "roadmap", label: "开发路线图", disabled: false, href: "/roadmap" },
     { key: "feedback", label: "反馈中心", disabled: false, href: "/feedback" },
@@ -66,11 +65,6 @@ function App() {
               onClick={(e) => {
                 if (item.disabled) {
                   e.preventDefault();
-                  return;
-                }
-                if (item.href && item.href.startsWith("#")) {
-                  e.preventDefault();
-                  navigate(item.href.replace("#", ""));
                 }
               }}
             >
