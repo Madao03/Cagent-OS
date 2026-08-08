@@ -5,6 +5,7 @@ import react from "@vitejs/plugin-react";
 // so FastAPI StaticFiles serves React without any extra service.
 export default defineConfig({
   plugins: [react()],
+  base: "/static/react/",
   build: {
     outDir: "../src/cagent_os/interfaces/http/static/react",
     emptyOutDir: true,
