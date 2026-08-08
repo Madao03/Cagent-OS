@@ -178,18 +178,28 @@ body {
 .app-sidebar-logo-text {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
-.logo-title {
+.app-sidebar-logo-text .logo-title {
   font-family: var(--font-family-heading);
   font-size: var(--heading-sm-font-size);
   font-weight: 600;
+  line-height: 1.2;
   color: var(--text-default);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.logo-subtitle {
+.app-sidebar-logo-text .logo-subtitle {
+  font-family: var(--font-family-default);
   font-size: var(--body-sm-font-size);
+  line-height: 1.4;
   color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .app-sidebar-nav {

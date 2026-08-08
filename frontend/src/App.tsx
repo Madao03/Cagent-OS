@@ -32,7 +32,7 @@ function App() {
 
   // Sidebar nav (shared with vanilla pages via shell.js)
   const navItems = [
-    { key: "chat", label: "对话面板", icon: "agent", disabled: false, href: "/" },
+    { key: "chat", label: "对话面板", icon: "chat", disabled: false, href: "/" },
     { key: "brief", label: "每日简报", icon: "calendar", disabled: true },
     { key: "dashboard", label: "定制化看板", icon: "monitor", disabled: true },
     { key: "opinions", label: "观点库", icon: "brain", disabled: false, href: "/app/opinions" },
