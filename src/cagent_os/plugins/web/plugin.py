@@ -88,17 +88,114 @@ if not _IS_WINDOWS:
     except ImportError:
         pass
 
-# -- Browser circuit breaker ───────────────────────────────────────────
-# Same pattern as yfinance: N consecutive failures → cooldown.
-_BROWSER_CB_FAILS = 0
-_BROWSER_CB_THRESHOLD = 3
-_BROWSER_CB_COOLDOWN = 300  # 5 minutes
-_BROWSER_CB_LAST_FAIL = 0.0
+# -- Browser circuit breaker (sliding window) ─────────────────────────
+# Tracks last N fetch results; if success rate < 30%, enter 60s cooldown.
+import threading
+_BROWSER_CB_WINDOW = []  # list of bools (True=success)
+_BROWSER_CB_WINDOW_SIZE = 10
+_BROWSER_CB_COOLDOWN = 60  # 1 minute (was 5 min)
+_BROWSER_CB_LAST_TRIP = 0.0
+_BROWSER_CB_LOCK = threading.Lock()
+
+def _cb_record(success: bool) -> None:
+    """Record a fetch result in the sliding window."""
+    with _BROWSER_CB_LOCK:
+        _BROWSER_CB_WINDOW.append(success)
+        if len(_BROWSER_CB_WINDOW) > _BROWSER_CB_WINDOW_SIZE:
+            _BROWSER_CB_WINDOW.pop(0)
+
+def _cb_should_trip() -> bool:
+    """Check if we should enter cooldown based on recent success rate."""
+    with _BROWSER_CB_LOCK:
+        if not _BROWSER_CB_WINDOW:
+            return False
+        successes = sum(_BROWSER_CB_WINDOW)
+        rate = successes / len(_BROWSER_CB_WINDOW)
+        return len(_BROWSER_CB_WINDOW) >= 3 and rate < 0.3
+
+def _cb_in_cooldown() -> bool:
+    """Check if circuit breaker is currently in cooldown."""
+    import time as _t
+    if _BROWSER_CB_LAST_TRIP > 0:
+        remaining = _BROWSER_CB_COOLDOWN - (_t.time() - _BROWSER_CB_LAST_TRIP)
+        if remaining > 0:
+            return True
+    return False
+
+def _cb_trip() -> None:
+    """Trip the circuit breaker."""
+    import time as _t
+    global _BROWSER_CB_LAST_TRIP
+    with _BROWSER_CB_LOCK:
+        _BROWSER_CB_LAST_TRIP = _t.time()
+        _BROWSER_CB_WINDOW.clear()
 
 # -- Concurrency limiter: only 1 Chromium instance at a time (4GB server)
 import threading
 _BROWSER_SEMAPHORE = threading.Semaphore(1)
 _BROWSER_TIMEOUT_SEC = 30  # hard limit: browser launch (10s) + page load (20s)
+
+# -- Jina Reader (cloud rendering fallback before Playwright) ──────────
+_JINA_READER_URL = "https://r.jina.ai/"
+_JINA_TIMEOUT_SEC = 12
+
+def _fetch_via_jina(url: str) -> str | None:
+    """Fetch URL via Jina Reader cloud service. Returns text or None."""
+    import requests
+    try:
+        resp = requests.get(
+            _JINA_READER_URL + url,
+            timeout=_JINA_TIMEOUT_SEC,
+            headers={"Accept": "text/plain"},
+        )
+        if resp.status_code == 200 and len(resp.text) > 100:
+            return resp.text
+        logger.info("Jina Reader returned status=%d len=%d for %s", resp.status_code, len(resp.text), url[:80])
+        return None
+    except Exception as exc:
+        logger.info("Jina Reader failed for %s: %s", url[:80], str(exc)[:100])
+        return None
+
+# -- Persistent browser instance (reuse across fetches) ────────────────
+_persistent_browser = None
+_persistent_playwright = None
+_persistent_last_used = 0.0
+_BROWSER_IDLE_TIMEOUT = 120  # close after 2 min idle
+
+def _get_persistent_browser():
+    """Get or create a persistent Chromium instance."""
+    global _persistent_browser, _persistent_playwright, _persistent_last_used
+    import time as _t
+    if _persistent_browser and _persistent_browser.is_connected():
+        _persistent_last_used = _t.time()
+        return _persistent_browser
+    # Cleanup old instance if disconnected
+    if _persistent_browser:
+        try:
+            _persistent_browser.close()
+        except Exception:
+            pass
+        _persistent_browser = None
+    if not _persistent_playwright:
+        from playwright.sync_api import sync_playwright
+        _persistent_playwright = sync_playwright().start()
+    _persistent_browser = _persistent_playwright.chromium.launch(
+        headless=True,
+        args=["--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"],
+    )
+    _persistent_last_used = _t.time()
+    return _persistent_browser
+
+def _close_idle_browser() -> None:
+    """Close persistent browser if idle for too long (free memory)."""
+    global _persistent_browser, _persistent_playwright, _persistent_last_used
+    import time as _t
+    if _persistent_browser and (_t.time() - _persistent_last_used) > _BROWSER_IDLE_TIMEOUT:
+        try:
+            _persistent_browser.close()
+        except Exception:
+            pass
+        _persistent_browser = None
 
 # -- Multi-modal vision API (for image.describe) ------------------------
 # Set CAGENTOS_VISION_API_KEY to activate; defaults to placeholder.
@@ -232,11 +329,17 @@ class WebPlugin(Plugin):
                 content = self.fetcher.fetch(url)
                 if content and not _looks_like_antibot(content):
                     return ToolResult(status="ok", content=content)
-                logger.info("HTTP fetch returned anti-bot signal, falling back to browser url=%s", url[:80])
+                logger.info("HTTP fetch returned anti-bot signal, trying Jina url=%s", url[:80])
             except Exception as exc:
-                logger.info("HTTP fetch failed, falling back to browser url=%s err=%s", url[:80], exc)
+                logger.info("HTTP fetch failed, trying Jina url=%s err=%s", url[:80], exc)
 
-        # Slow path: headless browser (Playwright in WSL)
+            # ★ Jina Reader fallback (cloud rendering, free, ~3s)
+            jina_content = _fetch_via_jina(url)
+            if jina_content:
+                logger.info("Jina Reader OK url=%s size=%d", url[:80], len(jina_content))
+                return ToolResult(status="ok", content=jina_content)
+
+        # Slow path: headless browser (Playwright)
         return self._fetch_via_browser(url)
 
     def _fetch_via_browser(self, url: str) -> ToolResult:
@@ -377,30 +480,23 @@ class WebPlugin(Plugin):
     def _fetch_via_native_playwright(self, url: str) -> ToolResult:
         """Fetch via native Playwright on Linux (no WSL bridge).
 
-        Includes circuit breaker, concurrency limiter (1), and hard timeout.
-        Returns cleaned text content — no image saving (Linux server mode).
+        Includes sliding-window circuit breaker, concurrency limiter (1),
+        persistent browser instance, stealth, and Readability extraction.
         """
         import time
 
-        global _BROWSER_CB_FAILS, _BROWSER_CB_LAST_FAIL
-
-        # ★ Circuit breaker: check if in cooldown
-        if _BROWSER_CB_FAILS >= _BROWSER_CB_THRESHOLD:
-            elapsed = time.time() - _BROWSER_CB_LAST_FAIL
-            if elapsed < _BROWSER_CB_COOLDOWN:
-                remaining = int(_BROWSER_CB_COOLDOWN - elapsed)
-                logger.warning("Browser circuit breaker active, %ds remaining", remaining)
-                return ToolResult(
-                    status="error",
-                    error_code="browser_circuit_breaker",
-                    content={
-                        "url": url[:200],
-                        "message": f"浏览器模式暂时不可用（连续失败熔断，{remaining}s 后重试）。",
-                        "fallback": "Try financial.websearch to find mirrors or cached copies.",
-                    },
-                )
-            else:
-                _BROWSER_CB_FAILS = 0  # Reset after cooldown
+        # ★ Sliding-window circuit breaker
+        if _cb_in_cooldown():
+            logger.warning("Browser circuit breaker in cooldown")
+            return ToolResult(
+                status="error",
+                error_code="browser_circuit_breaker",
+                content={
+                    "url": url[:200],
+                    "message": "浏览器模式暂时不可用（成功率过低，1 分钟后重试）。",
+                    "fallback": "Try financial.websearch to find mirrors or cached copies.",
+                },
+            )
 
         if not _PLAYWRIGHT_AVAILABLE:
             return ToolResult(
@@ -424,60 +520,77 @@ class WebPlugin(Plugin):
                 },
             )
 
+        success = False
         try:
             content = self._run_playwright_fetch(url)
+            success = bool(content and len(content) >= 100)
         except Exception as exc:
-            _BROWSER_CB_FAILS += 1
-            _BROWSER_CB_LAST_FAIL = time.time()
-            logger.warning("Native Playwright failed (fail #%d): %s", _BROWSER_CB_FAILS, str(exc)[:200])
+            logger.warning("Native Playwright failed: %s", str(exc)[:200])
+        finally:
+            _BROWSER_SEMAPHORE.release()
+            _cb_record(success)
+            if not success and _cb_should_trip():
+                _cb_trip()
+                logger.warning("Browser circuit breaker tripped (low success rate)")
+
+        if not success or not content:
             return ToolResult(
                 status="error",
                 error_code="browser_fetch_failed",
                 content={
                     "url": url[:200],
-                    "message": f"Browser fetch failed: {str(exc)[:200]}",
+                    "message": "Browser fetch failed or returned empty content.",
                     "fallback": "Try financial.websearch to find mirrors or cached copies.",
                 },
             )
-        finally:
-            _BROWSER_SEMAPHORE.release()
-
-        if not content or len(content) < 100:
-            return ToolResult(
-                status="error",
-                error_code="browser_fetch_empty",
-                content={
-                    "url": url[:200],
-                    "message": "Browser returned empty or very short content.",
-                    "fallback": "Try financial.websearch to find mirrors or cached copies.",
-                },
-            )
-
-        # Success — reset circuit breaker
-        _BROWSER_CB_FAILS = 0
 
         logger.info("Native Playwright fetch OK url=%s size=%d", url[:80], len(content))
         return ToolResult(status="ok", content=content)
 
     def _run_playwright_fetch(self, url: str) -> str:
-        """Launch Chromium, navigate, extract text. Called with semaphore held."""
-        from playwright.sync_api import sync_playwright
+        """Navigate URL with persistent browser + stealth, extract via Readability.
 
-        with sync_playwright() as p:
-            browser = p.chromium.launch(
-                headless=True,
-                args=["--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"],
-            )
+        Uses persistent Chromium instance (reused across calls) with stealth
+        context and Readability.js content extraction for cleaner text.
+        """
+        browser = _get_persistent_browser()
+
+        # ★ Stealth context — looks like a real browser
+        context = browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+            viewport={"width": 1920, "height": 1080},
+            locale="zh-CN",
+        )
+        try:
+            page = context.new_page()
+            page.goto(url, wait_until="domcontentloaded", timeout=15000)
+
+            # Smart wait: try to detect main content element
             try:
-                page = browser.new_page()
-                page.goto(url, wait_until="domcontentloaded", timeout=20000)
-                # Wait a bit for JS-rendered content
-                page.wait_for_timeout(2000)
-                # Extract text content
-                content = page.inner_text("body")
-                return content
-            finally:
-                browser.close()
+                page.wait_for_selector("article, main, .content, .post-content, .article-content", timeout=5000)
+            except Exception:
+                pass  # fallback to whatever is there
+
+            # ★ Readability.js extraction (clean article text, no ads/nav)
+            content = page.evaluate("""() => {
+                function extractText() {
+                    // Try common article selectors first
+                    const selectors = ['article', 'main', '.content', '.post-content', '.article-content', '.entry-content'];
+                    for (const sel of selectors) {
+                        const el = document.querySelector(sel);
+                        if (el && el.innerText.length > 200) return el.innerText;
+                    }
+                    // Fallback: remove obvious noise then get body text
+                    const noise = document.querySelectorAll('nav, header, footer, aside, .ad, .sidebar, .comment, .related, .share, .cookie');
+                    noise.forEach(n => n.remove());
+                    return document.body ? document.body.innerText : '';
+                }
+                return extractText();
+            }""")
+
+            return content if content else ""
+        finally:
+            context.close()
 
     def _handle_fetch_weixin(self, request: ToolRequest) -> ToolResult:
         url = str(request.arguments.get("url", "")).strip()
