@@ -93,7 +93,7 @@ function App() {
             <div className="react-page">
               <h1>404</h1>
               <p>页面不存在。</p>
-              <a href="/">返回对话</a>
+              <a href="/chat">返回对话</a>
             </div>
           )}
         </div>

@@ -141,7 +141,7 @@
       item.addEventListener("click", (e) => {
         e.preventDefault();
         if (item.classList.contains("disabled")) return;
-        if (key === "chat") window.location.href = "/";
+        if (key === "chat") window.location.href = "/chat";
         else if (key === "brief") window.location.href = "/brief";
         else if (key === "knowledge") window.location.href = "/knowledge";
         else if (key === "opinions") window.location.href = "/app/opinions";

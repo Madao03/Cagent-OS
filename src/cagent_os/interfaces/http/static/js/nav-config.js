@@ -3,7 +3,7 @@
  * Single source of truth for nav items. Add new pages here only.
  */
 window.CAGENT_NAV_ITEMS = [
-  { id: "chat",      label: "对话面板",   href: "/",             icon: "chat",        disabled: false },
+  { id: "chat",      label: "对话面板",   href: "/chat",         icon: "chat",        disabled: false },
   { id: "brief",     label: "每日简报",   href: "/brief",        icon: "calendar",    disabled: true },
   { id: "dashboard", label: "定制化看板", href: null,            icon: "monitor",     disabled: true },
   { id: "opinions",  label: "观点库",     href: "/app/opinions", icon: "brain",       disabled: false },

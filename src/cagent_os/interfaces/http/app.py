@@ -397,11 +397,18 @@ def create_app() -> FastAPI:
     if static_dir.exists():
         @app.get("/")
         async def serve_root():
+            landing = static_dir / "pages" / "landing.html"
+            if landing.exists():
+                return FileResponse(str(landing))
             if (static_dir / "pages" / "chat.html").exists():
                 return RedirectResponse(url="/static/pages/chat.html")
-            if (static_dir / "legacy.html").exists():
-                return FileResponse(str(static_dir / "legacy.html"))
             return JSONResponse({"detail": "no UI installed"}, status_code=404)
+
+        @app.get("/chat")
+        async def serve_chat():
+            if (static_dir / "pages" / "chat.html").exists():
+                return RedirectResponse(url="/static/pages/chat.html")
+            return RedirectResponse(url="/")
 
         @app.get("/brief")
         async def serve_brief():

@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cage Rao — CagentOS</title>
+<meta name="description" content="I built a financial research agent that refuses to answer until it knows which number is true.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root {
+  --paper:        #E9ECEF;
+  --paper-raised: #F4F6F7;
+  --paper-sunk:   #DFE3E7;
+
+  --ink:          #0D141C;
+  --ink-2:        #3B4956;
+  --ink-3:        #6C7A87;
+
+  --rule:         #C4CCD3;
+  --rule-soft:    #D6DCE1;
+
+  --flag:         #A8500B;   /* variance / alert — the one accent */
+  --flag-bg:      #F2E3D2;
+  --verified:     #145A48;   /* used exactly twice */
+
+  --gutter:       132px;
+
+  --step--1: clamp(0.72rem, 0.70rem + 0.1vw, 0.78rem);
+  --step-0:  clamp(0.95rem, 0.90rem + 0.2vw, 1.03rem);
+  --step-1:  clamp(1.15rem, 1.05rem + 0.4vw, 1.35rem);
+  --step-2:  clamp(1.5rem,  1.30rem + 0.9vw, 2.05rem);
+  --step-3:  clamp(2.1rem,  1.60rem + 2.3vw, 3.5rem);
+
+  --font-display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: var(--step-0);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--flag);
+  outline-offset: 3px;
+}
+
+/* ============================================================
+   SHELL
+   ============================================================ */
+.wrap {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 0 28px;
+}
+
+/* Every block is a two-column record: field label | value */
+.record {
+  display: grid;
+  grid-template-columns: var(--gutter) minmax(0, 1fr);
+  gap: 0 40px;
+  padding: 68px 0;
+  border-top: 1px solid var(--rule-soft);
+}
+
+.record__label {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding-top: 0.45em;
+}
+
+.record__body > *:first-child { margin-top: 0; }
+.record__body > *:last-child  { margin-bottom: 0; }
+
+/* ============================================================
+   TYPE
+   ============================================================ */
+h1, h2, h3 {
+  font-weight: 600;
+  letter-spacing: -0.028em;
+  line-height: 1.1;
+  margin: 0;
+}
+
+h1 { font-size: var(--step-3); letter-spacing: -0.038em; }
+h2 { font-size: var(--step-2); }
+h3 {
+  font-size: var(--step-0);
+  letter-spacing: -0.012em;
+  line-height: 1.35;
+}
+
+p { margin: 0 0 1.1em; max-width: 62ch; }
+
+.lede {
+  font-size: var(--step-1);
+  line-height: 1.5;
+  color: var(--ink-2);
+  max-width: 56ch;
+}
+
+.muted { color: var(--ink-2); }
+
+.mono-note {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  color: var(--ink-3);
+  letter-spacing: 0.02em;
+}
+
+/* ============================================================
+   TOP BAR
+   ============================================================ */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 26px 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.08em;
+}
+
+.topbar__id { font-weight: 600; text-transform: uppercase; letter-spacing: 0.16em; }
+.topbar__id span { color: var(--ink-3); font-weight: 400; }
+
+.langtoggle {
+  display: inline-flex;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  overflow: hidden;
+  background: var(--paper-raised);
+}
+
+.langtoggle button {
+  font: inherit;
+  letter-spacing: 0.1em;
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+  padding: 5px 11px;
+  cursor: pointer;
+}
+
+.langtoggle button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper-raised);
+}
+
+/* ============================================================
+   HERO
+   ============================================================ */
+.hero { padding: 78px 0 20px; }
+
+.hero__kicker {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--flag);
+  margin: 0 0 26px;
+}
+
+.hero h1 { max-width: 17ch; }
+
+.hero__sub {
+  font-size: var(--step-1);
+  line-height: 1.5;
+  color: var(--ink-2);
+  max-width: 48ch;
+  margin: 26px 0 0;
+}
+
+/* --- SIGNATURE: the reconciliation panel --- */
+.recon {
+  margin: 54px 0 0;
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  max-width: 620px;
+  overflow: hidden;
+}
+
+.recon__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 13px 20px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper-sunk);
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.recon__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--rule-soft);
+  font-family: var(--font-mono);
+}
+
+.recon__src { font-size: var(--step--1); color: var(--ink-2); letter-spacing: 0.04em; }
+
+.recon__val {
+  font-size: var(--step-1);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.recon__delta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 15px 20px;
+  background: var(--flag-bg);
+  border-bottom: 1px solid var(--rule-soft);
+  font-family: var(--font-mono);
+  color: var(--flag);
+}
+
+.recon__delta .recon__src { color: var(--flag); }
+.recon__delta .recon__val { color: var(--flag); }
+
+.recon__out {
+  padding: 15px 20px;
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  line-height: 1.65;
+  color: var(--ink-2);
+}
+
+.recon__out b { color: var(--verified); font-weight: 600; letter-spacing: 0.04em; }
+
+/* staged reveal */
+.reveal { opacity: 0; transform: translateY(6px); animation: rise 0.5s ease forwards; }
+.reveal--1 { animation-delay: 0.15s; }
+.reveal--2 { animation-delay: 0.45s; }
+.reveal--3 { animation-delay: 0.85s; }
+.reveal--4 { animation-delay: 1.15s; }
+
+@keyframes rise { to { opacity: 1; transform: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { animation: none; opacity: 1; transform: none; }
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 38px 0 0;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 13px 20px;
+  border-radius: 2px;
+  border: 1px solid var(--ink);
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.btn--solid { background: var(--ink); color: var(--paper-raised); }
+.btn--solid:hover { background: var(--flag); border-color: var(--flag); }
+
+.btn--ghost { background: transparent; color: var(--ink); }
+.btn--ghost:hover { background: var(--ink); color: var(--paper-raised); }
+
+/* ============================================================
+   STATS
+   ============================================================ */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(122px, 1fr));
+  gap: 1px;
+  background: var(--rule-soft);
+  border: 1px solid var(--rule-soft);
+  border-radius: 3px;
+  margin: 34px 0 0;
+  overflow: hidden;
+}
+
+.stat { background: var(--paper); padding: 16px 18px; }
+
+.stat__n {
+  font-family: var(--font-mono);
+  font-size: var(--step-1);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  display: block;
+  line-height: 1.2;
+}
+
+.stat__k {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ============================================================
+   SHOT
+   ============================================================ */
+.shot {
+  margin: 34px 0 0;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  background: var(--paper-raised);
+  overflow: hidden;
+}
+
+.shot img { display: block; width: 100%; height: auto; }
+
+.shot__ph {
+  aspect-ratio: 16 / 9;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  text-align: center;
+  padding: 24px;
+  background:
+    repeating-linear-gradient(-45deg,
+      transparent 0 11px,
+      var(--paper-sunk) 11px 22px);
+}
+
+.shot__cap {
+  padding: 11px 16px;
+  border-top: 1px solid var(--rule-soft);
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  color: var(--ink-3);
+  letter-spacing: 0.03em;
+}
+
+/* ============================================================
+   DECISION LIST
+   ============================================================ */
+.decisions { display: grid; gap: 0; margin: 0; }
+
+.decision {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.decision:first-child { padding-top: 0; }
+.decision:last-child { border-bottom: 0; padding-bottom: 0; }
+
+.decision__h {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0 0 9px;
+}
+
+.decision__tag {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  color: var(--flag);
+  letter-spacing: 0.1em;
+  flex: none;
+}
+
+.decision p { margin: 0 0 7px; color: var(--ink-2); }
+
+.decision__why {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  color: var(--ink-3);
+  line-height: 1.6;
+  margin: 0;
+  max-width: 62ch;
+}
+
+/* ============================================================
+   CONTACT
+   ============================================================ */
+.contact { padding-bottom: 96px; }
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 26px;
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.06em;
+}
+
+.links a {
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 3px;
+  transition: border-color 0.16s ease, color 0.16s ease;
+}
+
+.links a:hover { color: var(--flag); border-bottom-color: var(--flag); }
+
+.foot {
+  border-top: 1px solid var(--rule-soft);
+  padding: 22px 0 40px;
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 720px) {
+  .wrap { padding: 0 20px; }
+
+  .record {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    padding: 46px 0;
+  }
+
+  .record__label { padding-top: 0; }
+
+  .hero { padding: 52px 0 12px; }
+
+  .recon { margin-top: 38px; }
+
+  .recon__head,
+  .recon__row,
+  .recon__delta,
+  .recon__out { padding-left: 15px; padding-right: 15px; }
+
+  .btn { flex: 1 1 auto; justify-content: center; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+  <!-- ===== TOP BAR ===== -->
+  <header class="topbar">
+    <div class="topbar__id">Cage Rao <span>饶余昕</span></div>
+    <div class="langtoggle" role="group" aria-label="Language">
+      <button type="button" data-lang="en" aria-pressed="true">EN</button>
+      <button type="button" data-lang="zh" aria-pressed="false">中文</button>
+    </div>
+  </header>
+
+  <!-- ===== HERO ===== -->
+  <section class="hero">
+    <p class="hero__kicker"
+       data-en="NVDA · Forward P/E · same day, two sources"
+       data-zh="NVDA · 预期市盈率 · 同一天，两个来源">NVDA · Forward P/E · same day, two sources</p>
+
+    <h1 data-en="One of these numbers is wrong. The agent has no idea which."
+        data-zh="其中有一个数字是错的。但模型并不知道是哪个。">One of these numbers is wrong. The agent has no idea which.</h1>
+
+    <!-- SIGNATURE ELEMENT -->
+    <div class="recon">
+      <div class="recon__head">
+        <span data-en="Metric — NVDA Forward P/E" data-zh="指标 — NVDA 预期市盈率">Metric — NVDA Forward P/E</span>
+        <span data-en="Retrieved" data-zh="取数">Retrieved</span>
+      </div>
+
+      <div class="recon__row reveal reveal--1">
+        <span class="recon__src">SOURCE_A · yfinance</span>
+        <span class="recon__val">35.2</span>
+      </div>
+
+      <div class="recon__row reveal reveal--2">
+        <span class="recon__src">SOURCE_B · cross-check</span>
+        <span class="recon__val">18.5</span>
+      </div>
+
+      <div class="recon__delta reveal reveal--3">
+        <span class="recon__src"
+              data-en="VARIANCE — threshold 5%" data-zh="方差 — 阈值 5%">VARIANCE — threshold 5%</span>
+        <span class="recon__val">47.4%</span>
+      </div>
+
+      <p class="recon__out reveal reveal--4"
+         data-en="Consensus not reached. Third source requested → 2-of-3 agreement → value released to the model as VerifiedMetric. Without this step the agent answers fluently, confidently, and wrong."
+         data-zh="未达成共识。请求第三个来源 → 三取二一致 → 通过验证的数值才会交给模型。如果缺少这一步，模型会给出一个流畅、笃定、但完全错误的回答。">Consensus not reached. Third source requested → 2-of-3 agreement → value released to the model as VerifiedMetric. Without this step the agent answers fluently, confidently, and wrong.</p>
+    </div>
+
+    <p class="hero__sub"
+       data-en="I built CagentOS — a financial research agent that treats its own input as the thing most likely to be wrong."
+       data-zh="所以我做了 CagentOS —— 一个把「自己拿到的数据」视为最薄弱环节的金融投研 Agent 系统。">I built CagentOS — a financial research agent that treats its own input as the thing most likely to be wrong.</p>
+
+    <div class="actions">
+      <a class="btn btn--solid" href="/chat"
+         data-en="Try it → cagentos.com" data-zh="试用 → cagentos.com">Try it → cagentos.com</a>
+      <a class="btn btn--ghost" href="https://github.com/Madao03/Cagent-OS"
+         data-en="Read the code" data-zh="阅读源码">Read the code</a>
+    </div>
+  </section>
+
+  <!-- ===== PROBLEM ===== -->
+  <section class="record">
+    <div class="record__label">Problem</div>
+    <div class="record__body">
+      <p class="lede"
+         data-en="A financial agent that reads a wrong number doesn't fail loudly. It produces a fluent, well-structured, entirely wrong answer — and every conclusion downstream inherits the error silently."
+         data-zh="读到错误数字的投研 Agent 不会报错。它会产出一篇流畅、结构完整、但完全错误的分析——而后续每一条结论都会静默地继承这个错误。">A financial agent that reads a wrong number doesn't fail loudly. It produces a fluent, well-structured, entirely wrong answer — and every conclusion downstream inherits the error silently.</p>
+
+      <p data-en="Most agent frameworks treat retrieved data as input. In investment research it is the single highest-risk surface in the system, and almost nothing is built to guard it. That gap is what CagentOS is organised around."
+         data-zh="大多数 Agent 框架把取到的数据当作输入。但在投研场景中，它是整个系统风险最高的环节，几乎没有框架在这层设防。CagentOS 就是围绕这个缺口构建的。">Most agent frameworks treat retrieved data as input. In investment research it is the single highest-risk surface in the system, and almost nothing is built to guard it. That gap is what CagentOS is organised around.</p>
+    </div>
+  </section>
+
+  <!-- ===== SYSTEM ===== -->
+  <section class="record">
+    <div class="record__label">System</div>
+    <div class="record__body">
+      <h2 data-en="A financial research agent OS, built from scratch."
+          data-zh="一个从零搭建的金融投研 Agent 操作系统。">A financial research agent OS, built from scratch.</h2>
+
+      <p style="margin-top:18px"
+         data-en="Python. No LangChain, no LangGraph. A ReAct loop on event sourcing, a plugin tool system, cross-session memory, and a data integrity layer standing in front of the model. Live at cagentos.com in invite-only beta."
+         data-zh="纯 Python 实现，不依赖 LangChain 或 LangGraph。核心是跑在事件溯源之上的 ReAct 循环、插件化工具系统、跨会话记忆，以及一道挡在模型之前的数据完整性层。已上线 cagentos.com，邀请制内测中。">Python. No LangChain, no LangGraph. A ReAct loop on event sourcing, a plugin tool system, cross-session memory, and a data integrity layer standing in front of the model. Live at cagentos.com in invite-only beta.</p>
+
+      <div class="stats">
+        <div class="stat">
+          <span class="stat__n">10</span>
+          <span class="stat__k" data-en="Data sources" data-zh="数据源">Data sources</span>
+        </div>
+        <div class="stat">
+          <span class="stat__n">21</span>
+          <span class="stat__k" data-en="Tools" data-zh="工具">Tools</span>
+        </div>
+        <div class="stat">
+          <span class="stat__n">9</span>
+          <span class="stat__k" data-en="Research skills" data-zh="投研技能">Research skills</span>
+        </div>
+        <div class="stat">
+          <span class="stat__n">25</span>
+          <span class="stat__k" data-en="Eval criteria" data-zh="评测标准">Eval criteria</span>
+        </div>
+      </div>
+
+      <!-- REPLACE the block below with: <img src="shot.png" alt="..."> -->
+      <figure class="shot" style="margin-block-end:0">
+        <div class="shot__ph">
+          <span class="mono-note">[ SCREENSHOT / 30s SCREEN RECORDING ]</span>
+          <span class="mono-note" data-en="one full run: question → tool calls → sourced answer"
+                data-zh="一次完整运行：提问 → 工具调用 → 带溯源的回答">one full run: question → tool calls → sourced answer</span>
+        </div>
+        <figcaption class="shot__cap"
+          data-en="A macro query running end to end — every figure traceable to the source that produced it."
+          data-zh="一次完整的宏观查询——每个数字都能追溯到产出它的数据源。">A macro query running end to end — every figure traceable to the source that produced it.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ===== DECISIONS ===== -->
+  <section class="record">
+    <div class="record__label">Decisions</div>
+    <div class="record__body">
+      <div class="decisions">
+
+        <article class="decision">
+          <div class="decision__h">
+            <span class="decision__tag">↳</span>
+            <h3 data-en="Three sources in parallel, not one"
+                data-zh="三源并行取数，而非信任单一来源">Three sources in parallel, not one</h3>
+          </div>
+          <p data-en="Variance above 5% raises a flag. Resolution requires 2-of-3 agreement — otherwise the agent reports that it doesn't know."
+             data-zh="方差超过 5% 自动告警。取值需三取二一致；无法一致时，Agent 会回答「无法确认」而非编造。">Variance above 5% raises a flag. Resolution requires 2-of-3 agreement — otherwise the agent reports that it doesn't know.</p>
+          <p class="decision__why"
+             data-en="WHY — In research, a confident wrong number costs more than a missing one."
+             data-zh="原因 —— 在投研中，一个笃定的错误数字比一个缺失的数字代价更高。">WHY — In research, a confident wrong number costs more than a missing one.</p>
+        </article>
+
+        <article class="decision">
+          <div class="decision__h">
+            <span class="decision__tag">↳</span>
+            <h3 data-en="Event sourcing, not a messages table"
+                data-zh="事件溯源，而非消息表">Event sourcing, not a messages table</h3>
+          </div>
+          <p data-en="Every state change is an immutable journal entry. The model transcript is rebuilt from the event stream on each turn."
+             data-zh="每一次状态变更都是一条不可变的日志记录。模型上下文在每一轮对话中从事件流重新构建。">Every state change is an immutable journal entry. The model transcript is rebuilt from the event stream on each turn.</p>
+          <p class="decision__why"
+             data-en="WHY — Replayable debugging, crash recovery, and an audit trail you get for free instead of bolting on."
+             data-zh="原因 —— 可重放调试、崩溃恢复，以及一条天然存在而非事后补上的审计轨迹。">WHY — Replayable debugging, crash recovery, and an audit trail you get for free instead of bolting on.</p>
+        </article>
+
+        <article class="decision">
+          <div class="decision__h">
+            <span class="decision__tag">↳</span>
+            <h3 data-en="An allow-list, not trust in the model"
+                data-zh="白名单授权，而非信任模型">An allow-list, not trust in the model</h3>
+          </div>
+          <p data-en="Models invent tool names. A per-agent allow-list rejects the call before it ever reaches the dispatcher."
+             data-zh="模型会编造工具名。每个 Agent 持有独立的白名单，非法调用在进入分发器之前就会被拒绝。">Models invent tool names. A per-agent allow-list rejects the call before it ever reaches the dispatcher.</p>
+          <p class="decision__why"
+             data-en="WHY — What the agent is permitted to do is a system decision, not a model output."
+             data-zh="原因 —— Agent 被允许做什么，是系统决策，而非模型输出。">WHY — What the agent is permitted to do is a system decision, not a model output.</p>
+        </article>
+
+        <article class="decision">
+          <div class="decision__h">
+            <span class="decision__tag">↳</span>
+            <h3 data-en="Scored on every change"
+                data-zh="每次改动都有评测">Scored on every change</h3>
+          </div>
+          <p data-en="Ten golden cases across seven scenario types, 25 criteria, LLM-judge scoring with history comparison."
+             data-zh="覆盖 7 类场景的 10 个黄金用例，25 条评估标准，LLM 自动评分并与历史结果对比。">Ten golden cases across seven scenario types, 25 criteria, LLM-judge scoring with history comparison.</p>
+          <p class="decision__why"
+             data-en="WHY — Without a score you cannot tell a fix from a regression. Most agent projects never find out."
+             data-zh="原因 —— 没有分数，就无法区分一次改动是修复还是退化。大多数 Agent 项目从未搞清楚过。">WHY — Without a score you cannot tell a fix from a regression. Most agent projects never find out.</p>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== METHOD ===== -->
+  <section class="record">
+    <div class="record__label">Method</div>
+    <div class="record__body">
+      <p class="lede"
+         data-en="I make every product and architecture decision. I don't hand-write the code."
+         data-zh="所有产品和架构决策由我做出。代码不是我手写的。">I make every product and architecture decision. I don't hand-write the code.</p>
+
+      <p data-en="I specify, direct and verify the implementation with AI coding tools. The four decisions above are mine — the reasoning behind them, the trade-offs, and the failure cases they were chosen against. The typing is delegated."
+         data-zh="我用 AI 编码工具来定义、指挥并验证实现。上面四个决策是我的——包括背后的推理、取舍，以及它们各自要防范的失效场景。敲代码这件事，是委托出去的。">I specify, direct and verify the implementation with AI coding tools. The four decisions above are mine — the reasoning behind them, the trade-offs, and the failure cases they were chosen against. The typing is delegated.</p>
+
+      <p data-en="I put this up front because it's how I work, and increasingly how the teams I want to work with do too."
+         data-zh="我把这一点放在明面上：这就是我的工作方式，也越来越是我想加入的团队的工作方式。">I put this up front because it's how I work, and increasingly how the teams I want to work with do too.</p>
+    </div>
+  </section>
+
+  <!-- ===== PRIOR ===== -->
+  <section class="record">
+    <div class="record__label">Prior</div>
+    <div class="record__body">
+      <p data-en="Two years as an investment analyst on a secondary-market fund — participating in trading decisions and producing 600+ research reports. The asset class was digital assets; the framework was fundamentals."
+         data-zh="两年二级市场基金投资分析师经验——参与交易决策，产出 600+ 份投研报告。覆盖资产类别为数字资产，采用基本面分析框架。">Two years as an investment analyst on a secondary-market fund — participating in trading decisions and producing 600+ research reports. The asset class was digital assets; the framework was fundamentals.</p>
+
+      <p class="mono-note"
+         data-en="Currently — AI data product manager at NashNova, working on data engineering. Shanghai."
+         data-zh="现职 —— NashNova AI 数据产品经理，数据工程方向，常驻上海。">Currently — AI data product manager at NashNova, working on data engineering. Shanghai.</p>
+    </div>
+  </section>
+
+  <!-- ===== CONTACT ===== -->
+  <section class="record contact">
+    <div class="record__label">Contact</div>
+    <div class="record__body">
+      <h2 data-en="If you're building at the same intersection, I'd like to compare notes."
+          data-zh="如果你也在做 AI × 投研的交叉领域，我想和你交流各自踩过的坑。">If you're building at the same intersection, I'd like to compare notes.</h2>
+
+      <ul class="links">
+        <!-- REPLACE the placeholders below -->
+        <li><a href="mailto:YOUR_EMAIL">YOUR_EMAIL</a></li>
+        <li><a href="https://github.com/Madao03">github.com/Madao03</a></li>
+        <li><a href="https://x.com/YOUR_HANDLE">x.com/YOUR_HANDLE</a></li>
+        <li><a href="https://cagentos.com">cagentos.com</a></li>
+      </ul>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span>CagentOS · MIT</span>
+    <span data-en="Built and maintained by one person." data-zh="由一个人搭建和维护。">Built and maintained by one person.</span>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  var nodes = document.querySelectorAll('[data-en][data-zh]');
+  var buttons = document.querySelectorAll('.langtoggle button');
+
+  function setLang(lang) {
+    for (var i = 0; i < nodes.length; i++) {
+      var next = nodes[i].getAttribute('data-' + lang);
+      if (next) { nodes[i].textContent = next; }
+    }
+    document.documentElement.lang = (lang === 'zh') ? 'zh-CN' : 'en';
+    for (var j = 0; j < buttons.length; j++) {
+      buttons[j].setAttribute('aria-pressed',
+        String(buttons[j].getAttribute('data-lang') === lang));
+    }
+    try { localStorage.setItem('cos_lang', lang); } catch (e) {}
+  }
+
+  for (var k = 0; k < buttons.length; k++) {
+    buttons[k].addEventListener('click', function () {
+      setLang(this.getAttribute('data-lang'));
+    });
+  }
+
+  var saved = null;
+  try { saved = localStorage.getItem('cos_lang'); } catch (e) {}
+  if (saved === 'zh') { setLang('zh'); }
+})();
+</script>
+
+</body>
+</html>
