@@ -501,6 +501,16 @@ def create_app() -> FastAPI:
     from cagent_os.interfaces.http.routes_rag import build_rag_router
     app.include_router(build_rag_router(rag_service))
 
+    # Demo endpoint (no-auth, IP-limited, for landing page)
+    from cagent_os.interfaces.http.routes_demo import build_demo_router
+    app.include_router(
+        build_demo_router(
+            run_engine=run_engine,
+            conversation_service=conversation_service,
+            user_skill_service=user_skill_service,
+        )
+    )
+
     # Phase 4c: Knowledge triage + article browsing
     from cagent_os.interfaces.http.routes_knowledge import build_knowledge_router
     _knowledge_dir = _project_root / "knowledge"

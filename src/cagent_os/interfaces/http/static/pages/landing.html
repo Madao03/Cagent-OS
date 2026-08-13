@@ -184,7 +184,7 @@ p { margin: 0 0 1.1em; max-width: 62ch; }
   margin: 0 0 26px;
 }
 
-.hero h1 { max-width: 17ch; }
+.hero h1 { max-width: 22ch; }
 
 .hero__sub {
   font-size: var(--step-1);
@@ -454,6 +454,120 @@ p { margin: 0 0 1.1em; max-width: 62ch; }
 }
 
 /* ============================================================
+   DEMO CHAT
+   ============================================================ */
+.demo-chat {
+  display: flex;
+  flex-direction: column;
+  min-height: 320px;
+  max-height: 420px;
+}
+
+.demo-chat__log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  font-size: var(--step--1);
+  line-height: 1.65;
+  color: var(--ink-2);
+  max-height: 340px;
+}
+
+.demo-chat__log .demo-q {
+  font-family: var(--font-mono);
+  color: var(--ink);
+  font-weight: 500;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: var(--paper-sunk);
+  border-radius: 3px;
+}
+
+.demo-chat__log .demo-a {
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--ink);
+}
+
+.demo-chat__log .demo-tool {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--ink-3);
+  margin: 4px 0;
+  letter-spacing: 0.02em;
+}
+
+.demo-chat__log .demo-error {
+  color: var(--flag);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.demo-chat__log .demo-typing::after {
+  content: '▊';
+  animation: blink 0.8s infinite;
+  color: var(--ink-3);
+}
+
+@keyframes blink { 50% { opacity: 0; } }
+
+.demo-empty {
+  display: grid;
+  place-content: center;
+  text-align: center;
+  height: 100%;
+  min-height: 200px;
+  gap: 6px;
+}
+
+.demo-chat__input {
+  display: flex;
+  gap: 0;
+  border-top: 1px solid var(--rule);
+}
+
+.demo-chat__input input {
+  flex: 1;
+  border: 0;
+  padding: 14px 16px;
+  font-family: var(--font-display);
+  font-size: var(--step-0);
+  background: var(--paper-raised);
+  color: var(--ink);
+  outline: none;
+}
+
+.demo-chat__input input::placeholder { color: var(--ink-3); }
+
+.demo-chat__input button {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 0;
+  border-left: 1px solid var(--rule);
+  background: var(--ink);
+  color: var(--paper-raised);
+  padding: 0 22px;
+  cursor: pointer;
+  transition: background 0.16s ease;
+}
+
+.demo-chat__input button:hover:not(:disabled) { background: var(--flag); }
+.demo-chat__input button:disabled { opacity: 0.5; cursor: default; }
+.demo-chat__input input:disabled { opacity: 0.5; }
+
+.demo-chat__count {
+  padding: 8px 16px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--ink-3);
+  letter-spacing: 0.04em;
+  border-top: 1px solid var(--rule-soft);
+  background: var(--paper-sunk);
+}
+
+/* ============================================================
    RESPONSIVE
    ============================================================ */
 @media (max-width: 720px) {
@@ -487,7 +601,7 @@ p { margin: 0 0 1.1em; max-width: 62ch; }
 
   <!-- ===== TOP BAR ===== -->
   <header class="topbar">
-    <div class="topbar__id">Cage Rao <span>饶余昕</span></div>
+    <div class="topbar__id" data-en="Cage Rao" data-zh="饶余昕">Cage Rao</div>
     <div class="langtoggle" role="group" aria-label="Language">
       <button type="button" data-lang="en" aria-pressed="true">EN</button>
       <button type="button" data-lang="zh" aria-pressed="false">中文</button>
@@ -501,7 +615,7 @@ p { margin: 0 0 1.1em; max-width: 62ch; }
        data-zh="NVDA · 预期市盈率 · 同一天，两个来源">NVDA · Forward P/E · same day, two sources</p>
 
     <h1 data-en="One of these numbers is wrong. The agent has no idea which."
-        data-zh="其中有一个数字是错的。但模型并不知道是哪个。">One of these numbers is wrong. The agent has no idea which.</h1>
+        data-zh="其中一个数字是错的——而模型对此一无所知。">One of these numbers is wrong. The agent has no idea which.</h1>
 
     <!-- SIGNATURE ELEMENT -->
     <div class="recon">
@@ -586,16 +700,27 @@ p { margin: 0 0 1.1em; max-width: 62ch; }
         </div>
       </div>
 
-      <!-- REPLACE the block below with: <img src="shot.png" alt="..."> -->
+      <!-- DEMO CHAT WIDGET -->
       <figure class="shot" style="margin-block-end:0">
-        <div class="shot__ph">
-          <span class="mono-note">[ SCREENSHOT / 30s SCREEN RECORDING ]</span>
-          <span class="mono-note" data-en="one full run: question → tool calls → sourced answer"
-                data-zh="一次完整运行：提问 → 工具调用 → 带溯源的回答">one full run: question → tool calls → sourced answer</span>
+        <div class="demo-chat" id="demoChat">
+          <div class="demo-chat__log" id="demoLog">
+            <div class="demo-empty" id="demoEmpty">
+              <span class="mono-note" data-en="Try it — ask a research question"
+                    data-zh="试试看 — 输入一个投研问题">Try it — ask a research question</span>
+            </div>
+          </div>
+          <form class="demo-chat__input" id="demoForm">
+            <input type="text" id="demoQuery" placeholder="e.g. BTC 现在高估还是低估？"
+                   autocomplete="off" disabled />
+            <button type="submit" id="demoBtn" disabled>
+              <span data-en="Ask" data-zh="提问">Ask</span>
+            </button>
+          </form>
+          <div class="demo-chat__count" id="demoCount"></div>
         </div>
         <figcaption class="shot__cap"
-          data-en="A macro query running end to end — every figure traceable to the source that produced it."
-          data-zh="一次完整的宏观查询——每个数字都能追溯到产出它的数据源。">A macro query running end to end — every figure traceable to the source that produced it.</figcaption>
+          data-en="Powered by the same engine — 3 free queries per day, then sign up for full access."
+          data-zh="与正式版同一引擎驱动 — 每天 3 次免费体验，之后注册获取完整功能。">Powered by the same engine — 3 free queries per day, then sign up for full access.</figcaption>
       </figure>
     </div>
   </section>
@@ -700,17 +825,17 @@ p { margin: 0 0 1.1em; max-width: 62ch; }
 
       <ul class="links">
         <!-- REPLACE the placeholders below -->
-        <li><a href="mailto:YOUR_EMAIL">YOUR_EMAIL</a></li>
+        <li><a href="mailto:cage117@foxmail.com">cage117@foxmail.com</a></li>
         <li><a href="https://github.com/Madao03">github.com/Madao03</a></li>
-        <li><a href="https://x.com/YOUR_HANDLE">x.com/YOUR_HANDLE</a></li>
-        <li><a href="https://cagentos.com">cagentos.com</a></li>
+        <li><a href="https://x.com/heymadao03">x.com/heymadao03</a></li>
+        <li><a href="/chat">cagentos.com</a></li>
       </ul>
     </div>
   </section>
 
   <footer class="foot">
     <span>CagentOS · MIT</span>
-    <span data-en="Built and maintained by one person." data-zh="由一个人搭建和维护。">Built and maintained by one person.</span>
+    <span data-en="Built and maintained by one person." data-zh="由一人搭建和维护。">Built and maintained by one person.</span>
   </footer>
 
 </div>
@@ -742,6 +867,172 @@ p { margin: 0 0 1.1em; max-width: 62ch; }
   var saved = null;
   try { saved = localStorage.getItem('cos_lang'); } catch (e) {}
   if (saved === 'zh') { setLang('zh'); }
+})();
+
+// ============================================================
+// DEMO CHAT LOGIC
+// ============================================================
+(function () {
+  var form = document.getElementById('demoForm');
+  var input = document.getElementById('demoQuery');
+  var btn = document.getElementById('demoBtn');
+  var log = document.getElementById('demoLog');
+  var empty = document.getElementById('demoEmpty');
+  var countEl = document.getElementById('demoCount');
+  var DEMO_MAX = 3;
+  var used = 0;
+
+  // Try to read usage from localStorage
+  try {
+    var today = new Date().toISOString().slice(0, 10);
+    var saved2 = localStorage.getItem('cos_demo_' + today);
+    used = saved2 ? parseInt(saved2) : 0;
+  } catch (e) {}
+
+  function updateCount() {
+    var remaining = DEMO_MAX - used;
+    if (remaining <= 0) {
+      countEl.innerHTML = '✕ ' + (document.documentElement.lang === 'zh-CN'
+        ? '今日额度已用完 — <a href="/chat" style="color:var(--flag)">注册获取完整体验 →</a>'
+        : 'Daily limit reached — <a href="/chat" style="color:var(--flag)">Sign up for full access →</a>');
+      input.disabled = true;
+      btn.disabled = true;
+    } else if (used > 0) {
+      countEl.textContent = (document.documentElement.lang === 'zh-CN'
+        ? '今日剩余 ' + remaining + '/' + DEMO_MAX + ' 次'
+        : remaining + '/' + DEMO_MAX + ' queries left today');
+    }
+  }
+
+  // Enable input on load
+  input.disabled = false;
+  btn.disabled = false;
+  updateCount();
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  // Simple markdown: **bold**, line breaks
+  function renderMd(text) {
+    return escapeHtml(text)
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>');
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var query = input.value.trim();
+    if (!query || used >= DEMO_MAX) return;
+
+    // Save usage
+    used++;
+    try {
+      var today = new Date().toISOString().slice(0, 10);
+      localStorage.setItem('cos_demo_' + today, String(used));
+    } catch (e) {}
+
+    // Hide empty state
+    if (empty) empty.style.display = 'none';
+
+    // Show question
+    var qDiv = document.createElement('div');
+    qDiv.className = 'demo-q';
+    qDiv.textContent = query;
+    log.appendChild(qDiv);
+
+    // Create answer area
+    var aDiv = document.createElement('div');
+    aDiv.className = 'demo-a demo-typing';
+    log.appendChild(aDiv);
+
+    input.value = '';
+    input.disabled = true;
+    btn.disabled = true;
+    btn.querySelector('span').textContent = '···';
+
+    log.scrollTop = log.scrollHeight;
+
+    // SSE request
+    var ctrl = new AbortController();
+    fetch('/api/v1/demo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: query }),
+      signal: ctrl.signal,
+    }).then(function (resp) {
+      if (resp.status === 429) {
+        aDiv.classList.remove('demo-typing');
+        aDiv.className = 'demo-error';
+        aDiv.textContent = 'Rate limited — please try again tomorrow or sign up.';
+        used = DEMO_MAX;
+        updateCount();
+        return;
+      }
+      if (!resp.ok) {
+        aDiv.classList.remove('demo-typing');
+        aDiv.className = 'demo-error';
+        aDiv.textContent = 'Error: ' + resp.status;
+        return;
+      }
+
+      var reader = resp.body.getReader();
+      var decoder = new TextDecoder();
+      var buffer = '';
+      var fullText = '';
+
+      function read() {
+        reader.read().then(function (chunk) {
+          if (chunk.done) {
+            aDiv.classList.remove('demo-typing');
+            btn.querySelector('span').textContent = (document.documentElement.lang === 'zh-CN') ? '提问' : 'Ask';
+            if (used < DEMO_MAX) { input.disabled = false; btn.disabled = false; }
+            updateCount();
+            return;
+          }
+          buffer += decoder.decode(chunk.value, { stream: true });
+          var lines = buffer.split('\n');
+          buffer = lines.pop();
+
+          for (var i = 0; i < lines.length; i++) {
+            var line = lines[i].trim();
+            if (!line.startsWith('data: ')) continue;
+            try {
+              var evt = JSON.parse(line.slice(6));
+
+              if (evt.type === 'message.assistant_added' && evt.content) {
+                fullText += evt.content;
+                aDiv.innerHTML = renderMd(fullText);
+                log.scrollTop = log.scrollHeight;
+              }
+              if (evt.type === 'run.tool_requested' || evt.type === 'run.tool_completed') {
+                var toolDiv = document.createElement('div');
+                toolDiv.className = 'demo-tool';
+                toolDiv.textContent = (evt.type === 'run.tool_requested' ? '⟳ ' : '✓ ')
+                  + (evt.data && evt.data.name ? evt.data.name : 'tool');
+                aDiv.parentNode.insertBefore(toolDiv, aDiv);
+              }
+              if (evt.type === 'error') {
+                aDiv.classList.remove('demo-typing');
+                aDiv.className = 'demo-error';
+                aDiv.textContent = evt.message || 'Something went wrong.';
+              }
+            } catch (e) {}
+          }
+          read();
+        });
+      }
+      read();
+    }).catch(function (err) {
+      aDiv.classList.remove('demo-typing');
+      aDiv.className = 'demo-error';
+      aDiv.textContent = 'Connection failed.';
+      btn.querySelector('span').textContent = (document.documentElement.lang === 'zh-CN') ? '提问' : 'Ask';
+      if (used < DEMO_MAX) { input.disabled = false; btn.disabled = false; }
+    });
+  });
 })();
 </script>
 
