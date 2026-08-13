@@ -710,7 +710,9 @@ p { margin: 0 0 1.1em; max-width: 62ch; }
             </div>
           </div>
           <form class="demo-chat__input" id="demoForm">
-            <input type="text" id="demoQuery" placeholder="e.g. BTC 现在高估还是低估？"
+            <input type="text" id="demoQuery" placeholder="e.g. Is BTC overvalued right now?"
+                   data-en-placeholder="e.g. Is BTC overvalued right now?"
+                   data-zh-placeholder="例如：BTC现在高估还是低估"
                    autocomplete="off" disabled />
             <button type="submit" id="demoBtn" disabled>
               <span data-en="Ask" data-zh="提问">Ask</span>
@@ -850,6 +852,12 @@ p { margin: 0 0 1.1em; max-width: 62ch; }
       var next = nodes[i].getAttribute('data-' + lang);
       if (next) { nodes[i].textContent = next; }
     }
+    // Update placeholders for elements with data-{lang}-placeholder
+    var phNodes = document.querySelectorAll('[data-en-placeholder]');
+    for (var k = 0; k < phNodes.length; k++) {
+      var ph = phNodes[k].getAttribute('data-' + lang + '-placeholder');
+      if (ph) { phNodes[k].placeholder = ph; }
+    }
     document.documentElement.lang = (lang === 'zh') ? 'zh-CN' : 'en';
     for (var j = 0; j < buttons.length; j++) {
       buttons[j].setAttribute('aria-pressed',
@@ -867,6 +875,7 @@ p { margin: 0 0 1.1em; max-width: 62ch; }
   var saved = null;
   try { saved = localStorage.getItem('cos_lang'); } catch (e) {}
   if (saved === 'zh') { setLang('zh'); }
+  else { setLang('en'); }
 })();
 
 // ============================================================
