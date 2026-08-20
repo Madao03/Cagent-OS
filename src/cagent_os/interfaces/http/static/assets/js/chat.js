@@ -1652,6 +1652,7 @@
         if (evt.type === "message.user_added" && evt.content) {
           renderUserMessage(evt.content);
           partialAnswer = ""; // Reset for new turn
+          lastAssistantShell = null; // ★ Reset shell so the new turn gets its own assistant bubble
         } else if (evt.type === "message.assistant_delta" && evt.content) {
           // ★ Accumulate partial answer during streaming
           partialAnswer += evt.content;
