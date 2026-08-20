@@ -105,22 +105,31 @@ def build_llm_keys_router(key_store: UserLLMKeyStore, registry: BackendRegistry)
 
     @router.post("/api/v1/llm/test")
     def test_key(request: Request) -> dict:
-        """Send a 1-token completion to verify the stored key works."""
+        """Send a 1-token completion to verify the stored key works.
+
+        Uses the RAW user backend (probe_backend) — no platform fallback —
+        so a broken key surfaces as an error instead of silently succeeding
+        via the platform key.
+        """
         user_id = require_principal_id(request)
-        resolved = registry.resolve_for(user_id)
-        if not resolved.is_user_key:
+        cfg = key_store.get(user_id)
+        if cfg is None:
             return {"ok": False, "detail": "No user key configured — testing platform key."}
         try:
+            backend = registry.probe_backend(user_id)
+            if backend is None:
+                return {"ok": False, "detail": "No user key configured — testing platform key."}
             from cagent_os.llm.protocol import ChatMessage, InferenceOptions, ModelRequest
             req = ModelRequest(
-                model=resolved.default_model or "gpt-4o-mini",
+                model=cfg.default_model or "gpt-4o-mini",
                 messages=[ChatMessage(role="user", content="ping")],
                 options=InferenceOptions(max_tokens=1),
             )
-            resolved.backend.complete(req)
-            return {"ok": True, "provider": resolved.provider, "model": resolved.default_model}
+            backend.complete(req)
+            return {"ok": True, "provider": cfg.provider, "model": cfg.default_model}
         except Exception as exc:
-            return {"ok": False, "provider": resolved.provider, "detail": str(exc)[:200]}
+            from cagent_os.llm.backend_registry import redact_secrets
+            return {"ok": False, "provider": cfg.provider, "detail": redact_secrets(str(exc))[:200]}
 
     @router.get("/api/v1/llm/models")
     def list_models(request: Request) -> dict:

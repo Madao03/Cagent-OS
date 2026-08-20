@@ -243,12 +243,23 @@ class AgentRuntime:
             logger.warning("Cost budget exceeded: %s", exc)
             raise  # Re-raise to be caught by the existing exception handler
 
+    def _billed_to(self, setup: _RuntimeSetup) -> str:
+        """Cost attribution: which key actually paid for this run's LLM calls.
+
+        A user backend that fell back mid-run is attributed to the platform key.
+        """
+        override = setup.backend_override
+        if override is not None and hasattr(override, "fallback_used"):
+            return "platform_key" if override.fallback_used else "user_key"
+        return "platform_key"
+
     def _record_cost(
         self,
         principal_id: str,
         *,
         response: Any,
         model: str = "",
+        billed_to: str = "platform_key",
     ) -> None:
         """Record token usage after a successful LLM call."""
         if self._cost_tracker is None or not self._cost_tracker.enabled:
@@ -281,9 +292,10 @@ class AgentRuntime:
 
             self._cost_tracker.record(
                 principal_id,
-                prompt_tokens=prompt,
-                completion_tokens=completion,
+                input_tokens=prompt,
+                output_tokens=completion,
                 model=model,
+                billed_to=billed_to,
             )
         except Exception:
             logger.debug("Cost recording failed (non-fatal)", exc_info=True)
@@ -441,6 +453,7 @@ class AgentRuntime:
                         principal_id or conversation.user_id,
                         response=response,
                         model=setup.model,
+                        billed_to=self._billed_to(setup),
                     )
                 except Exception as exc:
                     logger.exception(
@@ -840,6 +853,7 @@ class AgentRuntime:
                                 principal_id or conversation.user_id,
                                 response=stream_usage,
                                 model=setup.model,
+                                billed_to=self._billed_to(setup),
                             )
                     else:
                         response = self._backend_for(setup).complete(request)
@@ -860,6 +874,7 @@ class AgentRuntime:
                             principal_id or conversation.user_id,
                             response=response,
                             model=setup.model,
+                            billed_to=self._billed_to(setup),
                         )
                 except Exception as exc:
                     logger.exception(

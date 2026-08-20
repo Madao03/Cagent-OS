@@ -78,7 +78,8 @@ CREATE TABLE IF NOT EXISTS usage_records (
     estimated_cost REAL DEFAULT 0.0,
     source TEXT NOT NULL DEFAULT 'user',
     query_preview TEXT DEFAULT '',
-    is_follow_up INTEGER DEFAULT 0
+    is_follow_up INTEGER DEFAULT 0,
+    billed_to TEXT NOT NULL DEFAULT 'platform_key'
 );
 
 CREATE INDEX IF NOT EXISTS idx_usage_user_date
@@ -219,14 +220,19 @@ class CostTracker:
     # ── Budget checks ────────────────────────────────────────────────
 
     def check_budget(self, user_id: str) -> None:
-        """Check all applicable budget limits. Raises BudgetExceeded if any exceeded."""
+        """Check all applicable budget limits. Raises BudgetExceeded if any exceeded.
+
+        Token quotas only count platform-key usage — BYOK requests run on the
+        user's own quota. Request-count limits still apply to everyone (they
+        protect server resources, not LLM budget).
+        """
         if not self._enabled:
             return
         today_str = date.today().isoformat()
         month_str = today_str[:7]
 
         with self._get_conn() as conn:
-            # Per-user daily request count
+            # Per-user daily request count (all requests — server resource guard)
             req_count = conn.execute(
                 "SELECT COUNT(*) FROM usage_records WHERE user_id=? AND date(timestamp)=? AND source='user'",
                 (user_id, today_str),
@@ -238,10 +244,10 @@ class CostTracker:
                     retry_after_sec=_seconds_until_midnight_cst(),
                 )
 
-            # Per-user daily token sum
+            # Per-user daily token sum (platform key only)
             user_daily = conn.execute(
                 "SELECT COALESCE(SUM(input_tokens+output_tokens), 0) FROM usage_records "
-                "WHERE user_id=? AND date(timestamp)=? AND source='user'",
+                "WHERE user_id=? AND date(timestamp)=? AND source='user' AND billed_to='platform_key'",
                 (user_id, today_str),
             ).fetchone()[0]
             if user_daily >= self._user_daily_token_limit:
@@ -251,10 +257,10 @@ class CostTracker:
                     retry_after_sec=_seconds_until_midnight_cst(),
                 )
 
-            # Global daily token sum
+            # Global daily token sum (platform key only)
             global_daily = conn.execute(
                 "SELECT COALESCE(SUM(input_tokens+output_tokens), 0) FROM usage_records "
-                "WHERE date(timestamp)=?",
+                "WHERE date(timestamp)=? AND billed_to='platform_key'",
                 (today_str,),
             ).fetchone()[0]
             if global_daily >= self._daily_token_limit:
@@ -263,10 +269,10 @@ class CostTracker:
                     retry_after_sec=_seconds_until_midnight_cst(),
                 )
 
-            # Global monthly token sum
+            # Global monthly token sum (platform key only)
             global_monthly = conn.execute(
                 "SELECT COALESCE(SUM(input_tokens+output_tokens), 0) FROM usage_records "
-                "WHERE strftime('%Y-%m', timestamp)=?",
+                "WHERE strftime('%Y-%m', timestamp)=? AND billed_to='platform_key'",
                 (month_str,),
             ).fetchone()[0]
             if global_monthly >= self._monthly_token_limit:
@@ -286,11 +292,19 @@ class CostTracker:
         request_id: str = "",
         query_preview: str = "",
         is_follow_up: bool = False,
+        billed_to: str = "platform_key",
     ) -> None:
-        """Append a usage record. Thread-safe, append-only."""
+        """Append a usage record. Thread-safe, append-only.
+
+        billed_to: "platform_key" (we pay) | "user_key" (BYOK — the user's own
+        quota; estimated_cost forced to 0 so platform cost stats stay honest).
+        """
         if not self._enabled:
             return
-        estimated_cost = _estimate_cost(model, input_tokens, output_tokens)
+        if billed_to == "user_key":
+            estimated_cost = 0.0  # tokens spent on the user's own account, not ours
+        else:
+            estimated_cost = _estimate_cost(model, input_tokens, output_tokens)
         ts = datetime.now(timezone.utc).isoformat()
 
         with self._get_conn() as conn:
@@ -298,17 +312,21 @@ class CostTracker:
                 """INSERT INTO usage_records
                    (user_id, session_id, request_id, timestamp, model,
                     input_tokens, output_tokens, estimated_cost, source,
-                    query_preview, is_follow_up)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    query_preview, is_follow_up, billed_to)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     user_id, session_id, request_id, ts, model,
                     input_tokens, output_tokens, estimated_cost, source,
-                    query_preview, 1 if is_follow_up else 0,
+                    query_preview, 1 if is_follow_up else 0, billed_to,
                 ),
             )
 
     def get_usage(self, user_id: str) -> dict:
-        """Get current usage stats for a user."""
+        """Get current usage stats for a user.
+
+        daily/monthly reflect platform-key usage only (the quota denominator);
+        BYOK usage is reported separately as byok_daily_tokens.
+        """
         today_str = date.today().isoformat()
         month_str = today_str[:7]
 
@@ -316,7 +334,8 @@ class CostTracker:
             user_daily = conn.execute(
                 "SELECT COALESCE(SUM(input_tokens),0), COALESCE(SUM(output_tokens),0), "
                 "COALESCE(SUM(estimated_cost),0), COUNT(*) "
-                "FROM usage_records WHERE user_id=? AND date(timestamp)=? AND source='user'",
+                "FROM usage_records "
+                "WHERE user_id=? AND date(timestamp)=? AND source='user' AND billed_to='platform_key'",
                 (user_id, today_str),
             ).fetchone()
             user_monthly = conn.execute(
@@ -325,6 +344,12 @@ class CostTracker:
                 "FROM usage_records WHERE user_id=? AND strftime('%Y-%m', timestamp)=? AND source='user'",
                 (user_id, month_str),
             ).fetchone()
+            # BYOK usage today (user's own key — informational, not quota-bound)
+            byok_daily = conn.execute(
+                "SELECT COALESCE(SUM(input_tokens+output_tokens),0) FROM usage_records "
+                "WHERE user_id=? AND date(timestamp)=? AND source='user' AND billed_to='user_key'",
+                (user_id, today_str),
+            ).fetchone()[0]
             global_daily = conn.execute(
                 "SELECT COALESCE(SUM(input_tokens+output_tokens),0) "
                 "FROM usage_records WHERE date(timestamp)=?",
@@ -356,6 +381,7 @@ class CostTracker:
                     "total_tokens": user_monthly[0] + user_monthly[1],
                     "estimated_cost_usd": round(user_monthly[2], 6),
                 },
+                "byok_daily_tokens": byok_daily,
             },
             "global": {
                 "daily": {"total_tokens": global_daily, "token_limit": self._daily_token_limit},
@@ -398,6 +424,14 @@ class CostTracker:
     def _init_db(self) -> None:
         with self._get_conn() as conn:
             conn.executescript(_SCHEMA)
+            # Migration: billed_to column (idempotent — check before ALTER)
+            cols = {row[1] for row in conn.execute("PRAGMA table_info(usage_records)")}
+            if "billed_to" not in cols:
+                conn.execute(
+                    "ALTER TABLE usage_records "
+                    "ADD COLUMN billed_to TEXT NOT NULL DEFAULT 'platform_key'"
+                )
+                logger.info("Migrated usage_records: added billed_to column")
 
     @contextmanager
     def _get_conn(self):
