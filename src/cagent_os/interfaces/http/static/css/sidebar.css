@@ -340,8 +340,7 @@ html.dark ::-webkit-scrollbar-thumb:hover {
   background: rgba(200, 200, 200, 0.30);
 }
 
-
-/* ©¤©¤ Model settings button (BYOK) ©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤ */
+/* â”€â”€ Model settings button (BYOK) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .sidebar-model-btn {
   display: flex;
   align-items: center;
@@ -377,7 +376,7 @@ html.dark ::-webkit-scrollbar-thumb:hover {
   flex-shrink: 0;
 }
 
-/* ©¤©¤ Model settings modal ©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤©¤ */
+/* â”€â”€ Model settings modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .model-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -499,11 +498,6 @@ html.dark ::-webkit-scrollbar-thumb:hover {
 .model-modal__btn--ghost:hover {
   border-color: var(--border-contrast);
   color: var(--text-default);
-}
-
-.model-modal__btn--ghost.is-active {
-  border-color: var(--status-success-default);
-  color: var(--status-success-default);
 }
 
 .model-modal__btn--danger:hover {
