@@ -1,20 +1,20 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN" class="light dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>对话面板</title>
+    <title>瀵硅瘽闈㈡澘</title>
     <link rel="stylesheet" href="/static/css/tokens.css?v=2">
-    <link rel="stylesheet" href="/static/css/sidebar.css?v=2">
+    <link rel="stylesheet" href="/static/css/sidebar.css?v=3">
     <script src="/static/js/nav-config.js"></script>
     <style id="component-vars">
-/* ═══════════════════════════════════════════════════════════════
-   components.css — Design System Component and Atom Definitions
+/* 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺?
+   components.css 鈥?Design System Component and Atom Definitions
    Component sections mirror preview/component-*.html marker blocks.
    Stable atoms live here so downstream pages do not depend on preview shell CSS.
-   ═══════════════════════════════════════════════════════════════ */
+   鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺?*/
 
-/* ── Shared Atoms ───────────────────────────────────────────── */
+/* 鈹€鈹€ Shared Atoms 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
 .icon,
 .icon-img {
   display: inline-block;
@@ -141,7 +141,7 @@ pre {
   color: var(--text-secondary);
 }
 
-/* ── Alert ─────────────────────────────────────────────────── */
+/* 鈹€鈹€ Alert 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
 /* ===== Notification / Toast ===== */
     .ds-notif {
       display: flex; align-items: flex-start;
@@ -202,7 +202,7 @@ pre {
     .ds-alert__title { font-family: var(--body-md-strong-font-family); font-size: var(--body-md-strong-font-size); line-height: var(--body-md-strong-line-height); font-weight: var(--body-md-strong-font-weight); letter-spacing: var(--body-md-strong-letter-spacing); margin-bottom: var(--spacer-4); }
     .ds-alert__desc { color: var(--text-secondary); font-size: var(--body-md-font-size); line-height: var(--body-md-line-height); }
 
-/* ── Avatar ────────────────────────────────────────────────── */
+/* 鈹€鈹€ Avatar 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
 /* ===== Avatar ===== */
     .ds-avatar {
       display: inline-flex; align-items: center; justify-content: center;
@@ -218,7 +218,7 @@ pre {
     .ds-avatar--sm { width: 24px; height: 24px; font-size: var(--body-sm-font-size); }
     .ds-avatar--lg { width: 40px; height: 40px; }
 
-/* ── Breadcrumb ────────────────────────────────────────────── */
+/* 鈹€鈹€ Breadcrumb 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
 /* ===== Breadcrumb ===== */
     .ds-breadcrumb { display: flex; align-items: center; gap: var(--spacer-8); font-size: var(--body-base-font-size); line-height: var(--body-base-line-height); color: var(--text-tertiary); }
     .ds-breadcrumb a { display: inline-flex; align-items: center; color: var(--text-tertiary); }
@@ -226,7 +226,7 @@ pre {
     .ds-breadcrumb__sep { color: var(--text-tertiary); }
     .ds-breadcrumb__current { color: var(--text-default); }
 
-/* ── Buttons ───────────────────────────────────────────────── */
+/* 鈹€鈹€ Buttons 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
 /* ===== Buttons ===== */
     .ds-btn {
       display: inline-flex; align-items: center; justify-content: center;
@@ -300,7 +300,7 @@ pre {
     .ds-btn-group > .ds-btn:first-child { border-top-left-radius: var(--radius-8); border-bottom-left-radius: var(--radius-8); margin-left: 0; }
     .ds-btn-group > .ds-btn:last-child { border-top-right-radius: var(--radius-8); border-bottom-right-radius: var(--radius-8); }
 
-/* ── Cards ─────────────────────────────────────────────────── */
+/* 鈹€鈹€ Cards 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
 /* ===== Card ===== */
     .ds-card {
       background: var(--bg-base-secondary);
@@ -312,7 +312,7 @@ pre {
     .ds-card__title { font-size: var(--heading-sm-font-size); line-height: var(--heading-sm-line-height); font-weight: var(--heading-sm-font-weight); margin-bottom: var(--spacer-8); }
     .ds-card__desc { font-size: var(--body-base-font-size); line-height: var(--body-base-line-height); color: var(--text-secondary); }
 
-/* ── Dialog ────────────────────────────────────────────────── */
+/* 鈹€鈹€ Dialog 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
 /* ===== Dialog / Modal ===== */
     .ds-backdrop { position: relative; background: var(--bg-overlay-l4); border: 1px solid var(--border-neutral-l1); padding: var(--spacer-32) var(--spacer-24); display: flex; align-items: center; justify-content: center; }
     .ds-dialog { background: var(--bg-base-default); border: 1px solid var(--border-neutral-l1); border-radius: var(--radius-12); width: 100%; max-width: 520px; overflow: hidden; color: var(--text-default); box-shadow: 0 24px 64px color-mix(in srgb, var(--text-default) 14%, transparent), 0 4px 16px color-mix(in srgb, var(--text-default) 8%, transparent); }
@@ -341,7 +341,7 @@ pre {
     .dialog-calendar-icon { width: 16px; height: 16px; color: var(--icon-secondary); object-fit: contain; }
     @media (max-width: 720px) { .dialog-grid { grid-template-columns: 1fr; } }
 
-/* ── Forms ─────────────────────────────────────────────────── */
+/* 鈹€鈹€ Forms 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
 /* ===== Input / Search ===== */
     .ds-input { display: flex; align-items: center; gap: var(--spacer-8); min-height: 32px; padding: 0 var(--spacer-12); background: var(--bg-base-default); border: 1px solid var(--border-neutral-l1); border-radius: var(--radius-8); color: var(--text-default); width: 100%; font-family: var(--body-base-font-family); font-size: var(--body-base-font-size); line-height: var(--body-base-line-height); }
     .ds-input:focus-within { border-color: var(--border-contrast); background: var(--bg-base-default); }
@@ -405,7 +405,7 @@ pre {
     .stepper input::-webkit-outer-spin-button,
     .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
-/* ── Menu ──────────────────────────────────────────────────── */
+/* 鈹€鈹€ Menu 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
 /* ===== Menu ===== */
     .ds-menu { display: flex; flex-direction: column; gap: var(--spacer-2); background: var(--bg-menu); border: 1px solid var(--border-neutral-l1); border-radius: var(--radius-12); padding: var(--spacer-8); min-width: 180px; color: var(--text-default); box-shadow: 0 12px 32px color-mix(in srgb, var(--text-default) 12%, transparent), 0 2px 8px color-mix(in srgb, var(--text-default) 8%, transparent); }
     .ds-menu__item { display: flex; align-items: center; gap: var(--spacer-8); min-height: 32px; padding: var(--spacer-6) var(--spacer-8); border-radius: var(--radius-8); color: var(--text-default); font-family: var(--body-base-font-family); font-size: var(--body-base-font-size); line-height: var(--body-base-line-height); font-weight: var(--body-base-font-weight); cursor: pointer; }
@@ -420,7 +420,7 @@ pre {
     .ds-menu__group-label { padding: var(--spacer-8); color: var(--text-tertiary); font-family: var(--body-md-font-family); font-size: var(--body-md-font-size); line-height: var(--body-md-line-height); font-weight: var(--body-md-font-weight); letter-spacing: var(--body-md-letter-spacing); text-transform: uppercase; }
     .ds-popover .ds-menu { border: 0; padding: 0; box-shadow: none; }
 
-/* ── Pagination ────────────────────────────────────────────── */
+/* 鈹€鈹€ Pagination 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
 /* ===== Pagination ===== */
     .ds-pagination { display: inline-flex; gap: var(--spacer-4); }
     .ds-pagination__item { min-width: 32px; height: 32px; padding: 0 var(--spacer-8); display: inline-flex; align-items: center; justify-content: center; background: transparent; color: var(--text-secondary); border: 1px solid var(--border-neutral-l1); border-radius: var(--radius-8); font: inherit; font-size: var(--body-base-font-size); cursor: pointer; }
@@ -429,13 +429,13 @@ pre {
     .ds-pagination__item[disabled] { opacity: .4; cursor: not-allowed; }
     .ds-pagination__range { color: var(--text-tertiary); font-family: var(--body-sm-font-family); font-size: var(--body-sm-font-size); line-height: var(--body-sm-line-height); font-weight: var(--body-sm-font-weight); letter-spacing: var(--body-sm-letter-spacing); }
 
-/* ── Progress ──────────────────────────────────────────────── */
+/* 鈹€鈹€ Progress 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
 /* ===== Progress ===== */
     .ds-progress { height: 6px; background: var(--bg-overlay-l2); border-radius: var(--radius-full); overflow: hidden; }
     .ds-progress__bar { height: 100%; background: var(--text-default); border-radius: inherit; }
     .ds-progress--brand .ds-progress__bar { background: var(--bg-brand); }
 
-/* ── Skeleton ──────────────────────────────────────────────── */
+/* 鈹€鈹€ Skeleton 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
 /* ===== Skeleton ===== */
     .ds-skeleton { display: block; background: var(--bg-overlay-l2); border-radius: var(--radius-8); position: relative; overflow: hidden; }
     .ds-skeleton::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, var(--bg-overlay-l3), transparent); animation: ds-skeleton-shine 1.6s ease-in-out infinite; }
@@ -444,7 +444,7 @@ pre {
     .ds-skeleton--title { height: 18px; width: 50%; }
     .ds-skeleton--circle { width: 32px; height: 32px; border-radius: var(--radius-full); }
 
-/* ── Table ─────────────────────────────────────────────────── */
+/* 鈹€鈹€ Table 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
 /* ===== Table ===== */
     .ds-table-card { overflow-x: auto; }
     .ds-table { width: 100%; min-width: 720px; border-collapse: collapse; }
@@ -467,7 +467,7 @@ pre {
     .ds-table__member-email { color: var(--text-tertiary); font-size: var(--body-md-font-size); line-height: var(--body-md-line-height); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .ds-table td.ds-table__actions { width: 1%; text-align: right; }
 
-/* ── Tabs ──────────────────────────────────────────────────── */
+/* 鈹€鈹€ Tabs 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
 /* ===== Tabs ===== */
     .ds-tabs { display: flex; gap: var(--spacer-24); border-bottom: 1px solid var(--border-neutral-l1); }
     .ds-tab { display: inline-flex; align-items: center; padding: var(--spacer-12) 0; background: transparent; border: none; color: var(--text-tertiary); cursor: pointer; font: inherit; font-size: var(--body-base-font-size); line-height: var(--body-base-line-height); font-weight: var(--font-weight-medium); position: relative; }
@@ -477,7 +477,7 @@ pre {
     .ds-tab__count,
     .ds-tab .ds-tag.num { margin-left: var(--spacer-6); min-width: 18px; height: 18px; padding: 0 var(--spacer-6); display: inline-grid; place-items: center; vertical-align: middle; border: none; border-radius: var(--radius-full); background: var(--bg-overlay-l2); color: var(--text-tertiary); font-family: var(--font-family-metric); font-size: var(--body-xs-font-size); line-height: var(--body-xs-line-height); font-weight: var(--body-xs-font-weight); font-variant-numeric: tabular-nums; }
 
-/* ── Tag ───────────────────────────────────────────────────── */
+/* 鈹€鈹€ Tag 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
 /* ===== Tag / Badge ===== */
     .ds-tag { display: inline-flex; align-items: center; gap: var(--spacer-4); height: 22px; padding: 0 var(--spacer-8); border-radius: var(--radius-8); font-size: var(--body-sm-font-size); line-height: var(--body-sm-line-height); background: var(--bg-overlay-l2); color: var(--text-secondary); border: 1px solid var(--border-neutral-l1); }
     .ds-tag .icon { width: 12px; height: 12px; }
@@ -618,7 +618,7 @@ pre {
   }
     </style>
     <style id="page-style">
-  /* ===== Page: 对话面板 (Chat Panel) — three-column research chat ===== */
+  /* ===== Page: 瀵硅瘽闈㈡澘 (Chat Panel) 鈥?three-column research chat ===== */
 
   /* ---- Compat tokens referenced by app-shell partial / task spec ---- */
   :root {
@@ -845,11 +845,11 @@ pre {
     color: var(--status-success-default);
     font-size: var(--body-sm-font-size);
   }
-  /* ★ Status-specific styling */
+  /* 鈽?Status-specific styling */
   .react-step-status-ok { background: var(--status-success-surface-l1); color: var(--status-success-default); }
   .react-step-status-running { background: var(--status-alert-surface-l1); color: var(--status-alert-active); }
   .react-step-status-error { background: var(--status-error-surface-l1); color: var(--status-error-default); }
-  /* ★ CSS-only spinner for running state */
+  /* 鈽?CSS-only spinner for running state */
   .react-step-spinner {
     display: inline-block;
     width: 10px;
@@ -964,7 +964,7 @@ pre {
   .chat-md-p:last-of-type { margin-bottom: 0; }
   .chat-md-p strong { color: var(--text-default); font-weight: 600; }
 
-  /* ── Table in chat messages ── */
+  /* 鈹€鈹€ Table in chat messages 鈹€鈹€ */
   .chat-md-table-card {
     overflow-x: auto;
     margin: var(--spacer-12) 0;
@@ -1016,7 +1016,7 @@ pre {
   }
   .chat-md-table td.num strong { color: var(--text-default); }
 
-  /* ── Derivations collapse ── */
+  /* 鈹€鈹€ Derivations collapse 鈹€鈹€ */
   .chat-md-derivations {
     margin: var(--spacer-10) 0;
     padding: var(--spacer-8) var(--spacer-12);
@@ -1037,7 +1037,7 @@ pre {
     line-height: 1.5;
   }
 
-  /* ── Disclaimer ── */
+  /* 鈹€鈹€ Disclaimer 鈹€鈹€ */
   .chat-disclaimer {
     margin-top: var(--spacer-8);
     padding-top: var(--spacer-6);
@@ -1047,14 +1047,14 @@ pre {
     font-style: italic;
   }
 
-  /* ── Horizontal rule ── */
+  /* 鈹€鈹€ Horizontal rule 鈹€鈹€ */
   .chat-md-hr {
     border: none;
     border-top: 1px solid var(--border-neutral-l2);
     margin: var(--spacer-16) 0;
   }
 
-  /* ── Blockquote ── */
+  /* 鈹€鈹€ Blockquote 鈹€鈹€ */
   .chat-md-blockquote {
     margin: var(--spacer-12) 0;
     padding: var(--spacer-8) var(--spacer-16);
@@ -1070,7 +1070,7 @@ pre {
   .chat-md-blockquote p:first-child { margin-top: 0; }
   .chat-md-blockquote p:last-child { margin-bottom: 0; }
 
-  /* ── Ordered list ── */
+  /* 鈹€鈹€ Ordered list 鈹€鈹€ */
   .chat-md-ol {
     margin: var(--spacer-8) 0;
     padding-left: var(--spacer-24);
@@ -1083,7 +1083,7 @@ pre {
   }
   .chat-md-ol li:last-child { margin-bottom: 0; }
 
-  /* ── Inline link ── */
+  /* 鈹€鈹€ Inline link 鈹€鈹€ */
   .chat-md-link {
     color: var(--bg-brand);
     text-decoration: underline;
@@ -1178,7 +1178,7 @@ pre {
     font-weight: 600;
     color: var(--text-default);
   }
-  /* 建设中灰化（参考侧栏 WIP 样式） */
+  /* 寤鸿涓伆鍖栵紙鍙傝€冧晶鏍?WIP 鏍峰紡锛?*/
   .ctx-card.is-wip {
     opacity: 0.6;
   }
@@ -1346,7 +1346,7 @@ pre {
     background: #ffffff;
   }
 
-  /* ── Minimal scrollbar ─────────────────────────────────────── */
+  /* 鈹€鈹€ Minimal scrollbar 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
 
   ::-webkit-scrollbar {
     width: 6px;
@@ -1369,7 +1369,7 @@ pre {
     background: rgba(200, 200, 200, 0.30);
   }
 
-  /* ── Provenance Data Cards ──────────────────────────────────── */
+  /* 鈹€鈹€ Provenance Data Cards 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€ */
 
   .prov-traced {
     cursor: help;
@@ -1536,13 +1536,13 @@ pre {
     color: var(--text-default);
   }
 
-  /* Untraced number marker — inline warning */
+  /* Untraced number marker 鈥?inline warning */
   .prov-untraced {
     border-bottom: 1px dashed var(--status-error-default);
     cursor: help;
   }
   .prov-untraced::after {
-    content: " ⚠";
+    content: " 鈿?;
     font-size: 10px;
     color: var(--status-error-default);
     vertical-align: super;
@@ -1606,47 +1606,95 @@ pre {
         <span class="sidebar-logo-icon" aria-hidden="true"><span style="display:inline-block;width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,#4B3FE3,#6A6FFF);text-align:center;line-height:28px;color:#fff;font-weight:700;font-size:14px;font-family:var(--font-family-mono,monospace)">C</span></span>
         <span class="app-sidebar-logo-text">
           <span class="logo-title">CagentOS</span>
-          <span class="logo-subtitle">投研工作台</span>
+          <span class="logo-subtitle">鎶曠爺宸ヤ綔鍙?/span>
         </span>
-        <button class="sidebar-collapse-btn" aria-label="收起侧边栏" title="收起侧边栏">
+        <button class="sidebar-collapse-btn" aria-label="鏀惰捣渚ц竟鏍? title="鏀惰捣渚ц竟鏍?>
           <span data-icon="arrow-collapse" class="sidebar-collapse-icon" aria-hidden="true"></span>
         </button>
       </div>
 
-      <nav class="app-sidebar-nav" data-dom-id="sidebar-nav" aria-label="主导航"></nav>
+      <nav class="app-sidebar-nav" data-dom-id="sidebar-nav" aria-label="涓诲鑸?></nav>
 
       <div class="app-sidebar-footer" data-dom-id="sidebar-status">
+        <button class="sidebar-model-btn" id="openModelSettings" type="button">
+          <span data-icon="settings" class="sidebar-model-btn-icon" aria-hidden="true"></span>
+          <span id="modelBtnLabel">妯″瀷璁剧疆</span>
+        </button>
         <div class="sidebar-status-row">
           <span class="sidebar-status-dot is-success" aria-hidden="true"></span>
-          <span>4 Agents 在线</span>
+          <span>4 Agents 鍦ㄧ嚎</span>
         </div>
         <div class="sidebar-status-row">
           <span class="sidebar-status-dot is-success" aria-hidden="true"></span>
-          <span>5 数据源 正常</span>
+          <span>5 鏁版嵁婧?姝ｅ父</span>
         </div>
         <div class="sidebar-status-row">
           <span class="sidebar-status-dot is-alert" aria-hidden="true"></span>
-          <span>1 方差告警</span>
+          <span>1 鏂瑰樊鍛婅</span>
         </div>
-        <div class="sidebar-version">v0.5.0 · Phase 4c</div>
+        <div class="sidebar-version">v0.5.0 路 Phase 4c</div>
+      </div>
+
+      <!-- Model settings modal (BYOK) -->
+      <div class="model-modal-backdrop" id="modelModalBackdrop" hidden>
+        <div class="model-modal" role="dialog" aria-modal="true" aria-labelledby="modelModalTitle">
+          <div class="model-modal__head">
+            <h2 id="modelModalTitle">妯″瀷璁剧疆</h2>
+            <button class="model-modal__close" id="closeModelSettings" type="button" aria-label="鍏抽棴">&times;</button>
+          </div>
+          <div class="model-modal__body">
+            <p class="model-modal__hint">
+              榛樿浣跨敤骞冲彴鎻愪緵鐨勬ā鍨嬨€傞厤缃嚜宸辩殑 API Key 鍚庯紝鎵€鏈夊璇濆皢浣跨敤浣犳寚瀹氱殑妯″瀷涓庨搴︺€?
+              Key 浠呯敤浜庣洿杩炴ā鍨嬫湇鍔″晢锛屼笉浼氱敤浜庡叾浠栫敤閫斻€?
+            </p>
+
+            <label class="model-modal__label" for="llmProvider">鏈嶅姟鍟?/label>
+            <select id="llmProvider" class="model-modal__select">
+              <option value="openrouter">OpenRouter</option>
+              <option value="openai">OpenAI</option>
+              <option value="anthropic">Anthropic</option>
+              <option value="deepseek">DeepSeek</option>
+              <option value="groq">Groq</option>
+              <option value="siliconflow">SiliconFlow</option>
+              <option value="together">Together</option>
+            </select>
+
+            <label class="model-modal__label" for="llmApiKey">API Key</label>
+            <input type="password" id="llmApiKey" class="model-modal__input"
+                   placeholder="鏈厤缃紙鐣欑┖淇濇寔鐜扮姸锛? autocomplete="off" />
+            <div class="model-modal__key-hint" id="keyHint"></div>
+
+            <label class="model-modal__label" for="llmModel">榛樿妯″瀷</label>
+            <input type="text" id="llmModel" class="model-modal__input"
+                   placeholder="渚嬪 anthropic/claude-sonnet-4" list="modelSuggestions" />
+            <datalist id="modelSuggestions"></datalist>
+
+            <div class="model-modal__actions">
+              <button type="button" class="model-modal__btn model-modal__btn--ghost" id="testKeyBtn">娴嬭瘯杩炴帴</button>
+              <button type="button" class="model-modal__btn model-modal__btn--ghost model-modal__btn--danger" id="clearKeyBtn">娓呴櫎 Key</button>
+              <button type="button" class="model-modal__btn model-modal__btn--solid" id="saveKeyBtn">淇濆瓨</button>
+            </div>
+            <div class="model-modal__result" id="testResult"></div>
+          </div>
+        </div>
       </div>
     </aside>
 
     <div class="app-main">
       <header class="app-topbar">
         <div class="app-topbar-left">
-          <h1 class="app-page-title" data-dom-id="page-title">对话面板</h1>
+          <h1 class="app-page-title" data-dom-id="page-title">瀵硅瘽闈㈡澘</h1>
         </div>
         <div class="app-topbar-right">
           <span class="ds-tag ds-tag-primary">Model: gpt-4o</span>
           <span class="ds-tag">RAG: 1,247 chunks</span>
-          <button class="theme-toggle" data-dom-id="theme-toggle" onclick="toggleTheme()" aria-label="切换深色模式">
+          <button class="theme-toggle" data-dom-id="theme-toggle" onclick="toggleTheme()" aria-label="鍒囨崲娣辫壊妯″紡">
             <span class="theme-toggle-track">
               <span class="theme-toggle-thumb"></span>
             </span>
-            <span class="theme-toggle-label">深色</span>
+            <span class="theme-toggle-label">娣辫壊</span>
           </button>
-        <span class="ds-avatar" aria-label="用户头像">A</span>
+        <span class="ds-avatar" aria-label="鐢ㄦ埛澶村儚">A</span>
         </div>
       </header>
 
@@ -1657,51 +1705,51 @@ pre {
           <!-- ===== Left panel: conversation list + skill selector ===== -->
           <div class="chat-left">
             <div class="chat-left-header">
-              <span class="chat-left-title">会话列表</span>
+              <span class="chat-left-title">浼氳瘽鍒楄〃</span>
               <button class="ds-btn ds-btn-secondary" type="button">
                 <span data-icon="Plus" aria-hidden="true"></span>
-                <span>新建</span>
+                <span>鏂板缓</span>
               </button>
             </div>
 
             <div class="chat-conv-list">
               <div class="chat-conv-item is-active">
-                <span class="chat-conv-title">NVDA 估值分析</span>
+                <span class="chat-conv-title">NVDA 浼板€煎垎鏋?/span>
                 <div class="chat-conv-meta">
                   <span class="chat-conv-date">14:32</span>
-                  <span class="ds-tag ds-tag-primary">估值分析</span>
+                  <span class="ds-tag ds-tag-primary">浼板€煎垎鏋?/span>
                 </div>
               </div>
               <div class="chat-conv-item">
-                <span class="chat-conv-title">BTC 周期定位</span>
+                <span class="chat-conv-title">BTC 鍛ㄦ湡瀹氫綅</span>
                 <div class="chat-conv-meta">
                   <span class="chat-conv-date">10:15</span>
-                  <span class="ds-tag">宏观</span>
+                  <span class="ds-tag">瀹忚</span>
                 </div>
               </div>
               <div class="chat-conv-item">
-                <span class="chat-conv-title">美联储议息预判</span>
+                <span class="chat-conv-title">缇庤仈鍌ㄨ鎭鍒?/span>
                 <div class="chat-conv-meta">
-                  <span class="chat-conv-date">昨日 16:45</span>
-                  <span class="ds-tag">宏观</span>
+                  <span class="chat-conv-date">鏄ㄦ棩 16:45</span>
+                  <span class="ds-tag">瀹忚</span>
                 </div>
               </div>
               <div class="chat-conv-item">
-                <span class="chat-conv-title">MSTR mNAV 分析</span>
+                <span class="chat-conv-title">MSTR mNAV 鍒嗘瀽</span>
                 <div class="chat-conv-meta">
-                  <span class="chat-conv-date">昨日 09:20</span>
-                  <span class="ds-tag">估值分析</span>
+                  <span class="chat-conv-date">鏄ㄦ棩 09:20</span>
+                  <span class="ds-tag">浼板€煎垎鏋?/span>
                 </div>
               </div>
             </div>
 
             <div class="chat-skill">
               <div class="chat-skill-label-row">
-                <span class="chat-skill-label">技能</span>
+                <span class="chat-skill-label">鎶€鑳?/span>
                 <span class="chat-skill-count">15</span>
               </div>
               <div class="chat-skill-value">financial.research.deep_analysis</div>
-              <div class="chat-skill-desc">深度投研分析 · 多数据源交叉验证</div>
+              <div class="chat-skill-desc">娣卞害鎶曠爺鍒嗘瀽 路 澶氭暟鎹簮浜ゅ弶楠岃瘉</div>
             </div>
           </div>
 
@@ -1710,7 +1758,7 @@ pre {
             <div class="chat-thread">
               <!-- User message -->
               <div class="chat-msg-user">
-                分析 NVDA 当前估值是否合理,对比历史估值区间和同业
+                鍒嗘瀽 NVDA 褰撳墠浼板€兼槸鍚﹀悎鐞?瀵规瘮鍘嗗彶浼板€煎尯闂村拰鍚屼笟
               </div>
 
               <!-- ReAct step 1 -->
@@ -1720,7 +1768,7 @@ pre {
                   <span class="react-step-tool">financial.quote.verified</span>
                   <span class="react-step-status">
                     <span data-icon="check-small" class="react-step-status-icon" aria-hidden="true"></span>
-                    <span>成功</span>
+                    <span>鎴愬姛</span>
                     <span class="react-step-elapsed">1.2s</span>
                   </span>
                 </div>
@@ -1735,12 +1783,12 @@ pre {
                   <span class="react-step-tool">financial.fred</span>
                   <span class="react-step-status">
                     <span data-icon="check-small" class="react-step-status-icon" aria-hidden="true"></span>
-                    <span>成功</span>
+                    <span>鎴愬姛</span>
                     <span class="react-step-elapsed">2.1s</span>
                   </span>
                 </div>
                 <div class="react-step-args">series="DGS10,DGS2,T10Y2Y"</div>
-                <div class="react-step-result">10Y: <span class="t-metric">4.32%</span>, 2Y: <span class="t-metric">4.75%</span>, 2Y10Y: <span class="t-metric">-43bp</span> (倒挂)</div>
+                <div class="react-step-result">10Y: <span class="t-metric">4.32%</span>, 2Y: <span class="t-metric">4.75%</span>, 2Y10Y: <span class="t-metric">-43bp</span> (鍊掓寕)</div>
               </div>
 
               <!-- ReAct step 3 -->
@@ -1750,12 +1798,12 @@ pre {
                   <span class="react-step-tool">financial.rag.search</span>
                   <span class="react-step-status">
                     <span data-icon="check-small" class="react-step-status-icon" aria-hidden="true"></span>
-                    <span>成功</span>
+                    <span>鎴愬姛</span>
                     <span class="react-step-elapsed">0.8s</span>
                   </span>
                 </div>
-                <div class="react-step-args">query="NVDA 估值 历史 PE" top_k=5</div>
-                <div class="react-step-result">命中 <span class="t-metric">3</span> 条知识库记录 (relevance: <span class="t-metric">0.89</span>)</div>
+                <div class="react-step-args">query="NVDA 浼板€?鍘嗗彶 PE" top_k=5</div>
+                <div class="react-step-result">鍛戒腑 <span class="t-metric">3</span> 鏉＄煡璇嗗簱璁板綍 (relevance: <span class="t-metric">0.89</span>)</div>
               </div>
 
               <!-- ReAct step 4 -->
@@ -1765,12 +1813,12 @@ pre {
                   <span class="react-step-tool">financial.memory.query_theses</span>
                   <span class="react-step-status">
                     <span data-icon="check-small" class="react-step-status-icon" aria-hidden="true"></span>
-                    <span>成功</span>
+                    <span>鎴愬姛</span>
                     <span class="react-step-elapsed">0.3s</span>
                   </span>
                 </div>
-                <div class="react-step-args">topic="NVDA 估值"</div>
-                <div class="react-step-result">召回 <span class="t-metric">2</span> 条活跃论点</div>
+                <div class="react-step-args">topic="NVDA 浼板€?</div>
+                <div class="react-step-result">鍙洖 <span class="t-metric">2</span> 鏉℃椿璺冭鐐?/div>
               </div>
 
               <!-- Assistant message -->
@@ -1780,16 +1828,16 @@ pre {
                   <span class="chat-assistant-name">Researcher Agent</span>
                 </div>
                 <div class="chat-assistant-bubble">
-                  <h2 class="chat-md-heading">NVDA 估值分析</h2>
-                  <p class="chat-md-p"><strong>当前估值</strong>: NVDA 营收 <span class="t-metric">$22.1B (+265% YoY)</span>, P/E <span class="t-metric">65.2x</span>, 远高于半导体行业中位数 <span class="t-metric">22.3x</span></p>
-                  <p class="chat-md-p"><strong>历史对比</strong>: 当前 P/E 处于 5 年 <span class="t-metric">85 分位</span>, 前次高点 (2024Q1) P/E <span class="t-metric">78x</span> 后回调 <span class="t-metric">28%</span></p>
-                  <p class="chat-md-p"><strong>利率环境</strong>: 10Y-2Y 利差 <span class="t-metric">-43bp</span> (深度倒挂), 高估值成长股承压</p>
-                  <p class="chat-md-p"><strong>RAG 参考</strong>: 知识库中 NVDA AI 垄断溢价论点置信度 <span class="t-metric">78%</span>, 但需关注周期性风险</p>
-                  <p class="chat-md-p"><strong>综合判断</strong>: 当前估值存在 <span class="risk-text">高估风险</span>。AI 需求支撑长期逻辑, 但利率倒挂 + 历史分位偏高建议等待回调至 P/E <span class="t-metric">50x</span> 以下再建仓。</p>
+                  <h2 class="chat-md-heading">NVDA 浼板€煎垎鏋?/h2>
+                  <p class="chat-md-p"><strong>褰撳墠浼板€?/strong>: NVDA 钀ユ敹 <span class="t-metric">$22.1B (+265% YoY)</span>, P/E <span class="t-metric">65.2x</span>, 杩滈珮浜庡崐瀵间綋琛屼笟涓綅鏁?<span class="t-metric">22.3x</span></p>
+                  <p class="chat-md-p"><strong>鍘嗗彶瀵规瘮</strong>: 褰撳墠 P/E 澶勪簬 5 骞?<span class="t-metric">85 鍒嗕綅</span>, 鍓嶆楂樼偣 (2024Q1) P/E <span class="t-metric">78x</span> 鍚庡洖璋?<span class="t-metric">28%</span></p>
+                  <p class="chat-md-p"><strong>鍒╃巼鐜</strong>: 10Y-2Y 鍒╁樊 <span class="t-metric">-43bp</span> (娣卞害鍊掓寕), 楂樹及鍊兼垚闀胯偂鎵垮帇</p>
+                  <p class="chat-md-p"><strong>RAG 鍙傝€?/strong>: 鐭ヨ瘑搴撲腑 NVDA AI 鍨勬柇婧环璁虹偣缃俊搴?<span class="t-metric">78%</span>, 浣嗛渶鍏虫敞鍛ㄦ湡鎬ч闄?/p>
+                  <p class="chat-md-p"><strong>缁煎悎鍒ゆ柇</strong>: 褰撳墠浼板€煎瓨鍦?<span class="risk-text">楂樹及椋庨櫓</span>銆侫I 闇€姹傛敮鎾戦暱鏈熼€昏緫, 浣嗗埄鐜囧€掓寕 + 鍘嗗彶鍒嗕綅鍋忛珮寤鸿绛夊緟鍥炶皟鑷?P/E <span class="t-metric">50x</span> 浠ヤ笅鍐嶅缓浠撱€?/p>
                   <div class="chat-md-tags">
-                    <span class="ds-tag ds-tag-alert">高风险</span>
-                    <span class="ds-tag">等待回调</span>
-                    <span class="ds-tag ds-tag-primary">AI 垄断溢价</span>
+                    <span class="ds-tag ds-tag-alert">楂橀闄?/span>
+                    <span class="ds-tag">绛夊緟鍥炶皟</span>
+                    <span class="ds-tag ds-tag-primary">AI 鍨勬柇婧环</span>
                   </div>
                 </div>
               </div>
@@ -1797,11 +1845,11 @@ pre {
 
             <!-- Message input bar -->
             <div class="chat-input-bar">
-              <textarea class="chat-input" placeholder="输入分析请求...按 Enter 发送" rows="1"></textarea>
-              <span class="chat-model-selector">gpt-4o · 0.3</span>
+              <textarea class="chat-input" placeholder="杈撳叆鍒嗘瀽璇锋眰...鎸?Enter 鍙戦€? rows="1"></textarea>
+              <span class="chat-model-selector">gpt-4o 路 0.3</span>
               <button class="ds-btn ds-btn-primary" type="button">
                 <span data-icon="arrow-right" aria-hidden="true"></span>
-                <span>发送</span>
+                <span>鍙戦€?/span>
               </button>
             </div>
           </div>
@@ -1811,7 +1859,7 @@ pre {
             <!-- Data Sources card -->
             <div class="ds-card ctx-card" id="data-sources-card" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
               <div class="ctx-card-head" style="flex-shrink:0;">
-                <span class="ctx-card-title">数据源状态</span>
+                <span class="ctx-card-title">鏁版嵁婧愮姸鎬?/span>
                 <span class="ctx-card-meta">14:32:05</span>
               </div>
               <div class="data-sources-body" style="flex:1;overflow-y:auto;min-height:0;">
@@ -1819,7 +1867,7 @@ pre {
                 <span class="src-name">FRED</span>
                 <span class="src-state">
                   <span class="src-dot is-ok" aria-hidden="true"></span>
-                  <span>在线</span>
+                  <span>鍦ㄧ嚎</span>
                   <span class="src-extra"><span class="t-metric">287</span> series</span>
                 </span>
               </div>
@@ -1827,32 +1875,32 @@ pre {
                 <span class="src-name">Jin10</span>
                 <span class="src-state is-warn">
                   <span class="src-dot is-warn" aria-hidden="true"></span>
-                  <span>方差告警</span>
+                  <span>鏂瑰樊鍛婅</span>
                   <span data-icon="info" class="src-state-icon" aria-hidden="true"></span>
-                  <span class="src-extra">实时</span>
+                  <span class="src-extra">瀹炴椂</span>
                 </span>
               </div>
               <div class="src-row">
                 <span class="src-name">yfinance</span>
                 <span class="src-state">
                   <span class="src-dot is-ok" aria-hidden="true"></span>
-                  <span>在线</span>
-                  <span class="src-extra">NVDA ✓</span>
+                  <span>鍦ㄧ嚎</span>
+                  <span class="src-extra">NVDA 鉁?/span>
                 </span>
               </div>
               <div class="src-row">
                 <span class="src-name">akshare</span>
                 <span class="src-state">
                   <span class="src-dot is-ok" aria-hidden="true"></span>
-                  <span>在线</span>
-                  <span class="src-extra">A股 ✓</span>
+                  <span>鍦ㄧ嚎</span>
+                  <span class="src-extra">A鑲?鉁?/span>
                 </span>
               </div>
               <div class="src-row">
                 <span class="src-name">PANews</span>
                 <span class="src-state">
                   <span class="src-dot is-ok" aria-hidden="true"></span>
-                  <span>在线</span>
+                  <span>鍦ㄧ嚎</span>
                   <span class="src-extra"><span class="t-metric">24</span>h</span>
                 </span>
               </div>
@@ -1862,33 +1910,33 @@ pre {
             <!-- Agent Progress card -->
             <div class="ds-card ctx-card is-wip">
               <div class="ctx-card-head">
-                <span class="ctx-card-title">多 Agent 协作</span>
-                <span class="ctx-card-tag">建设中</span>
+                <span class="ctx-card-title">澶?Agent 鍗忎綔</span>
+                <span class="ctx-card-tag">寤鸿涓?/span>
               </div>
               <div class="agent-row">
                 <span data-icon="check-small" class="agent-icon is-success" aria-hidden="true"></span>
                 <span class="agent-name">Supervisor</span>
-                <span class="agent-state">已完成</span>
+                <span class="agent-state">宸插畬鎴?/span>
               </div>
               <div class="agent-row">
                 <span data-icon="check-small" class="agent-icon is-success" aria-hidden="true"></span>
                 <span class="agent-name">DataCollector</span>
-                <span class="agent-state">已完成 · <span class="agent-elapsed">3.4s</span></span>
+                <span class="agent-state">宸插畬鎴?路 <span class="agent-elapsed">3.4s</span></span>
               </div>
               <div class="agent-row">
                 <span data-icon="check-small" class="agent-icon is-success" aria-hidden="true"></span>
                 <span class="agent-name">Researcher</span>
-                <span class="agent-state">已完成 · <span class="agent-elapsed">8.7s</span></span>
+                <span class="agent-state">宸插畬鎴?路 <span class="agent-elapsed">8.7s</span></span>
               </div>
               <div class="agent-row">
                 <span data-icon="check-small" class="agent-icon is-success" aria-hidden="true"></span>
                 <span class="agent-name">Red-Team</span>
-                <span class="agent-state">已完成 · <span class="agent-elapsed">2.1s</span></span>
+                <span class="agent-state">宸插畬鎴?路 <span class="agent-elapsed">2.1s</span></span>
               </div>
               <div class="agent-row">
                 <span data-icon="clock_time" class="agent-icon is-alert" aria-hidden="true"></span>
                 <span class="agent-name">Editor</span>
-                <span class="agent-state is-alert">进行中...</span>
+                <span class="agent-state is-alert">杩涜涓?..</span>
               </div>
             </div>
           </div>
@@ -1904,7 +1952,7 @@ pre {
     html.classList.toggle('dark');
     const isDark = html.classList.contains('dark');
     const label = document.querySelector('.theme-toggle-label');
-    if (label) label.textContent = isDark ? '亮色' : '深色';
+    if (label) label.textContent = isDark ? '浜壊' : '娣辫壊';
     try { localStorage.setItem('cagentos-theme', isDark ? 'dark' : 'light'); } catch(e) {}
   }
   (function() {
@@ -1919,12 +1967,13 @@ pre {
     else { html.classList.remove('dark'); html.classList.add('light'); }
     const isDark = html.classList.contains('dark');
     const label = document.querySelector('.theme-toggle-label');
-    if (label) label.textContent = isDark ? '亮色' : '深色';
+    if (label) label.textContent = isDark ? '浜壊' : '娣辫壊';
   })();
 </script>
   <!-- app-injected-scripts -->
   <script src="/static/assets/js/shell.js"></script>
   <script src="/static/assets/js/auth.js"></script>
+  <script src="/static/assets/js/model-settings.js"></script>
   <script src="/static/assets/js/chat.js"></script>
   <!-- /app-injected-scripts -->
 <script>
@@ -1937,7 +1986,7 @@ pre {
   if (!card) return;
   const body = card.querySelector('.data-sources-body');
   if (!body) return;
-  const NAMES = {edgar:'SEC EDGAR','fin-skill':'fin-skill MCP',fred:'FRED',yfinance:'yfinance',coinmetrics:'Coin Metrics',defillama:'DeFi Llama',binance_derivatives:'Binance 衍生品',fear_greed:'恐贪指数','akshare-stock':'akshare (行情)','akshare-futures':'akshare (期货)','akshare-financials':'akshare (财报)'};
+  const NAMES = {edgar:'SEC EDGAR','fin-skill':'fin-skill MCP',fred:'FRED',yfinance:'yfinance',coinmetrics:'Coin Metrics',defillama:'DeFi Llama',binance_derivatives:'Binance 琛嶇敓鍝?,fear_greed:'鎭愯椽鎸囨暟','akshare-stock':'akshare (琛屾儏)','akshare-futures':'akshare (鏈熻揣)','akshare-financials':'akshare (璐㈡姤)'};
   fetch('/api/v1/data-sources').then(r=>r.json()).then(d=>{
     body.innerHTML='';
     const meta=card.querySelector('.ctx-card-meta');
@@ -1947,8 +1996,8 @@ pre {
       const n=document.createElement('span');n.className='src-name';n.textContent=NAMES[s.name]||s.name;row.appendChild(n);
       const st=document.createElement('span');st.className='src-state';
       const dot=document.createElement('span');dot.className='src-dot';
-      if(s.available){dot.classList.add('is-ok');st.appendChild(dot);st.appendChild(document.createTextNode(' 在线'));if(s.latency_ms!==null){const x=document.createElement('span');x.className='src-extra';x.innerHTML='<span class=t-metric>'+s.latency_ms+'</span>ms';st.appendChild(x)}}
-       else{dot.classList.add('is-warn');st.classList.add('is-warn');st.appendChild(dot);st.appendChild(document.createTextNode(s.error?' '+s.error:' 离线'))}
+      if(s.available){dot.classList.add('is-ok');st.appendChild(dot);st.appendChild(document.createTextNode(' 鍦ㄧ嚎'));if(s.latency_ms!==null){const x=document.createElement('span');x.className='src-extra';x.innerHTML='<span class=t-metric>'+s.latency_ms+'</span>ms';st.appendChild(x)}}
+       else{dot.classList.add('is-warn');st.classList.add('is-warn');st.appendChild(dot);st.appendChild(document.createTextNode(s.error?' '+s.error:' 绂荤嚎'))}
       row.appendChild(st);body.appendChild(row);
     });
   }).catch(()=>{});
