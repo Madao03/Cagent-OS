@@ -17,6 +17,9 @@ _DEFAULT_BASE_URLS: dict[str, str] = {
     "groq": "https://api.groq.com/openai/v1",
     "siliconflow": "https://api.siliconflow.cn/v1",
     "together": "https://api.together.xyz/v1",
+    "zhipu": "https://open.bigmodel.cn/api/paas/v4",
+    "moonshot": "https://api.moonshot.cn/v1",
+    "qwen": "https://dashscope.aliyuncs.com/compatible-mode/v1",
 }
 
 
@@ -63,7 +66,7 @@ def create_backend(settings: Settings | None = None) -> LLMBackend:
 
     raise ValueError(
         f"Unknown LLM provider: '{settings.llm_provider}'. "
-        f"Supported: openrouter, deepseek, openai, anthropic, groq, siliconflow, together, custom."
+        f"Supported: openrouter, deepseek, openai, anthropic, groq, siliconflow, together, zhipu, moonshot, qwen, custom."
     )
 
 

@@ -193,4 +193,98 @@
   saveBtn.addEventListener("click", save);
   testBtn.addEventListener("click", testKey);
   clearBtn.addEventListener("click", clearKey);
+
+  // ============================================================
+  // Quick model switcher (badge next to chat input)
+  // ============================================================
+  var badge = document.getElementById("quickModelBadge");
+  var popover = document.getElementById("quickModelPopover");
+  var customList = document.getElementById("quickModelCustomList");
+  var customEmpty = document.getElementById("quickModelCustomEmpty");
+  var cfgBtn = document.getElementById("quickModelOpenSettings");
+
+  if (badge && popover) {
+    var currentModel = localStorage.getItem("cos_active_model") || "";
+
+    function badgeText() {
+      return currentModel ? currentModel.split("/").pop() + " ▾" : "DeepSeek V4 Pro ▾";
+    }
+
+    function refreshBadge() {
+      badge.textContent = badgeText();
+      badge.classList.toggle("is-custom", !!currentModel);
+    }
+
+    function closePopover() { popover.hidden = true; }
+
+    function loadQuickModels() {
+      Promise.all([
+        api("/api/v1/llm/settings").then(function (r) { return r.json(); }),
+        api("/api/v1/llm/models").then(function (r) { return r.json(); }),
+      ]).then(function (res) {
+        var settings = res[0], models = res[1];
+        var items = "";
+        if (settings.configured) {
+          var models2 = (models.models_by_provider || {})[settings.provider] || [];
+          models2.forEach(function (m) {
+            var active = m === currentModel ? " is-active" : "";
+            items += '<button class="model-popover__item' + active + '" data-model="' + m + '">' + m + '</button>';
+          });
+        }
+        if (items) {
+          customList.innerHTML = items;
+          customEmpty.hidden = true;
+          // wire clicks
+          customList.querySelectorAll(".model-popover__item").forEach(function (b) {
+            b.addEventListener("click", function () {
+              currentModel = b.getAttribute("data-model");
+              localStorage.setItem("cos_active_model", currentModel);
+              refreshBadge();
+              closePopover();
+            });
+          });
+        } else {
+          customList.innerHTML = "";
+          customEmpty.hidden = false;
+        }
+        // mark platform default active state
+        var defBtn = popover.querySelector('[data-model=""]');
+        if (defBtn) defBtn.classList.toggle("is-active", !currentModel);
+      }).catch(function () { /* non-fatal */ });
+    }
+
+    badge.addEventListener("click", function (e) {
+      e.stopPropagation();
+      popover.hidden = !popover.hidden;
+      if (!popover.hidden) loadQuickModels();
+    });
+    badge.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        badge.click();
+      }
+    });
+    document.addEventListener("click", function (e) {
+      if (!popover.hidden && !popover.contains(e.target) && e.target !== badge) closePopover();
+    });
+
+    // platform default
+    var defBtn = popover.querySelector('[data-model=""]');
+    if (defBtn) {
+      defBtn.addEventListener("click", function () {
+        currentModel = "";
+        localStorage.removeItem("cos_active_model");
+        refreshBadge();
+        closePopover();
+      });
+    }
+    if (cfgBtn) {
+      cfgBtn.addEventListener("click", function () {
+        closePopover();
+        open();
+      });
+    }
+
+    refreshBadge();
+  }
 })();

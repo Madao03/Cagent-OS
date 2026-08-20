@@ -523,7 +523,12 @@
             "Content-Type": "application/json",
             "Accept": "text/event-stream",
           },
-          body: JSON.stringify({ content: text, user_id: USER_ID, stream: true }),
+          body: JSON.stringify({
+            content: text,
+            user_id: USER_ID,
+            stream: true,
+            model: (localStorage.getItem("cos_active_model") || undefined),
+          }),
         }
       );
 

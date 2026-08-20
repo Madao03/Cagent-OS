@@ -109,6 +109,10 @@ def build_runs_router(
             except Exception:
                 logger.debug("BYOK resolution failed, using platform backend", exc_info=True)
 
+        # ★ Request-level model wins (quick switcher) — only with a user backend
+        if backend_override is not None and payload.model:
+            model_override = payload.model
+
         def _run_agent_thread() -> None:
             """Run agent in a thread, push events to queue."""
             try:

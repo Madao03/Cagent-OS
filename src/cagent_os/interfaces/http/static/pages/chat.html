@@ -1110,6 +1110,7 @@ pre {
 
   /* ---- Message input bar ---- */
   .chat-input-bar {
+    position: relative;
     display: flex;
     align-items: flex-end;
     gap: var(--spacer-12);
@@ -1145,6 +1146,78 @@ pre {
     border-radius: var(--radius-6);
     padding: var(--spacer-8) var(--spacer-12);
     white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: border-color 0.15s ease, color 0.15s ease;
+  }
+  .chat-model-selector:hover,
+  .chat-model-selector:focus-visible {
+    border-color: var(--border-contrast);
+    color: var(--text-default);
+    outline: none;
+  }
+  .chat-model-selector.is-custom {
+    border-color: var(--status-success-default);
+    color: var(--status-success-default);
+  }
+  .model-popover {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    right: 0;
+    z-index: 300;
+    min-width: 240px;
+    max-height: 320px;
+    overflow-y: auto;
+    background: var(--bg-surface-default);
+    border: 1px solid var(--border-neutral-l1);
+    border-radius: var(--radius-md, 8px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+    padding: var(--spacer-6);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .model-popover[hidden] { display: none; }
+  .model-popover__title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--text-quaternary);
+    padding: var(--spacer-6) var(--spacer-8) var(--spacer-4);
+    text-transform: uppercase;
+  }
+  .model-popover__item {
+    text-align: left;
+    border: 0;
+    background: none;
+    color: var(--text-secondary);
+    font-family: var(--font-family-mono);
+    font-size: var(--body-sm-font-size);
+    padding: var(--spacer-8) var(--spacer-10);
+    border-radius: var(--radius-6);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .model-popover__item:hover {
+    background: var(--bg-overlay-l1);
+    color: var(--text-default);
+  }
+  .model-popover__item.is-active {
+    color: var(--text-brand);
+    font-weight: 600;
+  }
+  .model-popover__item--cfg {
+    border-top: 1px solid var(--border-neutral-l1);
+    border-radius: 0;
+    margin-top: var(--spacer-4);
+    color: var(--text-tertiary);
+  }
+  .model-popover__empty {
+    font-size: var(--body-sm-font-size);
+    color: var(--text-quaternary);
+    padding: var(--spacer-4) var(--spacer-8) var(--spacer-8);
   }
 
   /* ---- Right context panel ---- */
@@ -1653,6 +1726,9 @@ pre {
               <option value="openai">OpenAI</option>
               <option value="anthropic">Anthropic</option>
               <option value="deepseek">DeepSeek</option>
+              <option value="zhipu">智谱 GLM</option>
+              <option value="moonshot">月之暗面 Kimi</option>
+              <option value="qwen">通义千问 Qwen</option>
               <option value="groq">Groq</option>
               <option value="siliconflow">SiliconFlow</option>
               <option value="together">Together</option>
@@ -1842,7 +1918,20 @@ pre {
             <!-- Message input bar -->
             <div class="chat-input-bar">
               <textarea class="chat-input" placeholder="输入分析请求...按 Enter 发送" rows="1"></textarea>
-              <span class="chat-model-selector">gpt-4o · 0.3</span>
+              <span class="chat-model-selector" id="quickModelBadge" role="button" tabindex="0"
+                    title="点击切换模型">gpt-4o ▾</span>
+              <div class="model-popover" id="quickModelPopover" hidden>
+                <div class="model-popover__title">平台模型</div>
+                <button class="model-popover__item" data-model="">默认（DeepSeek V4 Pro）</button>
+                <div class="model-popover__title">我的 Key 模型</div>
+                <div class="model-popover__empty" id="quickModelCustomEmpty">
+                  未配置 — 侧栏“模型设置”添加 API Key
+                </div>
+                <div id="quickModelCustomList"></div>
+                <button class="model-popover__item model-popover__item--cfg" id="quickModelOpenSettings">
+                  ⚙ 模型设置…
+                </button>
+              </div>
               <button class="ds-btn ds-btn-primary" type="button">
                 <span data-icon="arrow-right" aria-hidden="true"></span>
                 <span>发送</span>
@@ -1969,8 +2058,8 @@ pre {
   <!-- app-injected-scripts -->
   <script src="/static/assets/js/shell.js"></script>
   <script src="/static/assets/js/auth.js"></script>
-  <script src="/static/assets/js/model-settings.js"></script>
-  <script src="/static/assets/js/chat.js?v=2"></script>
+  <script src="/static/assets/js/model-settings.js?v=2"></script>
+  <script src="/static/assets/js/chat.js?v=3"></script>
   <!-- /app-injected-scripts -->
 <script>
 (function loadDS() {

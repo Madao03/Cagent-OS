@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 class PostMessageRequest(BaseModel):
     content: str
     stream: bool = True
+    model: str | None = None  # per-request model override (BYOK quick switcher)
 
 
 class OneshotRunRequest(BaseModel):

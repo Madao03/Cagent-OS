@@ -22,7 +22,10 @@ from cagent_os.llm.factory import _DEFAULT_BASE_URLS
 
 logger = logging.getLogger(__name__)
 
-SUPPORTED_PROVIDERS = ["openrouter", "openai", "anthropic", "deepseek", "groq", "siliconflow", "together"]
+SUPPORTED_PROVIDERS = [
+    "openrouter", "openai", "anthropic", "deepseek", "groq",
+    "siliconflow", "together", "zhipu", "moonshot", "qwen",
+]
 
 
 class LLMSettingsPayload(BaseModel):
@@ -47,6 +50,9 @@ _COMMON_MODELS: dict[str, list[str]] = {
     "groq": ["llama-3.3-70b-versatile", "mixtral-8x7b-32768"],
     "siliconflow": ["deepseek-ai/DeepSeek-V3", "Qwen/Qwen2.5-72B-Instruct"],
     "together": ["meta-llama/Llama-3.3-70B-Instruct-Turbo"],
+    "zhipu": ["glm-4-plus", "glm-4-air", "glm-4-flash"],
+    "moonshot": ["moonshot-v1-128k", "moonshot-v1-32k", "kimi-k2-0711-preview"],
+    "qwen": ["qwen-max", "qwen-plus", "qwen-turbo", "qwen2.5-72b-instruct"],
 }
 
 
