@@ -97,6 +97,8 @@ class _RuntimeSetup(NamedTuple):
     policy: ToolGuard
     system_prompt: str
     tool_schemas: list
+    # BYOK: per-run backend override (None = use the process-wide default)
+    backend_override: object | None = None
 
 
 @dataclass
@@ -295,6 +297,8 @@ class AgentRuntime:
         principal_id: str,
         user_content: str,
         skip_provenance_gate: bool = False,
+        model_override: str | None = None,
+        backend_override: object | None = None,
     ) -> Iterator[JournalEntry]:
         conversation = self._conversation_service.get_conversation(principal_id, conversation_id)
         if not self._lock_manager.acquire(conversation_id):
@@ -336,7 +340,11 @@ class AgentRuntime:
             self._trace("run_started", conversation_id, user_id=conversation.user_id, user_query=user_content)
 
             try:
-                setup = self._build_runtime_setup(conversation)
+                setup = self._build_runtime_setup(
+                    conversation,
+                    model_override=model_override,
+                    backend_override=backend_override,
+                )
                 # Phase 1a: inject read-later skill into system prompt for URL messages
                 _injection = _build_read_later_prompt_injection(user_content)
                 if _injection:
@@ -425,7 +433,7 @@ class AgentRuntime:
                     # ── Cost budget check ──
                     self._check_cost_budget(principal_id or conversation.user_id)
 
-                    response = self._llm_backend.complete(request)
+                    response = self._backend_for(setup).complete(request)
                     message = response.message
 
                     # ── Cost recording ──
@@ -669,6 +677,8 @@ class AgentRuntime:
         conversation_id: str,
         principal_id: str,
         user_content: str,
+        model_override: str | None = None,
+        backend_override: object | None = None,
     ) -> Iterator[JournalEntry]:
         conversation = self._conversation_service.get_conversation(principal_id, conversation_id)
         if not self._lock_manager.acquire(conversation_id):
@@ -709,7 +719,11 @@ class AgentRuntime:
             self._trace("run_started", conversation_id, user_id=conversation.user_id, user_query=user_content)
 
             try:
-                setup = self._build_runtime_setup(conversation)
+                setup = self._build_runtime_setup(
+                    conversation,
+                    model_override=model_override,
+                    backend_override=backend_override,
+                )
                 # Phase 1a: inject read-later skill into system prompt for URL messages
                 _injection = _build_read_later_prompt_injection(user_content)
                 if _injection:
@@ -801,7 +815,8 @@ class AgentRuntime:
                     # ── Cost budget check ──
                     self._check_cost_budget(principal_id or conversation.user_id)
 
-                    stream_method = getattr(self._llm_backend, "stream", None)
+                    run_backend = self._backend_for(setup)
+                    stream_method = getattr(run_backend, "stream", None)
                     if callable(stream_method):
                         stream_usage = None
                         for stream_event in stream_method(request):
@@ -827,7 +842,7 @@ class AgentRuntime:
                                 model=setup.model,
                             )
                     else:
-                        response = self._llm_backend.complete(request)
+                        response = self._backend_for(setup).complete(request)
                         message = response.message
                         if message.content:
                             content_chunks.append(message.content)
@@ -975,6 +990,10 @@ class AgentRuntime:
     def _resolve_model(self) -> str:
         return self._model_router.resolve(self._settings.default_model_alias)
 
+    def _backend_for(self, setup: _RuntimeSetup):
+        """Return the LLM backend for a run — per-run override or the default."""
+        return setup.backend_override or self._llm_backend
+
     def _append_failed(
         self,
         conversation_id: str,
@@ -995,7 +1014,13 @@ class AgentRuntime:
         self._event_store.append(conversation_id, event)
         return event
 
-    def _build_runtime_setup(self, conversation) -> _RuntimeSetup:
+    def _build_runtime_setup(
+        self,
+        conversation,
+        *,
+        model_override: str | None = None,
+        backend_override: object | None = None,
+    ) -> _RuntimeSetup:
         allowed_capability_ids = self._capability_executor.registry.default_enabled_tool_ids()
         if conversation.policy_snapshot.allowed_capability_ids:
             policy_allowed = set(conversation.policy_snapshot.allowed_capability_ids)
@@ -1023,10 +1048,11 @@ class AgentRuntime:
             )
         ).text
         return _RuntimeSetup(
-            model=self._resolve_model(),
+            model=(model_override or self._resolve_model()),
             policy=ToolGuard(set(allowed_capability_ids)),
             system_prompt=system_prompt,
             tool_schemas=tool_schemas,
+            backend_override=backend_override,
         )
 
     def _build_memory_context(self, conversation) -> MemorySnapshot:

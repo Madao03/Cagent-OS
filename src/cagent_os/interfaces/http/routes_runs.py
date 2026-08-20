@@ -33,6 +33,7 @@ def build_runs_router(
     conversation_service: ConversationService,
     user_skill_service: UserSkillService,
     cost_tracker: CostTracker | None = None,
+    backend_registry=None,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -96,6 +97,18 @@ def build_runs_router(
         # The SSE reader simply drains the queue and exits when done.
         event_queue: asyncio.Queue = asyncio.Queue(maxsize=256)
 
+        # ── BYOK: resolve per-user backend + model (falls back to platform) ──
+        model_override = None
+        backend_override = None
+        if backend_registry is not None:
+            try:
+                resolved = backend_registry.resolve_for(principal_id)
+                if resolved.is_user_key:
+                    backend_override = resolved.backend
+                    model_override = resolved.default_model
+            except Exception:
+                logger.debug("BYOK resolution failed, using platform backend", exc_info=True)
+
         def _run_agent_thread() -> None:
             """Run agent in a thread, push events to queue."""
             try:
@@ -103,6 +116,8 @@ def build_runs_router(
                     conversation_id=conversation_id,
                     principal_id=principal_id,
                     user_content=payload.content,
+                    model_override=model_override,
+                    backend_override=backend_override,
                 ):
                     payload_dict = project_stream_payload(event, conversation_id=conversation_id)
                     try:

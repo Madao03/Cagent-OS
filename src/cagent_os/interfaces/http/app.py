@@ -96,6 +96,16 @@ def create_app() -> FastAPI:
         return here.parents[4]
 
     _project_root = _resolve_project_root()
+
+    # BYOK: per-user LLM key store + backend registry
+    from cagent_os.auth.user_llm_key_store import UserLLMKeyStore
+    from cagent_os.llm.backend_registry import BackendRegistry
+    user_llm_key_store = UserLLMKeyStore(_project_root / "data" / "user_llm_keys.db")
+    backend_registry = BackendRegistry(
+        default_backend=llm_backend,
+        key_store=user_llm_key_store,
+        settings=settings,
+    )
     logger.info("Project root resolved: %s", _project_root)
 
     # Phase 4c+: Persistent conversation storage.
@@ -494,6 +504,7 @@ def create_app() -> FastAPI:
             conversation_service=conversation_service,
             user_skill_service=user_skill_service,
             cost_tracker=run_engine._cost_tracker if hasattr(run_engine, '_cost_tracker') else None,
+            backend_registry=backend_registry,
         )
     )
 
@@ -510,6 +521,10 @@ def create_app() -> FastAPI:
             user_skill_service=user_skill_service,
         )
     )
+
+    # BYOK: LLM key management
+    from cagent_os.interfaces.http.routes_llm_keys import build_llm_keys_router
+    app.include_router(build_llm_keys_router(user_llm_key_store, backend_registry))
 
     # Phase 4c: Knowledge triage + article browsing
     from cagent_os.interfaces.http.routes_knowledge import build_knowledge_router
