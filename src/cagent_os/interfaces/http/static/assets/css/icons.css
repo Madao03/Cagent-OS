@@ -36,6 +36,7 @@
 [data-icon="arrow-collapse"] { -webkit-mask-image: url(../icons/dl_builtin_trae_work/arrow-collapse.svg); mask-image: url(../icons/dl_builtin_trae_work/arrow-collapse.svg); }
 [data-icon="arrow-right"] { -webkit-mask-image: url(../icons/dl_builtin_trae_work/arrow-right.svg); mask-image: url(../icons/dl_builtin_trae_work/arrow-right.svg); }
 [data-icon="Plus"] { -webkit-mask-image: url(../icons/dl_builtin_trae_work/Plus.svg); mask-image: url(../icons/dl_builtin_trae_work/Plus.svg); }
+[data-icon="settings"] { -webkit-mask-image: url(../icons/dl_builtin_trae_work/settings.svg); mask-image: url(../icons/dl_builtin_trae_work/settings.svg); }
 
 /* ── Sidebar-specific sizing ── */
 .sidebar-nav-icon {
@@ -133,6 +134,7 @@
 [data-icon="brain"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/brain.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/brain.svg); }
 [data-icon="clock_time"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/clock_time.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/clock_time.svg); }
 [data-icon="Plus"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/Plus.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/Plus.svg); }
+[data-icon="settings"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/settings.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/settings.svg); }
 
 /* Knowledge page icons */
 [data-icon="Search"] { -webkit-mask-image: url(/static/assets/icons/dl_builtin_trae_work/Search.svg); mask-image: url(/static/assets/icons/dl_builtin_trae_work/Search.svg); }
