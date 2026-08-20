@@ -156,6 +156,119 @@ def _fetch_via_jina(url: str) -> str | None:
         logger.info("Jina Reader failed for %s: %s", url[:80], str(exc)[:100])
         return None
 
+# -- WeChat article direct fetch (zero-credential fast path) ──────────
+# mp.weixin.qq.com article pages embed the full text in raw HTML
+# (js_content div) — no JS execution and no login needed for text.
+# The WeChat-embedded-browser UA (from a proven production crawler)
+# avoids the "环境异常" verification trigger that generic UAs hit.
+_WEIXIN_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 "
+    "NetType/WIFI MicroMessenger/7.0.20.1781(0x6700143B) "
+    "WindowsWechat(0x63090a13) UnifiedPCWindowsWechat(0xf254173b) XWEB/19027 Flue"
+)
+_WEIXIN_DIRECT_TIMEOUT = 15
+_WEIXIN_BLOCK_MARKERS = (
+    "环境异常", "操作频繁", "访问过于频繁", "去验证",
+    "该内容已被发布者删除", "此内容因违规无法查看", "此账号已自主注销",
+)
+
+# publish timestamp appears in page JS vars (unix seconds) — try known variants
+_WEIXIN_TS_PATTERNS = (
+    re.compile(r'var\s+ct\s*=\s*"?(\d{9,11})"?'),
+    re.compile(r'var\s+oriCreateTime\s*=\s*"?(\d{9,11})"?'),
+    re.compile(r'"create_time"\s*:\s*(\d{9,11})'),
+)
+
+
+def _fetch_weixin_direct(url: str) -> str | None:
+    """Fetch a WeChat article via plain HTTP + WeChat-browser UA.
+
+    Returns formatted markdown text, or None when blocked / anti-bot /
+    content missing (caller falls back to Jina → Playwright).
+    """
+    import requests
+    try:
+        resp = requests.get(
+            url,
+            timeout=_WEIXIN_DIRECT_TIMEOUT,
+            headers={
+                "User-Agent": _WEIXIN_UA,
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            },
+            allow_redirects=True,
+        )
+    except Exception as exc:
+        logger.info("weixin direct fetch failed url=%s err=%s", url[:80], str(exc)[:120])
+        return None
+    if resp.status_code != 200:
+        logger.info("weixin direct fetch status=%d url=%s", resp.status_code, url[:80])
+        return None
+
+    html = resp.text
+    head = html[:4000]
+    # Anti-bot / verification / deleted pages
+    if any(marker in head for marker in _WEIXIN_BLOCK_MARKERS):
+        logger.info("weixin direct fetch hit block page url=%s", url[:80])
+        return None
+
+    try:
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(html, "lxml")
+    except Exception:
+        logger.info("weixin direct fetch: bs4/lxml unavailable or parse error")
+        return None
+
+    content_el = soup.find(id="js_content")
+    if content_el is None:
+        # no js_content → not a normal article page (maybe redirect target)
+        logger.info("weixin direct fetch: no js_content div url=%s", url[:80])
+        return None
+
+    title_el = soup.find("h1", id="activity-name") or soup.find("h1", class_="rich_media_title")
+    title = title_el.get_text(strip=True) if title_el else ""
+    if not title:
+        og = soup.find("meta", property="og:title")
+        title = (og.get("content", "") if og else "").strip()
+
+    account_el = soup.find(id="js_name")
+    account = account_el.get_text(strip=True) if account_el else ""
+    author_meta = soup.find("meta", attrs={"name": "author"})
+    author = (author_meta.get("content", "").strip() if author_meta else "")
+
+    publish_time = ""
+    for pat in _WEIXIN_TS_PATTERNS:
+        m = pat.search(html)
+        if m:
+            try:
+                publish_time = datetime.datetime.fromtimestamp(
+                    int(m.group(1)), tz=datetime.timezone(datetime.timedelta(hours=8))
+                ).strftime("%Y-%m-%d %H:%M")
+                break
+            except (ValueError, OverflowError):
+                continue
+
+    # Text extraction: block-level tags → newlines, then normalize blank lines
+    text = content_el.get_text(separator="\n", strip=True)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    if len(text) < 100:
+        logger.info("weixin direct fetch: extracted text too short (%d) url=%s", len(text), url[:80])
+        return None
+
+    img_count = len(content_el.find_all("img"))
+
+    header = f"# {title}\n" if title else ""
+    meta_parts = [p for p in (
+        f"公众号: {account}" if account else "",
+        f"作者: {author}" if author else "",
+        f"发布时间: {publish_time}" if publish_time else "",
+    ) if p]
+    meta_line = f"\n> {' · '.join(meta_parts)}\n" if meta_parts else ""
+    img_note = f"\n\n(正文含图片 {img_count} 张，图片未随文本提取)" if img_count else ""
+
+    return f"{header}{meta_line}\n{text}{img_note}\n\n来源: {url}"
+
 # -- Persistent browser instance (reuse across fetches) ────────────────
 _persistent_browser = None
 _persistent_playwright = None
@@ -278,12 +391,12 @@ class WebPlugin(Plugin):
                     capability_id="web.fetch_weixin",
                     trust_level=ToolTrustLevel.NETWORKED,
                     description=(
-                        "Fetch a WeChat Official Account (微信公众号) article via Playwright headless browser. "
-                        "Use this for mp.weixin.qq.com URLs — it launches a real Chromium browser in WSL "
-                        "to bypass WeChat's anti-scraping protection. Images are downloaded locally into "
-                        "knowledge/00_Inbox/<slug>/images/ and referenced with local relative paths — "
-                        "Obsidian can render them directly. Returns markdown with YAML frontmatter "
-                        "and metadata (saved_dir, article_path, image_count)."
+                        "Fetch a WeChat Official Account (微信公众号) article. "
+                        "Degradation chain: (1) direct HTTP with WeChat-browser UA — fast, "
+                        "extracts title/account/author/publish-time + full text; (2) Jina cloud "
+                        "rendering; (3) headless Chromium via Playwright. On Windows dev it "
+                        "can also save images into knowledge/00_Inbox/ via WSL. Returns "
+                        "markdown text with metadata header."
                     ),
                     parameters={
                         "type": "object",
@@ -609,7 +722,25 @@ class WebPlugin(Plugin):
                 error_code="ssrf_blocked",
                 content={"message": f"URL blocked by SSRF protection: {reason}"},
             )
-        # ★ On Linux with native Playwright, try fetching weixin article text
+        # ★ Tier 1: direct HTTP with WeChat-browser UA (fast, zero credentials).
+        # mp article pages embed full text in raw HTML — works from most IPs
+        # without JS execution. The WeChat UA avoids the "环境异常" gate.
+        try:
+            direct = _fetch_weixin_direct(url)
+            if direct:
+                logger.info("weixin direct fetch OK url=%s len=%d", url[:80], len(direct))
+                return ToolResult(status="ok", content=direct)
+        except Exception as exc:
+            logger.warning("weixin direct fetch raised: %s", str(exc)[:200])
+
+        # ★ Tier 2: Jina Reader (cloud rendering — different egress IP,
+        # bypasses IP-based blocks that hit our server directly)
+        jina_content = _fetch_via_jina(url)
+        if jina_content and not _looks_like_antibot(jina_content):
+            logger.info("weixin via Jina OK url=%s len=%d", url[:80], len(jina_content))
+            return ToolResult(status="ok", content=jina_content)
+
+        # ★ Tier 3: native Playwright (Linux)
         if not _IS_WINDOWS and _PLAYWRIGHT_AVAILABLE:
             # WeChat articles may work via native browser on some networks
             try:
@@ -623,10 +754,14 @@ class WebPlugin(Plugin):
         if not _IS_WINDOWS or not _WSL_PYTHON or not _FETCH_WEIXIN_SCRIPT:
             return ToolResult(
                 status="error",
-                error_code="browser_mode_unavailable",
+                error_code="weixin_all_tiers_failed",
                 content={
-                    "message": "微信文章暂不支持自动抓取（服务器在海外，受微信访问限制）。请在本地浏览器打开文章，保存为 Markdown 后通过知识库注入。",
-                    "fallback": "Try web.fetch — it may get partial content or search for mirrors.",
+                    "message": (
+                        "微信文章抓取失败：直抓 / Jina 云渲染 / 无头浏览器三级降级均未取到正文"
+                        "（可能是微信验证页拦截或网络出口受限）。"
+                        "请尝试 web.fetch 或 financial.websearch 找镜像/转载版本。"
+                    ),
+                    "fallback": "Try web.fetch, or financial.websearch to find mirrors.",
                 },
             )
         # Fetch to WSL /tmp/ first (no Chinese chars → no subprocess encoding issues).
