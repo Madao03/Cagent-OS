@@ -2,7 +2,7 @@
 
 > English | [中文](README.zh-CN.md)
 >
-> **Status: Beta Online ✅ — Live at cagentos.com — 16 skills · 42+ capabilities · 10 data sources · Multi-agent + Cron + Web UI + RAG + Provenance + Playwright + Auto-Eval**
+> **Status: Beta Online ✅ — Live at cagentos.com — 16 skills · 42+ capabilities · 10 data sources · Multi-agent + Cron + Web UI + RAG + Provenance + BYOK + Auto-Eval**
 > A self-contained financial research agent operating system built from scratch — not a LangChain wrapper.
 
 CagentOS is a Python framework for building AI agents that perform financial research. It implements a ReAct loop with event sourcing at its core, surrounded by a plugin-based tool system, cross-session memory, a provenance layer that traces every number to its source, and a data integrity layer designed specifically for financial data.
@@ -20,7 +20,7 @@ CLI / HTTP API / Web UI
      ↓
 AgentRuntime (ReAct loop + Event Sourcing)
   ├── PromptBuilder          (system prompt assembly + derivation lineage)
-  ├── ModelRouter → LLM      (8 providers, cost-tiered routing)
+  ├── ModelRouter → LLM      (10 providers, cost-tiered routing + BYOK per-user backends)
   ├── ToolGuard              (allow-list authorization)
   ├── ToolDispatcher         (plugin-based tool execution)
   └── TranscriptReplayer     (event stream → LLM transcript)
@@ -105,11 +105,14 @@ uvicorn cagent_os.interfaces.http.app:create_app --factory --host 0.0.0.0 --port
 - **ToolRegistry + ToolGuard + ArgumentChecker**: plugin-based tools with JSON Schema validation and allow-list authorization
 - **EventStore**: SQLite-backed event sourcing with WAL mode for concurrent reads
 - **TraceReader**: Conversation history query API (list/summary/timeline/count) + DICA 4-dimension tagging
-- **8 LLM providers**: OpenRouter, DeepSeek, OpenAI, Anthropic, Groq, SiliconFlow, Together, Custom
+- **10 LLM providers**: OpenRouter, DeepSeek, OpenAI, Anthropic, Groq, SiliconFlow, Together + Zhipu GLM, Moonshot Kimi, Qwen (all OpenAI-compatible) + Custom
+- **BYOK (bring your own key)**: Fernet-encrypted per-user key store + `BackendRegistry` (LRU cache) + `FallbackBackend` (user-key failure → transparent platform-key retry, model auto-retargeted) + cost attribution (`billed_to`: user-key usage costs $0 to platform and is quota-exempt) + secret redaction in logs (`sk-xxx`/`Bearer` masked)
+- **WeChat article fetch (3-tier)**: direct HTTP with WeChat-embedded-browser UA (~1s, zero credentials, extracts title/account/author/publish-time/full text — verified working from overseas IPs) → Jina cloud rendering → Playwright headless
+- **Landing page + demo chat**: public showcase page at `/` (EN/中文) with a no-login demo chat widget (IP-limited 3/day, SSE streaming) — full product moved to `/chat`
 - **MCP Client**: Multi-transport session manager (Anthropic official SDK)
 - **Memory system**: Hot memory (≤500 chars in system prompt) + Cold memory (SQLite 3 tables) + **LLM contradiction detection**
 - **Data Integrity Wall**: 10 sources → variance detection (>5% alert) → cross-validation → circuit breaker + akshare price fallback
-- **Browser fetch**: Playwright + Readability.js + Stealth anti-bot — native Linux Playwright with circuit breaker (3 fails → 5min cooldown) + concurrency limiter (1 Chromium instance) + UTF-8 encoding fix for Chinese sites
+- **Browser fetch**: Playwright + Readability.js + Stealth anti-bot — persistent browser reuse + sliding-window circuit breaker (success <30% → 60s cooldown) + Jina Reader pre-fallback + concurrency limiter (1 Chromium instance) + UTF-8 encoding fix for Chinese sites
 - **Skill Schemas**: Pydantic v2 I/O schemas for core skills + State 3-layer separation + permission matrix
 - **Golden Cases**: 14 evaluation benchmarks (including "data unavailable" anti-hallucination case)
 - **RAG Pipeline**: Qwen3-Embedding-8B + 6 chunking schemes + Reranker (cos 0.79→0.999) + NumPy vector store
@@ -177,6 +180,11 @@ uvicorn cagent_os.interfaces.http.app:create_app --factory --host 0.0.0.0 --port
 | — | React infrastructure (Vite + TypeScript + shared design tokens, serves at /app/*) | ✅ Done (2026-08-08) |
 | — | React opinion bank page (list/search/filter/category/edit/delete) | ✅ Done (2026-08-08) |
 | — | Ops: uvicorn 2 workers + Caddy 120s timeout + stale-while-revalidate DS cache | ✅ Done (2026-08-08) |
+| — | Landing page at `/` + demo chat widget (no-auth, IP-limited, SSE) + `/chat` migration | ✅ Done (2026-08-09) |
+| — | BYOK: encrypted key store + BackendRegistry + settings modal + fallback + cost attribution + log redaction | ✅ Done (2026-08-20) |
+| — | 3 new LLM providers (Zhipu / Kimi / Qwen, total 10) + quick model switcher | ✅ Done (2026-08-20) |
+| — | WeChat article 3-tier fetch (WeChat-UA direct, verified from overseas IP) | ✅ Done (2026-08-20) |
+| — | P0 fixes: cost-tracker never recorded tokens / multi-turn history rendering / FRED event-loop blocking | ✅ Done (2026-08-20) |
 | 4d | Langfuse trace visualization | Planned |
 | 4e | Evaluation regression CI suite | Planned |
 | 5 | Self-improving flywheel (SFT/DPO) | Future |
@@ -212,7 +220,7 @@ Financial analysis lives or dies by the accuracy of its numbers. The provenance 
 | Language | Python ≥ 3.11 |
 | Framework | FastAPI, Pydantic v2 |
 | Database | SQLite (aiosqlite + WAL) — 3 databases: conversations, memory, trace |
-| LLM | DeepSeek V4 Pro (default), 7 others |
+| LLM | DeepSeek V4 Pro (default), 9 others — incl. Zhipu GLM / Moonshot Kimi / Qwen |
 | SEC filings | EDGAR companyfacts XBRL + 6-K/8-K earnings releases |
 | Macro data | FRED API (21 series) + 金十 MCP (quotes/calendar/flash) |
 | Stock data | yfinance + akshare (A-shares, HK stocks, US indices, China futures) |

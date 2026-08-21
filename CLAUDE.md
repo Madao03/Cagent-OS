@@ -8,7 +8,7 @@ CagentOS — 面向金融投研场景的 Agent 操作系统。底层 Runtime 基
 
 - **Python**: >=3.11, **包名**: `cagent_os` (源码在 `src/cagent_os/`)
 - **数据库**: SQLite (`aiosqlite` + WAL 模式)
-- **LLM**: DeepSeek V4 Pro (默认),8 个 provider 框架就绪
+- **LLM**: DeepSeek V4 Pro (平台默认), 10 个 provider 框架就绪 (含智谱/Kimi/Qwen), 支持 **BYOK 用户自带 key**
 - **当前阶段**: **Beta 上线 ✅** (2026-08-07, cagentos.com, 邀请制内测)
 
 ## 常用命令
@@ -31,7 +31,7 @@ CLI / HTTP API
      ↓
 AgentRuntime (agents/run_engine.py)         ← ReAct 循环 + Event Sourcing
   ├── PromptBuilder                           ← system prompt 组装
-  ├── ModelRouter → LLM                       ← 8 provider 路由
+  ├── ModelRouter → LLM                       ← 10 provider 路由 (+ BYOK per-user backend)
   ├── ToolGuard → ToolDispatcher              ← 白名单 + 插件执行
   └── TranscriptReplayer                      ← 事件流 → transcript
         ↑
@@ -135,7 +135,7 @@ Multi-Agent Layer (multi_agent/)
 
 **Memory** (热记忆 ×3): `memory.get_full_state` · `memory.update_notes` · `memory.update_profile`
 
-**Web**: `web.fetch` (auto-fallback 到浏览器模式) · `web.fetch_weixin` (微信) · `image.describe` (多模态骨架)
+**Web**: `web.fetch` (auto-fallback 到浏览器模式) · `web.fetch_weixin` (公众号三级降级: 微信UA直抓→Jina→Playwright) · `image.describe` (多模态骨架)
 
 **Infra**: `docs.read` · `write.file` · `Skill` (技能加载)
 
@@ -200,6 +200,23 @@ Multi-Agent Layer (multi_agent/)
 - ✅ **侧栏统一**: 所有页面 (vanilla + React) 统一渐变紫 C logo + icon 系统 + 暗色模式底色 (#151b23) + 折叠按钮
 - ✅ **React 设计系统**: `frontend/src/styles/tokens.css` 提取自 chat.html (单一真相源, React 页面引用, 待后续迁移时全局面用)
 
+### Beta++ 迭代 (2026-08-09 ~ 08-20)
+
+- ✅ **落地页重构**: `/` 变为求职展示页 (landing.html, 中英双语切换), 对话面板迁移至 `/chat`, about 返回按钮修正
+- ✅ **落地页 demo 对话框**: 无需登录体验 + IP 限流 3 次/天 (slowapi) + SSE 流式回答 (`routes_demo.py` `/api/v1/demo`)
+- ✅ **BYOK 用户自带 API Key (3 批次)**:
+  - 批次 1: `UserLLMKeyStore` (Fernet 对称加密 SQLite, 主密钥 `CAGENTOS_KEY_ENCRYPTION_SECRET`) + `BackendRegistry` (LRU 50 条, TTL 1h, per-user backend) + run_engine `model_override`/`backend_override` 注入 + key 管理 API
+  - 批次 2: 侧栏"模型设置"弹窗 (服务商/key/模型 + 测试连接 + 常用模型建议) + 输入框旁模型快捷切换 popover (request-level model 透传, 仅用户 backend 上生效)
+  - 批次 3: `FallbackBackend` 错误回落 (complete 全失败回落 / stream 仅未输出时回落, model 自动 retarget 平台默认) + `billed_to` 成本归因 (`user_key` cost=0 不占平台配额, request 次数照算) + `redact_secrets` 日志清洗 (sk-xxx/Bearer 打码) + `probe_backend` 测试连接绕过回落 (坏 key 不能误报 ok)
+- ✅ **新增 3 家 LLM provider**: 智谱 GLM (bigmodel.cn) / 月之暗面 Kimi (moonshot.cn) / 通义千问 Qwen (dashscope 兼容模式) — 均 OpenAI-compatible, 共 10 家
+- ✅ **微信公众号三级降级抓取**: Tier-1 微信内置浏览器 UA 直抓 (requests + bs4 解析 js_content, 零凭据 ~1s, 提取标题/公众号/作者/发布时间/全文) → Tier-2 Jina 云渲染 → Tier-3 Playwright; 内置 7 种拦截页标记识别; **海外服务器 IP 实测可用**
+- ✅ **模型设置全局 icon**: `settings` SVG mask 补入 icons.css 单一真相源 (侧栏 badge + 弹窗标题 + popover 入口三处统一, 跨主题 currentColor)
+- ✅ **P0 修复 — cost_tracker 计费从未生效**: `run_engine` 传 `prompt_tokens` 但 `record()` 签名是 `input_tokens`, TypeError 被静默吞掉 → **上线以来 token 计费从未记录成功** (只有 request 计数在工作)。已修正, 修复后 token 配额才真正生效
+- ✅ **P0 修复 — 多轮会话 AI 回答丢失**: `lastAssistantShell` 未在新用户轮重置, 后续轮次全部堆进第 1 轮 assistant 气泡 (数据未丢, 渲染错乱)
+- ✅ **P0 修复 — fred_adapter 阻塞事件循环**: `requests.get` 单次最多阻塞 15s, 已包 `asyncio.to_thread`
+- ✅ **Playwright 5合1 优化**: Jina 前置降级 + 常驻浏览器实例复用 + Readability 正文抽取 + Stealth 反检测 + 滑动窗口熔断 (成功率 <30% → 60s 冷却)
+- ⚠️ **事故教训 — PowerShell 编码**: 中文 Windows 下 `Set-Content -Encoding UTF8` 实际以 GBK 写入, UTF-8 中文双重编码 → chat.html 黑屏。已从干净 commit 恢复 (见开发注意事项)
+
 ### 待实现 (阶段 4d-4e + Backlog)
 
 ## 上线前基线（2026-07-29, n=24 runs, 14 cases）
@@ -256,5 +273,11 @@ Multi-Agent Layer (multi_agent/)
 - **Provenance P5 (backlog)**: 派生 fact 成对出现（ratio 0.38 + percentage 38.18 — percentage bridge 产物），且丢失 period_type。应标注主值（primary），并继承父 fact 的 period 信息。
 - **Provenance P6**: ✅ 已修复 — akshare 财报截取最近 8 个报告期，fact 数从 10,204 降至约 600-800。
 - **slowapi key_func 陷阱**: `@limiter.limit()` 装饰器里的 `key_func` 是**无参调用** (`key_func()`)，不传 Request 对象 — 与全局 `Limiter(key_func=fn)` 的签名不同 (那里 `fn` 接收 Request)。限流 key 逻辑必须放在全局 `Limiter(key_func=...)` 层面，不要在装饰器里写 `key_func=lambda r: ...`，否则直接 `TypeError: missing 1 required positional argument: 'r'`。
+- **PowerShell 编码陷阱（重大教训）**: 中文 Windows 下 `Set-Content`/`Add-Content`（即使 `-Encoding UTF8`）实际以 GBK 写入，UTF-8 中文会被双重编码成 mojibake → JS 字符串断裂 → 页面黑屏。**所有涉及 UTF-8 文件的写入一律用 SearchReplace / Write / Python 脚本 (`io.open(encoding="utf-8")`)，禁止 PowerShell 文件操作**。
+- **静态资源 cache-busting**: 改 `static/` 下 CSS/JS 必须 bump 引用处的 `?v=N`（chat/knowledge/about/feedback/roadmap/brief + react/index.html 全部页面），否则浏览器缓存旧文件表现为"修复无效"。当前: sidebar.css v5, icons.css v2, chat.js v3, model-settings.js v2。
+- **cost_tracker.record() 参数名**: 是 `input_tokens`/`output_tokens`（不是 prompt/completion）— 曾因参数名不匹配 TypeError 被 `except` 静默吞掉，上线以来 token 计费从未生效，8-20 才修复。
+- **BYOK 测试连接**: `POST /api/v1/llm/test` 必须用 `registry.probe_backend()`（裸 backend 无回落），坏 key 要报错而不是被平台回落掩盖成 ok。
+- **BYOK 回落语义**: `FallbackBackend.stream()` 只在**未输出任何字符**时回落（中途回落会导致回答重复）；回落时 model 自动换成平台默认（用户模型名在平台 provider 上不存在）；`fallback_used=True` 的 run 归因 `platform_key`。
+- **微信文章直抓**: 正确 UA 是微信内置浏览器（`MicroMessenger ... WindowsWechat XWEB`，来自生产验证的爬虫），普通 Chrome UA 会拿到 JS 渲染壳。文章页正文在 `js_content` div 服务端渲染，无需登录。搜狗微信搜索的 `/link` 重定向 URL 是 JS 分段拼接（`url += 'frag'`），需正则拼合。
 - **Provenance P7 (backlog)**: 茅台 EPS caliber 未标注「单季/累计」。A 股一季报 EPS 通常为单季值，逻辑成立但 caliber 未写明。触发: 出现 EPS 时间序列比较需求时。
 - **Provenance P8 (backlog)**: 覆盖率分母混在一起 — 搜索来源的引用与真未溯源在同一分母。建议拆分显示「结构化 / 引用 / 未溯源」三类，避免用户把「38% 来自新闻与卖方观点」误读为质量问题。触发: 用户对覆盖率数字产生疑问时。

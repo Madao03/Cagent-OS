@@ -1,6 +1,6 @@
 # CagentOS
 
-> **状态:上线前就绪 ✅ — 16 个技能 · 42+ 个能力 · 10 个数据源 · 多 Agent + Cron + Web UI + RAG + 数字溯源 + 自动评测**
+> **状态:Beta 上线 ✅ — cagentos.com 运行中 — 16 个技能 · 42+ 个能力 · 10 个数据源 · 多 Agent + Cron + Web UI + RAG + 数字溯源 + BYOK + 自动评测**
 > 一个从零搭建的金融投研 Agent 操作系统 —— 不是 LangChain 包装器。
 >
 > [English](README.md) | 中文
@@ -20,7 +20,7 @@ CLI / HTTP API / Web UI
      ↓
 AgentRuntime (ReAct 循环 + 事件溯源)
   ├── PromptBuilder          (system prompt 组装 + 派生计算溯源)
-  ├── ModelRouter → LLM      (8 个 provider,按成本分层路由)
+  ├── ModelRouter → LLM      (10 个 provider,按成本分层路由 + BYOK 用户自带 key)
   ├── ToolGuard              (白名单授权)
   ├── ToolDispatcher         (插件化工具执行)
   └── TranscriptReplayer     (事件流 → LLM transcript)
@@ -105,7 +105,10 @@ uvicorn cagent_os.interfaces.http.app:create_app --factory --host 0.0.0.0 --port
 - **ToolRegistry + ToolGuard + ArgumentChecker**:插件化工具 + JSON Schema 校验 + 白名单授权
 - **EventStore**:SQLite 事件溯源,WAL 模式支持并发读
 - **TraceReader**:对话历史查询 API (list/summary/timeline/count) + DICA 四维标注
-- **8 个 LLM provider**:OpenRouter / DeepSeek / OpenAI / Anthropic / Groq / SiliconFlow / Together / Custom
+- **10 个 LLM provider**:OpenRouter / DeepSeek / OpenAI / Anthropic / Groq / SiliconFlow / Together + 智谱 GLM / 月之暗面 Kimi / 通义千问 Qwen (均 OpenAI 兼容) + Custom
+- **BYOK 用户自带 key**:Fernet 加密 per-user key 存储 + `BackendRegistry` (LRU 缓存) + `FallbackBackend` (用户 key 失败 → 透明回落平台 key, model 自动重定向) + 成本归因 (`billed_to`: 用户 key 调用平台成本记 0 且不占配额) + 日志密钥打码 (sk-xxx/Bearer 掩码)
+- **微信公众号抓取 (三级降级)**:微信内置浏览器 UA 直抓 (~1s, 零凭据, 提取标题/公众号/作者/发布时间/全文 — 海外 IP 实测可用) → Jina 云渲染 → Playwright
+- **落地页 + demo 对话**:`/` 公开展示页 (中英双语) + 无需登录的 demo 对话框 (IP 限流 3 次/天, SSE 流式) —— 完整产品迁移至 `/chat`
 - **MCP Client**:多传输协议 session 管理器(Anthropic 官方 SDK)
 - **记忆系统**:热记忆(≤500 字注入 system prompt)+ 冷记忆(SQLite 三表)+ **LLM 矛盾检测**
 - **数据防线**:10 源 → 方差检测(>5% 告警)→ 交叉验证 → 熔断器 + akshare 价格降级
@@ -166,6 +169,13 @@ uvicorn cagent_os.interfaces.http.app:create_app --factory --host 0.0.0.0 --port
 | — | Crypto 数据适配器 (4源 × 7能力) | ✅ 完成 (2026-07-23) |
 | — | 数字溯源系统 (P0-c + P1 派生链) | ✅ 完成 (2026-07-24) |
 | — | 上线前基线 (n=24, 0% 失败, 21.6% 幻觉率) | ✅ 完成 (2026-07-29) |
+| **Beta** | **上线: cagentos.com — 邀请制内测** | **✅ 上线 (2026-08-07)** |
+| — | 上线周迭代: 溯源 UI + 路线图/反馈/观点库页 + React 基建 + 运维优化 | ✅ 完成 (2026-08-08) |
+| — | 落地页 `/` + demo 对话框 (免登录/IP 限流/SSE) + `/chat` 迁移 | ✅ 完成 (2026-08-09) |
+| — | BYOK: 加密 key 库 + BackendRegistry + 设置弹窗 + 错误回落 + 成本归因 + 日志打码 | ✅ 完成 (2026-08-20) |
+| — | 新增 3 家 LLM provider (智谱/Kimi/Qwen, 共 10 家) + 模型快捷切换 | ✅ 完成 (2026-08-20) |
+| — | 微信公众号三级降级抓取 (微信 UA 直抓, 海外 IP 验证) | ✅ 完成 (2026-08-20) |
+| — | P0 修复: cost-tracker 从未记录 token / 多轮历史渲染 / FRED 阻塞事件循环 | ✅ 完成 (2026-08-20) |
 | 4d | Langfuse 全链路可视化 | 规划中 |
 | 4e | 评测 CI/CD 回归套件 | 规划中 |
 | 5 | 自进化飞轮 (SFT/DPO) | 远期 |
@@ -201,7 +211,7 @@ LLM 会幻觉工具名。Guard 强制执行 per-agent 白名单。如果 LLM 返
 | 语言 | Python ≥ 3.11 |
 | 框架 | FastAPI, Pydantic v2 |
 | 数据库 | SQLite (aiosqlite + WAL) — 三库:conversations / memory / trace |
-| LLM | DeepSeek V4 Pro(默认),另有 7 个 provider |
+| LLM | DeepSeek V4 Pro(平台默认), 另有 9 家 —— 含智谱 GLM / Kimi / Qwen |
 | SEC 财报 | EDGAR companyfacts XBRL + 6-K/8-K 业绩新闻稿 |
 | 宏观数据 | FRED API (21 系列) + 金十 MCP (行情/日历/快讯) |
 | 股票数据 | yfinance + akshare (A股 / 港股 / 美股指数 / 国内期货) |
@@ -212,12 +222,14 @@ LLM 会幻觉工具名。Guard 强制执行 per-agent 白名单。如果 LLM 返
 | 多 Agent | 自研 Supervisor (asyncio.gather 并行 + 串行流水线) |
 | 定时调度 | CronAgent (FastAPI lifespan,每天 8:00 触发) |
 | MCP | Anthropic 官方 `mcp` SDK |
-| 浏览器抓取 | Playwright + Readability.js + Stealth 反反爬 |
+| 浏览器抓取 | Playwright + Readability.js + Stealth 反反爬 + Jina 降级 + 常驻实例复用 |
+| 微信抓取 | 微信内置浏览器 UA 直抓 (js_content 解析) + Jina + Playwright 三级降级 |
 | RAG | Qwen3-Embedding-8B (1024-dim) + Qwen3-Reranker-8B + 6 种分块 |
 | 评测 | Golden Cases × 14 + 25-criterion LLM-Judge + 仪表板 |
 | CLI | argparse REPL |
 | HTTP | FastAPI + SSE 流式 + JWT auth |
-| Web UI | HTML + vanilla JS (对话 / 简报 / 知识库) |
+| Web UI | HTML + vanilla JS (对话 / 简报 / 知识库) + 落地页 + demo 对话框 |
+| React 前端 | Vite + React 18 + TypeScript + React Router (观点库页, `/app/*` 路由) |
 
 ## License
 
