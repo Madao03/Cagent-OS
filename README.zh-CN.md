@@ -37,15 +37,15 @@ AgentRuntime (ReAct 循环 + 事件溯源)
   ────────────────────────────────────────
   横切关注点:
     Ⓐ 记忆 (热记忆 ≤500 字注入 / 冷记忆 SQLite 三表 / LLM 矛盾检测)
-    Ⓑ 可观测性 (TraceWriter + TraceReader 查询API / DICA 四维标注)
+    Ⓑ 可观测性 (TraceWriter + TraceReader 查询API / DICA: Detect-Interaction-Context-Answer, 每次 run 写入 trace_events, 服务 Phase 5 SFT/DPO)
     Ⓒ 数据防线 (10 个数据源 / 方差检测 >5% / 熔断器 + 降级链)
-    Ⓓ 评测 (Golden Cases ×14 + 25-criterion LLM-Judge + 上线前基线)
+    Ⓓ 评测 (Golden Cases ×14 + 25-criterion LLM-Judge: task4/facts5/tools4/reasoning4/risk4/format4 + 上线前基线)
   ────────────────────────────────────────
   多 Agent 层 (阶段 4a/4b):
     Supervisor (自研编排器)
       ├── DataCollector (并行) — RAG + FRED + web 搜索
       ├── Researcher   (并行) — 全 Skill 套件,可注入 AgentRuntime
-      ├── Red-Team     (串行) — 启发式对抗检查
+      ├── Red-Team     (串行) — 启发式对抗检查 (4 规则: 风险≤1条→medium / 无数据引用 / 论点<50字→medium / 过度自信词 一定·必然·guaranteed·100%→high)
       └── Editor       (串行) — 决策摘要压缩
     CronAgent (定时) — 加密日报 + 宏观周报模板
 ```
@@ -104,7 +104,7 @@ uvicorn cagent_os.interfaces.http.app:create_app --factory --host 0.0.0.0 --port
 - **Crypto 数据适配器** (4源 × 7能力):DeFiLlama + Coin Metrics + Binance + 恐贪指数 —— 全免费无 key
 - **ToolRegistry + ToolGuard + ArgumentChecker**:插件化工具 + JSON Schema 校验 + 白名单授权
 - **EventStore**:SQLite 事件溯源,WAL 模式支持并发读
-- **TraceReader**:对话历史查询 API (list/summary/timeline/count) + DICA 四维标注
+- **TraceReader**:对话历史查询 API (list/summary/timeline/count) + DICA 四维标注 (Detect=查询 / Interaction=工具+skill+LLM轮次 / Context=记忆+自选股 / Answer=输出), 存 `trace_events` 表 (conversation_id/agent_name/event_type/JSON payload) — Phase 5 SFT/DPO 冷优化数据集
 - **10 个 LLM provider**:OpenRouter / DeepSeek / OpenAI / Anthropic / Groq / SiliconFlow / Together + 智谱 GLM / 月之暗面 Kimi / 通义千问 Qwen (均 OpenAI 兼容) + Custom
 - **BYOK 用户自带 key**:Fernet 加密 per-user key 存储 + `BackendRegistry` (LRU 缓存) + `FallbackBackend` (用户 key 失败 → 透明回落平台 key, model 自动重定向) + 成本归因 (`billed_to`: 用户 key 调用平台成本记 0 且不占配额) + 日志密钥打码 (sk-xxx/Bearer 掩码)
 - **微信公众号抓取 (三级降级)**:微信内置浏览器 UA 直抓 (~1s, 零凭据, 提取标题/公众号/作者/发布时间/全文 — 海外 IP 实测可用) → Jina 云渲染 → Playwright
@@ -115,8 +115,8 @@ uvicorn cagent_os.interfaces.http.app:create_app --factory --host 0.0.0.0 --port
 - **通用浏览器抓取**:Playwright + Readability.js + Stealth 反反爬,CDN 保护站点 + 微信公众号文章直接可读
 - **RAG 管线**:Qwen3-Embedding-8B (1024 维) + 6 种分块策略 + Reranker (cos 0.79→0.999) + NumPy 向量库
 - **Skill Schema**:核心 skill 的 Pydantic v2 I/O Schema + State 三层分离 + 权限标签矩阵
-- **Golden Cases**:14 个评测基准 (含"数据不可得"防幻觉 case)
-- **自动评测**:25 条 criterion LLM-Judge + JSON 结果存储 + 历史对比 + 仪表板
+- **Golden Cases**:14 个评测基准 (含"数据不可得"防幻觉 case), 六维 Rubric (task/facts/tools/reasoning/risk/format, 权重 20/20/15/25/10/10)
+- **自动评测**:25 条 criterion LLM-Judge (task×4 + facts×5 + tools×4 + reasoning×4 + risk×4 + format×4, `evaluation/criterion.py`) + JSON 结果存储 + 历史对比 + 仪表板
 - **CLI + HTTP 双入口**:REPL 用于本地,FastAPI + SSE 用于 web
 - **Web UI** (阶段 4c):HTML + vanilla JS 三合一页面 (对话面板/每日简报/知识库浏览) + JWT auth + 静态资源托管
 - **多 Agent 编排**(阶段 4a):自研 Supervisor 协调 4 个 Agent,Pydantic 消息总线,并行+串行流水线,意图路由

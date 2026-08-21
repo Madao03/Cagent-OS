@@ -37,15 +37,15 @@ AgentRuntime (ReAct loop + Event Sourcing)
   ────────────────────────────────────────
   Cross-cutting:
     Ⓐ Memory (hot ≤500 chars / cold SQLite 3-tables / LLM contradiction detection)
-    Ⓑ Observability (TraceWriter + TraceReader query API / DICA 4-dimension tagging)
+    Ⓑ Observability (TraceWriter + TraceReader query API / DICA: Detect-Interaction-Context-Answer, one row per run in trace_events, feeds Phase-5 SFT/DPO)
     Ⓒ Data Integrity Wall (10 sources / variance >5% alert / circuit breaker + fallback)
-    Ⓓ Eval (Golden Cases ×14 + 25-criterion LLM-Judge + pre-launch baseline)
+    Ⓓ Eval (Golden Cases ×14 + 25-criterion LLM-Judge: task4/facts5/tools4/reasoning4/risk4/format4 + pre-launch baseline)
   ────────────────────────────────────────
   Multi-agent layer (Phase 4a/4b):
     Supervisor (self-built orchestrator)
       ├── DataCollector (parallel) — RAG + FRED + web search
       ├── Researcher   (parallel) — full skill suite via injected AgentRuntime
-      ├── Red-Team     (serial)   — heuristic adversarial check
+      ├── Red-Team     (serial)   — heuristic adversarial check (4 rules: risk coverage ≤1 → medium / no citations / thesis <50 chars → medium / overconfidence regex 一定·必然·guaranteed·100% → high)
       └── Editor       (serial)   — decision summary compression
     CronAgent (scheduled) — daily crypto brief + weekly macro report
 ```
@@ -104,7 +104,7 @@ uvicorn cagent_os.interfaces.http.app:create_app --factory --host 0.0.0.0 --port
 - **Crypto Data Adapters** (4 sources × 7 capabilities): DeFiLlama + Coin Metrics + Binance + Fear&Greed — all free, no API key needed
 - **ToolRegistry + ToolGuard + ArgumentChecker**: plugin-based tools with JSON Schema validation and allow-list authorization
 - **EventStore**: SQLite-backed event sourcing with WAL mode for concurrent reads
-- **TraceReader**: Conversation history query API (list/summary/timeline/count) + DICA 4-dimension tagging
+- **TraceReader**: Conversation history query API (list/summary/timeline/count) + DICA 4-dimension tagging (Detect=query / Interaction=tool+skill+LLM rounds / Context=memory+watchlist / Answer=output), stored in `trace_events` (conversation_id, agent_name, event_type, JSON payload) — the cold-optimization dataset for Phase-5 SFT/DPO
 - **10 LLM providers**: OpenRouter, DeepSeek, OpenAI, Anthropic, Groq, SiliconFlow, Together + Zhipu GLM, Moonshot Kimi, Qwen (all OpenAI-compatible) + Custom
 - **BYOK (bring your own key)**: Fernet-encrypted per-user key store + `BackendRegistry` (LRU cache) + `FallbackBackend` (user-key failure → transparent platform-key retry, model auto-retargeted) + cost attribution (`billed_to`: user-key usage costs $0 to platform and is quota-exempt) + secret redaction in logs (`sk-xxx`/`Bearer` masked)
 - **WeChat article fetch (3-tier)**: direct HTTP with WeChat-embedded-browser UA (~1s, zero credentials, extracts title/account/author/publish-time/full text — verified working from overseas IPs) → Jina cloud rendering → Playwright headless
@@ -114,9 +114,9 @@ uvicorn cagent_os.interfaces.http.app:create_app --factory --host 0.0.0.0 --port
 - **Data Integrity Wall**: 10 sources → variance detection (>5% alert) → cross-validation → circuit breaker + akshare price fallback
 - **Browser fetch**: Playwright + Readability.js + Stealth anti-bot — persistent browser reuse + sliding-window circuit breaker (success <30% → 60s cooldown) + Jina Reader pre-fallback + concurrency limiter (1 Chromium instance) + UTF-8 encoding fix for Chinese sites
 - **Skill Schemas**: Pydantic v2 I/O schemas for core skills + State 3-layer separation + permission matrix
-- **Golden Cases**: 14 evaluation benchmarks (including "data unavailable" anti-hallucination case)
+- **Golden Cases**: 14 evaluation benchmarks (including "data unavailable" anti-hallucination case), six-dimension rubric (task/facts/tools/reasoning/risk/format, weights 20/20/15/25/10/10)
 - **RAG Pipeline**: Qwen3-Embedding-8B + 6 chunking schemes + Reranker (cos 0.79→0.999) + NumPy vector store
-- **Auto-Evaluation**: 25 criterion LLM-Judge + JSON result storage + history comparison + dashboard
+- **Auto-Evaluation**: 25-criterion LLM-Judge (task×4 + facts×5 + tools×4 + reasoning×4 + risk×4 + format×4, `evaluation/criterion.py`) + JSON result storage + history comparison + dashboard
 - **CLI + HTTP dual entry**: REPL for local, FastAPI + SSE for web
 - **Web UI** (Phase 4c): HTML + vanilla JS three-in-one page (chat panel / daily brief / knowledge browser) + JWT auth + static asset hosting
 - **Multi-agent orchestration** (Phase 4a): Self-built Supervisor coordinating 4 agents with Pydantic message bus, parallel + serial pipeline, intent-based routing

@@ -49,16 +49,27 @@ Multi-Agent Layer (multi_agent/)
   Supervisor (supervisor.py)                   ← 自研编排器,意图路由 + 并行/串行调度
     ├── DataCollector (并行)                   ← RAG + FRED + web 搜索
     ├── Researcher   (并行)                    ← 全 Skill 套件,可注入 agent_runner
-    ├── Red-Team     (串行)                    ← 启发式对抗检查
+    ├── Red-Team     (串行)                    ← 启发式对抗检查 (4 规则, 见下)
     └── Editor       (串行)                    ← 决策摘要压缩
   CronAgent (cron_agent.py)                    ← 定时触发,共用 Agent 池
 ```
 
+**Red-Team 对抗检查** (`supervisor.py::_run_red_team`, 串行阶段, 输出 `RiskAuditResult` 三档 severity):
+
+| # | 规则 | 触发条件 | severity |
+|:--|:-----|:---------|:---------|
+| 1 | 风险覆盖不足 | `risks ≤ 1` 条 | medium |
+| 2 | 无数据引用 | `data_citations` 为空 (无依据断言) | low |
+| 3 | 论点过短 | thesis < 50 字符 (缺乏深度) | medium |
+| 4 | 过度自信语言 | 正则命中 `一定/必然/毫无疑问/绝对/guaranteed/certainly/definitely/without doubt/100%` | **high** |
+
+> MVP 为零成本启发式 (注释已标记 "Phase 4+ can upgrade to LLM-based adversarial review"), 升级时保持 `RiskAuditResult` 接口不变。
+
 **横切关注点**:
 - Ⓐ Memory: 热记忆(≤500 字注入) + 冷记忆(SQLite 三表) + **LLM 矛盾检测**
-- Ⓑ Observe: TraceWriter + **TraceReader** (查询API) + DICA 四维标注
+- Ⓑ Observe: TraceWriter + **TraceReader** (查询API: list/summary/timeline/count) + **DICA 四维标注** — D=Detect (user_query 触发) / I=Interaction (工具调用+skill加载+LLM轮次) / C=Context (记忆注入+自选股状态) / A=Answer (最终输出); trace_events 表 (conversation_id/agent_name/event_type/payload JSON), 为 Phase 5 SFT/DPO 冷优化采集数据
 - Ⓒ DataWall: **FRED (21 系列) + EDGAR + Crypto (DeFiLlama/CoinMetrics/Binance/恐贪) + 金十 MCP + yfinance + akshare (A股+期货) + PANews** → 方差检测 >5% → 交叉验证
-- Ⓓ Eval: **Golden Cases × 14** (含腾讯数据不可得防幻觉) + 25-criterion LLM-Judge 自动评分 + 仪表板
+- Ⓓ Eval: **Golden Cases × 14** (含腾讯数据不可得防幻觉) + **25-criterion LLM-Judge** (六维: task×4 + facts×5 + tools×4 + reasoning×4 + risk×4 + format×4, `evaluation/criterion.py`) + JSON 存储 + 历史对比 + 仪表板
 
 ## 命名约定
 
@@ -152,7 +163,7 @@ Multi-Agent Layer (multi_agent/)
 - ✅ Trace: `TraceWriter` + `TraceReader` (查询 API) + DICA 四维标注
 - ✅ 16 个 Skill (9 投研核心 + 7 扩展含 web-search), macro 已重写
 - ✅ 浏览器抓取: Playwright + Readability.js + Stealth 反反爬, 自动降级
-- ✅ Golden Cases × 13 (triage/macro/NVDA/crypto/crypto-stock/cross-skill/RAG/容错/纪律/对立观点/标的解构/RAG优先/反伪精确) + 六维 Rubric + scorer.py
+- ✅ Golden Cases × 14 (triage/macro/NVDA/crypto/crypto-stock/cross-skill/RAG/容错/纪律/对立观点/标的解构/RAG优先/反伪精确/腾讯数据不可得) + 六维 Rubric (task20/facts20/tools15/reasoning25/risk10/format10) + scorer.py
 - ✅ RAG 管线: 6-scheme Chunking + Qwen3-Embedding-8B + NumPy + Qwen3-Reranker-8B + 容错重试 + Plugin 接入
 - ✅ 评测自动化: 25-criterion LLM-Judge 自动评分 + JSON 存储 + 历史对比 + 仪表板
 - ✅ 29 篇分诊积累, 分诊台账 (append-only)
