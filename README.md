@@ -1,6 +1,6 @@
 # CagentOS
 
-> English | [中文](README.zh-CN.md)
+> English | [中文](README.zh-CN.md) | **Live demo: [cagentos.com](https://cagentos.com)** (invite-only beta — public landing page with a no-login demo chat at [/](https://cagentos.com))
 >
 > **Status: Beta Online ✅ — Live at cagentos.com — 16 skills · 42+ capabilities · 10 data sources · Multi-agent + Cron + Web UI + RAG + Provenance + BYOK + Auto-Eval**
 > A self-contained financial research agent operating system built from scratch — not a LangChain wrapper.
@@ -161,7 +161,7 @@ uvicorn cagent_os.interfaces.http.app:create_app --factory --host 0.0.0.0 --port
 | 1 | Knowledge entry: read-later + triage + data wall | ✅ Done |
 | 1.5 | Runtime normalization + open-source prep | ✅ Done |
 | 2 | Knowledge engine + Golden Cases + Schema + Trace + Memory | ✅ Done (2026-06-25) |
-| 3 | RAG + Rerank + Golden Cases ×10 + LLM-Judge Auto-Eval + Dashboard | ✅ Done (2026-06-26) |
+| 3 | RAG + Rerank + LLM-Judge Auto-Eval + Dashboard (Golden Cases ×10 at the time, now ×14) | ✅ Done (2026-06-26) |
 | 4a | Supervisor + 4 Agent + Message Bus | ✅ Done (2026-07-13) |
 | 4b | Cron scheduler + daily brief templates | ✅ Done (2026-07-13) |
 | 4c | Web UI (HTML + vanilla JS + JWT auth) | ✅ Done (2026-07-20) |
