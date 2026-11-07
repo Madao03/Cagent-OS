@@ -95,6 +95,8 @@ def build_registry(
         )
     from cagent_os.plugins.crypto.plugin import CryptoPlugin
     registry.register_plugin(CryptoPlugin())
+    from cagent_os.plugins.opennews import register_opennews
+    register_opennews(registry)
     return registry, toolkit
 
 

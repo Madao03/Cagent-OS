@@ -208,6 +208,8 @@ def create_app() -> FastAPI:
     )
     from cagent_os.plugins.crypto.plugin import CryptoPlugin
     registry.register_plugin(CryptoPlugin())
+    from cagent_os.plugins.opennews import register_opennews
+    register_opennews(registry)
     executor = ToolDispatcher(registry=registry)
 
     run_engine = AgentRuntime(

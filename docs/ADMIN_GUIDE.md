@@ -41,6 +41,10 @@ uvicorn cagent_os.interfaces.http.app:create_app --factory --port 8000 --host 12
 
 在仓库根目录配置好 `.env` 后运行 `docker compose up -d --build`。用 `docker compose ps` 查看 `app` 的健康状态，或访问 `http://127.0.0.1:8000/health`。Compose 挂载宿主机的 `data/`、`config/` 和 `knowledge/`；共享技能随镜像构建。
 
+### 接入 NewsLiquid OpenNews
+
+在独立虚拟环境中安装[官方 OpenNews MCP](https://github.com/6551Team/opennews-mcp)，在 CagentOS 的服务端 `.env` 中设置 `OPENNEWS_COMMAND` 为该环境内 `opennews-mcp` 可执行文件的绝对路径。将 [NewsLiquid MCP 控制台](https://app.newsliquid.com/mcp) 的访问令牌填入 `OPENNEWS_TOKEN`，然后重启服务。登录聊天或 CLI 可调用 `opennews.news`，按关键词搜索或读取最新新闻，每次最多 10 条。匿名试用不开放此工具。未配置令牌时服务可以照常启动。
+
 ### 生成第一批邀请码
 
 ```powershell
