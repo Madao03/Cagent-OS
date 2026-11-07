@@ -6,7 +6,6 @@ import json
 import os
 from collections.abc import Callable
 from contextlib import asynccontextmanager
-from datetime import timedelta
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
@@ -30,7 +29,7 @@ async def opennews_session():
             env[name] = os.environ[name]
     params = StdioServerParameters(command=os.getenv("OPENNEWS_COMMAND") or "opennews-mcp", env=env)
     async with stdio_client(params) as (reader, writer):
-        async with ClientSession(reader, writer, read_timeout_seconds=timedelta(seconds=30)) as session:
+        async with ClientSession(reader, writer) as session:
             await session.initialize()
             yield session
 
