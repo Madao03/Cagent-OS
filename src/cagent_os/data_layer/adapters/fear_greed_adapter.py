@@ -27,6 +27,7 @@ class FearGreedAdapter(DataSourceAdapter):
 
     tier = 1
     name = "fear_greed"
+    display_name = "恐贪指数"
 
     async def get_latest(self) -> dict[str, Any] | None:
         """Current fear & greed index."""

@@ -4,12 +4,14 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import time
 from collections.abc import Callable
 from contextlib import asynccontextmanager
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
+from cagent_os.data_layer.adapter import DataSourceHealth, StatusSource
 from cagent_os.plugins.contracts import ToolRequest, ToolResult, ToolTrustLevel
 from cagent_os.plugins.manifests import PluginSpec, ToolSpec
 from cagent_os.plugins.plugin import Plugin
@@ -34,7 +36,21 @@ async def opennews_session():
             yield session
 
 
-class OpenNewsPlugin(Plugin):
+class OpenNewsPlugin(Plugin, StatusSource):
+    name = "opennews"
+    display_name = "NewsLiquid OpenNews"
+
+    async def health_check(self) -> DataSourceHealth:
+        started = time.monotonic()
+        try:
+            async with opennews_session() as session:
+                tools = {tool.name for tool in (await session.list_tools()).tools}
+        except Exception:
+            return DataSourceHealth(False, error_message="MCP 连接失败")
+        if not {"get_latest_news", "search_news"} <= tools:
+            return DataSourceHealth(False, error_message="MCP 新闻工具不可用")
+        return DataSourceHealth(True, latency_ms=(time.monotonic() - started) * 1000)
+
     def manifest(self) -> PluginSpec:
         return PluginSpec(
             plugin_id="opennews",

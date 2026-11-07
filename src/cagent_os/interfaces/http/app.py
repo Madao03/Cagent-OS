@@ -290,11 +290,21 @@ def create_app() -> FastAPI:
             return
         _ds_refreshing = True
         try:
-            results = await data_layer.health_check_all()
+            extra_sources = dict(registry.status_sources)
+            if mcp_manager:
+                # Adapters with a dedicated health probe already represent their MCP server.
+                covered = {getattr(data_layer.get_adapter(name), "server_name", None)
+                           for name in data_layer.adapter_names}
+                for source in mcp_manager.status_sources():
+                    if source.name not in covered and source.name not in data_layer.adapter_names:
+                        extra_sources.setdefault(source.name, source)
+            results = await data_layer.health_check_all(extra_sources.values())
             sources = []
             for name, h in results.items():
+                provider = extra_sources.get(name) or data_layer.get_adapter(name)
                 sources.append({
                     "name": name,
+                    "display_name": provider.display_name or name,
                     "available": h.available,
                     "latency_ms": round(h.latency_ms, 1) if h.latency_ms else None,
                     "error": h.error_message,

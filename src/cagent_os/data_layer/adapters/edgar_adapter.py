@@ -163,6 +163,7 @@ class EdgardAdapter(DataSourceAdapter):
 
     tier = 0  # Highest priority — authoritative source
     name = "edgar"
+    display_name = "SEC EDGAR"
 
     def __init__(self) -> None:
         self._ticker_cache: dict[str, str] | None = None  # ticker → CIK

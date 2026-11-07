@@ -9,12 +9,26 @@ import logging
 import os
 from contextlib import AsyncExitStack
 
+from cagent_os.data_layer.adapter import DataSourceHealth, StatusSource
+
 import httpx
 from mcp import ClientSession
 from mcp.client.sse import sse_client
 from mcp.client.streamable_http import streamable_http_client
 
 logger = logging.getLogger(__name__)
+
+
+class MCPConnectionStatus(StatusSource):
+    """Report whether an enabled server has initialized a client session."""
+    def __init__(self, manager, config: dict) -> None:
+        self.manager = manager
+        self.name = config["name"]
+        self.display_name = config.get("display_name", self.name)
+
+    async def health_check(self) -> DataSourceHealth:
+        connected = self.manager.is_connected(self.name)
+        return DataSourceHealth(connected, error_message=None if connected else "MCP 未连接")
 
 
 class MCPSessionManager:
@@ -32,6 +46,12 @@ class MCPSessionManager:
         self._configs = server_configs
         self._sessions: dict[str, ClientSession] = {}
         self._stacks: dict[str, AsyncExitStack] = {}
+
+    def is_connected(self, server: str) -> bool:
+        return server in self._sessions
+
+    def status_sources(self) -> list[MCPConnectionStatus]:
+        return [MCPConnectionStatus(self, cfg) for cfg in self._configs if cfg.get("enabled", True)]
 
     async def connect_all(self) -> None:
         for cfg in self._configs:

@@ -55,6 +55,7 @@ class CoinMetricsAdapter(DataSourceAdapter):
 
     tier = 1
     name = "coinmetrics"
+    display_name = "Coin Metrics"
 
     async def get_mvrv(
         self,

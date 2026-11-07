@@ -1820,6 +1820,10 @@
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const data = await resp.json();
 
+      if (data.loading) {
+        setTimeout(refreshDataSources, 2500);
+        return;
+      }
       // Clear old rows
       body.innerHTML = "";
 
@@ -1829,25 +1833,10 @@
         meta.textContent = new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
       }
 
-      // Display name mapping (adapter name → user-facing label)
-      const DISPLAY_NAMES = {
-        "edgar":                 "SEC EDGAR",
-        "fin-skill":             "fin-skill MCP",
-        "fred":                  "FRED",
-        "yfinance":              "yfinance",
-        "coinmetrics":           "Coin Metrics",
-        "defillama":             "DeFi Llama",
-        "binance_derivatives":   "Binance 衍生品",
-        "fear_greed":            "恐贪指数",
-        "akshare-stock":         "akshare (行情)",
-        "akshare-futures":       "akshare (期货)",
-        "akshare-financials":    "akshare (财报)",
-      };
-
       for (const s of data.sources) {
         const row = el("div", "src-row");
         const name = el("span", "src-name");
-        name.textContent = DISPLAY_NAMES[s.name] || s.name;
+        name.textContent = s.display_name || s.name;
         row.appendChild(name);
 
         const state = el("span", "src-state");
@@ -1871,7 +1860,8 @@
         body.appendChild(row);
       }
     } catch (err) {
-      console.warn("refreshDataSources: API unavailable — keeping static content", err.message);
+      if (!body.querySelector(".src-row")) body.textContent = "暂时无法获取数据源状态";
+      console.warn("refreshDataSources:", err.message);
     }
   }
 

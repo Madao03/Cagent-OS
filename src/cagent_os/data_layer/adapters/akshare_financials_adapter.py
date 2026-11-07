@@ -470,6 +470,7 @@ class AkshareFinancialsAdapter(DataSourceAdapter):
     """A-share financial report adapter via akshare → East Money."""
 
     name = "akshare-financials"
+    display_name = "akshare (财报)"
     tier = 1
 
     # ── DataSourceAdapter interface ──────────────────────────────

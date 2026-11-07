@@ -29,6 +29,7 @@ class AkshareFuturesAdapter(DataSourceAdapter):
     """Domestic futures data via akshare → Sina Finance."""
 
     name = "akshare-futures"
+    display_name = "akshare (期货)"
     tier = 1
 
     # ------------------------------------------------------------------

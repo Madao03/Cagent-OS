@@ -53,6 +53,7 @@ class BinanceDerivativesAdapter(DataSourceAdapter):
 
     tier = 1
     name = "binance_derivatives"
+    display_name = "Binance 衍生品"
 
     async def get_funding_rate(self, symbol: str = "BTCUSDT") -> dict[str, Any] | None:
         """Current funding rate + mark price.

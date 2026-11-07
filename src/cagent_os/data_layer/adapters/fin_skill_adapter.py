@@ -56,6 +56,7 @@ _METRIC_TOOL: dict[str, tuple[str, str]] = {
 
 class FinSkillAdapter(DataSourceAdapter):
     name = "fin-skill"
+    display_name = "fin-skill MCP"
     tier = 2
     server_name = "fin-skill-mcp"
 

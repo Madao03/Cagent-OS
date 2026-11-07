@@ -175,6 +175,7 @@ class FredAdapter(DataSourceAdapter):
     """
 
     name = "fred"
+    display_name = "FRED"
     tier = 1
 
     def __init__(self, api_key: str = "") -> None:

@@ -1935,50 +1935,10 @@ pre {
             <div class="ds-card ctx-card" id="data-sources-card" style="flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;">
               <div class="ctx-card-head" style="flex-shrink:0;">
                 <span class="ctx-card-title">数据源状态</span>
-                <span class="ctx-card-meta">14:32:05</span>
+                <span class="ctx-card-meta">—</span>
               </div>
               <div class="data-sources-body" style="flex:1;overflow-y:auto;min-height:0;">
-              <div class="src-row">
-                <span class="src-name">FRED</span>
-                <span class="src-state">
-                  <span class="src-dot is-ok" aria-hidden="true"></span>
-                  <span>在线</span>
-                  <span class="src-extra"><span class="t-metric">287</span> series</span>
-                </span>
-              </div>
-              <div class="src-row">
-                <span class="src-name">Jin10</span>
-                <span class="src-state is-warn">
-                  <span class="src-dot is-warn" aria-hidden="true"></span>
-                  <span>方差告警</span>
-                  <span data-icon="info" class="src-state-icon" aria-hidden="true"></span>
-                  <span class="src-extra">实时</span>
-                </span>
-              </div>
-              <div class="src-row">
-                <span class="src-name">yfinance</span>
-                <span class="src-state">
-                  <span class="src-dot is-ok" aria-hidden="true"></span>
-                  <span>在线</span>
-                  <span class="src-extra">NVDA ✓</span>
-                </span>
-              </div>
-              <div class="src-row">
-                <span class="src-name">akshare</span>
-                <span class="src-state">
-                  <span class="src-dot is-ok" aria-hidden="true"></span>
-                  <span>在线</span>
-                  <span class="src-extra">A股 ✓</span>
-                </span>
-              </div>
-              <div class="src-row">
-                <span class="src-name">PANews</span>
-                <span class="src-state">
-                  <span class="src-dot is-ok" aria-hidden="true"></span>
-                  <span>在线</span>
-                  <span class="src-extra"><span class="t-metric">24</span>h</span>
-                </span>
-              </div>
+                正在检查数据源…
               </div><!-- /data-sources-body -->
             </div>
 
@@ -2049,34 +2009,8 @@ pre {
   <script src="/static/assets/js/shell.js?v=2"></script>
   <script src="/static/assets/js/auth.js"></script>
   <script src="/static/assets/js/model-settings.js?v=4"></script>
-  <script src="/static/assets/js/chat.js?v=4"></script>
+  <script src="/static/assets/js/chat.js?v=5"></script>
   <!-- /app-injected-scripts -->
-<script>
-(function loadDS() {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadDS);
-    return;
-  }
-  const card = document.getElementById('data-sources-card');
-  if (!card) return;
-  const body = card.querySelector('.data-sources-body');
-  if (!body) return;
-  const NAMES = {edgar:'SEC EDGAR','fin-skill':'fin-skill MCP',fred:'FRED',yfinance:'yfinance',coinmetrics:'Coin Metrics',defillama:'DeFi Llama',binance_derivatives:'Binance 衍生品',fear_greed:'恐贪指数','akshare-stock':'akshare (行情)','akshare-futures':'akshare (期货)','akshare-financials':'akshare (财报)'};
-  fetch('/api/v1/data-sources').then(r=>r.json()).then(d=>{
-    body.innerHTML='';
-    const meta=card.querySelector('.ctx-card-meta');
-    if(meta) meta.textContent=new Date().toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-    d.sources.forEach(s=>{
-      const row=document.createElement('div');row.className='src-row';
-      const n=document.createElement('span');n.className='src-name';n.textContent=NAMES[s.name]||s.name;row.appendChild(n);
-      const st=document.createElement('span');st.className='src-state';
-      const dot=document.createElement('span');dot.className='src-dot';
-      if(s.available){dot.classList.add('is-ok');st.appendChild(dot);st.appendChild(document.createTextNode(' 在线'));if(s.latency_ms!==null){const x=document.createElement('span');x.className='src-extra';x.innerHTML='<span class=t-metric>'+s.latency_ms+'</span>ms';st.appendChild(x)}}
-       else{dot.classList.add('is-warn');st.classList.add('is-warn');st.appendChild(dot);st.appendChild(document.createTextNode(s.error?' '+s.error:' 离线'))}
-      row.appendChild(st);body.appendChild(row);
-    });
-  }).catch(()=>{});
-})();
-</script>
+
 </body>
 </html>

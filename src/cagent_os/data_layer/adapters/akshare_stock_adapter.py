@@ -32,6 +32,7 @@ class AkshareStockAdapter(DataSourceAdapter):
     """A-share & HK stock data via akshare → Sina Finance."""
 
     name = "akshare-stock"
+    display_name = "akshare (行情)"
     tier = 1
 
     # ------------------------------------------------------------------

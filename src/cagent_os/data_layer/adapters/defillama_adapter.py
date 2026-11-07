@@ -74,6 +74,7 @@ class DefiLlamaAdapter(DataSourceAdapter):
 
     tier = 1
     name = "defillama"
+    display_name = "DeFi Llama"
 
     # ── TVL endpoints ───────────────────────────────────────────
 

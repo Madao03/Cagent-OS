@@ -23,16 +23,21 @@ class RawData:
     fetched_at: str = ""
 
 
-class DataSourceAdapter(ABC):
-    """Uniform interface for all data sources (API, MCP, web scrape, etc.)."""
-
-    tier: int = 1
+class StatusSource(ABC):
+    """A data provider that appears in the sidebar when registered."""
     name: str = ""
-
-    @abstractmethod
-    async def fetch(self, metric: str, **params: Any) -> RawData:
-        ...
+    display_name: str = ""
 
     @abstractmethod
     async def health_check(self) -> DataSourceHealth:
+        ...
+
+
+class DataSourceAdapter(StatusSource):
+    """Uniform interface for all data sources (API, MCP, web scrape, etc.)."""
+
+    tier: int = 1
+
+    @abstractmethod
+    async def fetch(self, metric: str, **params: Any) -> RawData:
         ...

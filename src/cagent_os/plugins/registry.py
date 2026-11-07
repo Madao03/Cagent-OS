@@ -11,6 +11,7 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from cagent_os.data_layer.adapter import StatusSource
 from cagent_os.plugins.contracts import ToolRequest, ToolResult, ToolTrustLevel
 from cagent_os.plugins.manifests import ToolSpec
 from cagent_os.llm.protocol import ToolSchema
@@ -40,6 +41,7 @@ class ToolRegistry:
     """
 
     def __init__(self) -> None:
+        self.status_sources: dict[str, StatusSource] = {}
         self._entries: dict[str, RegisteredTool] = {}
 
     # -- registration ---------------------------------------------------
@@ -66,6 +68,8 @@ class ToolRegistry:
     def register_plugin(self, plugin: Plugin) -> None:
         """Register every capability declared by a plugin."""
         plugin_manifest = plugin.manifest()
+        if plugin_manifest.default_enabled and isinstance(plugin, StatusSource):
+            self.status_sources[plugin.name] = plugin
         for cap_manifest in plugin_manifest.capabilities:
             self.register(
                 capability_id=cap_manifest.capability_id,

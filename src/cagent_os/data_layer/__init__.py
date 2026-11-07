@@ -10,11 +10,12 @@ Stage 1: multi-source collection, full variance detection, auto-degradation.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 import logging
 import time
 from typing import Any
 
-from cagent_os.data_layer.adapter import DataSourceAdapter, DataSourceHealth, RawData
+from cagent_os.data_layer.adapter import DataSourceAdapter, DataSourceHealth, RawData, StatusSource
 from cagent_os.data_layer.cross_validator import MetricCrossValidator, VerifiedMetric
 
 import asyncio  # noqa: E402
@@ -49,10 +50,10 @@ class DataLayer:
     # Health check
     # ------------------------------------------------------------------
 
-    async def health_check_all(self) -> dict[str, DataSourceHealth]:
+    async def health_check_all(self, extra_sources: Iterable[StatusSource] = ()) -> dict[str, DataSourceHealth]:
         """Run health checks for all registered adapters concurrently."""
 
-        async def _check_one(name: str, adapter: DataSourceAdapter) -> tuple[str, DataSourceHealth]:
+        async def _check_one(name: str, adapter: StatusSource) -> tuple[str, DataSourceHealth]:
             try:
                 result = await asyncio.wait_for(
                     adapter.health_check(), timeout=8,
@@ -67,9 +68,10 @@ class DataLayer:
                 logger.warning("Health check failed for %s: %s", name, exc)
                 return name, DataSourceHealth(available=False, error_message=str(exc))
 
+        sources = {**self._adapters, **{source.name: source for source in extra_sources}}
         tasks = [
             _check_one(name, adapter)
-            for name, adapter in self._adapters.items()
+            for name, adapter in sources.items()
         ]
         results_list = await asyncio.gather(*tasks)
         return dict(results_list)

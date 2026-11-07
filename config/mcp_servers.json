@@ -24,6 +24,7 @@
     },
     {
       "name": "jin10-mcp",
+      "display_name": "金十 MCP",
       "transport": "streamable-http",
       "url": "https://mcp.jin10.com/mcp",
       "tier": 2,
