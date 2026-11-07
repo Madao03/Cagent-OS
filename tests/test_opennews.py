@@ -9,7 +9,8 @@ from cagent_os.plugins.registry import ToolRegistry
 
 
 @pytest.mark.parametrize("args,tool", [({}, "get_latest_news"), ({"keyword": " LNG "}, "search_news")])
-def test_read_only_news_dispatch(monkeypatch, args, tool):
+@pytest.mark.parametrize("error_field", ["is_error", "isError"])
+def test_read_only_news_dispatch(monkeypatch, args, tool, error_field):
     registry = ToolRegistry()
     monkeypatch.delenv("OPENNEWS_TOKEN", raising=False)
     register_opennews(registry)
@@ -17,7 +18,7 @@ def test_read_only_news_dispatch(monkeypatch, args, tool):
     monkeypatch.setenv("OPENNEWS_TOKEN", "test")
     register_opennews(registry)
     assert registry.default_enabled_tool_ids() == ["opennews.news"]
-    call = AsyncMock(return_value=SimpleNamespace(isError=False, content=[
+    call = AsyncMock(return_value=SimpleNamespace(**{error_field: False}, content=[
         SimpleNamespace(text='{"success":true,"data":[{"link":"https://example.com/article"}]}')
     ]))
 

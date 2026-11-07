@@ -69,7 +69,7 @@ class OpenNewsPlugin(Plugin):
         async def query():
             async with opennews_session() as session:
                 result = await session.call_tool(tool, args)
-                if result.isError or not result.content:
+                if getattr(result, "is_error", getattr(result, "isError", False)) or not result.content:
                     raise ValueError("OpenNews tool call failed")
                 return json.loads(result.content[0].text)
 
