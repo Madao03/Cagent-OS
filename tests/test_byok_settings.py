@@ -36,7 +36,7 @@ def test_disabled_storage_does_not_accept_keys(tmp_path, monkeypatch, secret):
 def test_probe_uses_form_without_overwriting_saved_credentials(tmp_path, monkeypatch):
     monkeypatch.setenv("CAGENTOS_KEY_ENCRYPTION_SECRET", Fernet.generate_key().decode())
     store = UserLLMKeyStore(tmp_path / "keys.db")
-    store.upsert("alice", provider="deepseek", api_key="saved-key", default_model="original")
+    store.upsert("alice", provider="deepseek", api_key="saved-key", default_model="deepseek-flash")
     app = FastAPI()
     registry = Mock()
     app.include_router(build_llm_keys_router(store, registry))
@@ -44,14 +44,30 @@ def test_probe_uses_form_without_overwriting_saved_credentials(tmp_path, monkeyp
     with patch("cagent_os.interfaces.http.routes_llm_keys.require_principal_id", return_value="alice"):
         for key in ["", "trial-key"]:
             response = client.post("/api/v1/llm/test", json={
-                "provider": "deepseek", "api_key": key, "default_model": "trial-model",
+                "provider": "deepseek", "api_key": key, "default_model": "deepseek-v4-pro",
             })
             assert response.json()["ok"]
             config = registry.probe_backend.call_args.args[1]
             assert config.api_key == (key or "saved-key")
-            assert registry.probe_backend.return_value.complete.call_args.args[0].model == "trial-model"
+            assert registry.probe_backend.return_value.complete.call_args.args[0].model == "deepseek-v4-pro"
         assert client.post("/api/v1/llm/test", json={
             "provider": "openai", "api_key": "", "default_model": "trial",
         }).status_code == 400
-    assert store.get("alice").default_model == "original"
+    assert store.get("alice").default_model == "deepseek-flash"
     assert store.get("alice").api_key == "saved-key"
+
+@pytest.mark.parametrize("old,current", [("deepseek-chat", "deepseek-flash"), ("deepseek-reasoner", "deepseek-v4-pro")])
+def test_old_deepseek_selection_is_current(tmp_path, monkeypatch, old, current):
+    monkeypatch.setenv("CAGENTOS_KEY_ENCRYPTION_SECRET", Fernet.generate_key().decode())
+    store = UserLLMKeyStore(tmp_path / "keys.db")
+    store.upsert("alice", provider="deepseek", api_key="test-key", default_model=old)
+    app = FastAPI()
+    app.include_router(build_llm_keys_router(store, Mock()))
+    with patch("cagent_os.interfaces.http.routes_llm_keys.require_principal_id", return_value="alice"):
+        client = TestClient(app)
+        models = client.get("/api/v1/llm/models").json()
+        assert models["models_by_provider"]["deepseek"] == ["deepseek-flash", "deepseek-v4-pro"]
+        assert models["user_default"] == current
+        assert client.put("/api/v1/llm/settings", json={
+            "provider": "deepseek", "api_key": "", "default_model": old,
+        }).status_code == 400

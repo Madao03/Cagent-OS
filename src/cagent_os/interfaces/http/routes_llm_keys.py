@@ -16,7 +16,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from cagent_os.config import get_settings as get_platform_settings
-from cagent_os.auth.user_llm_key_store import KeyStoreUnavailable, UserLLMConfig, UserLLMKeyStore
+from cagent_os.auth.user_llm_key_store import DEEPSEEK_MODELS, KeyStoreUnavailable, UserLLMConfig, UserLLMKeyStore
 from cagent_os.interfaces.http.auth_context import require_principal_id
 from cagent_os.llm.backend_registry import BackendRegistry
 
@@ -46,7 +46,7 @@ _COMMON_MODELS: dict[str, list[str]] = {
     ],
     "openai": ["gpt-4o", "gpt-4o-mini", "o3-mini"],
     "anthropic": ["claude-sonnet-4-20250514", "claude-3-5-haiku-20241022"],
-    "deepseek": ["deepseek-flash", "deepseek-v4-pro"],
+    "deepseek": list(DEEPSEEK_MODELS),
     "groq": ["llama-3.3-70b-versatile", "mixtral-8x7b-32768"],
     "siliconflow": ["deepseek-ai/DeepSeek-V3", "Qwen/Qwen2.5-72B-Instruct"],
     "together": ["meta-llama/Llama-3.3-70B-Instruct-Turbo"],
@@ -83,6 +83,8 @@ def build_llm_keys_router(key_store: UserLLMKeyStore, registry: BackendRegistry)
         provider = payload.provider.lower().strip()
         if provider not in SUPPORTED_PROVIDERS:
             raise HTTPException(400, "不支持的模型服务商")
+        if provider == "deepseek" and payload.default_model and payload.default_model not in DEEPSEEK_MODELS:
+            raise HTTPException(400, "DeepSeek 请选择 V4.1 Flash 或 V4 Pro")
         api_key = payload.api_key.strip()
         if not api_key:
             existing = key_store.get(user_id)

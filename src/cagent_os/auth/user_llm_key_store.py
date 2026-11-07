@@ -39,6 +39,9 @@ CREATE TABLE IF NOT EXISTS user_llm_keys (
 """
 
 
+DEEPSEEK_MODELS = ("deepseek-flash", "deepseek-v4-pro")
+
+
 @dataclass(frozen=True)
 class UserLLMConfig:
     provider: str
@@ -118,6 +121,8 @@ class UserLLMKeyStore:
         except Exception:
             logger.error("Failed to decrypt user LLM key (master secret changed?) user=%s", user_id)
             return None
+        if provider == "deepseek" and default_model not in DEEPSEEK_MODELS:
+            default_model = "deepseek-v4-pro" if default_model == "deepseek-reasoner" else "deepseek-flash"
         return UserLLMConfig(provider=provider, api_key=api_key, default_model=default_model)
 
     def delete(self, user_id: str) -> None:
