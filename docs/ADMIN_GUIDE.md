@@ -37,6 +37,10 @@ cd d:\Projects\cagent-os
 uvicorn cagent_os.interfaces.http.app:create_app --factory --port 8000 --host 127.0.0.1
 ```
 
+### 用 Docker Compose 启动
+
+在仓库根目录配置好 `.env` 后运行 `docker compose up -d --build`。用 `docker compose ps` 查看 `app` 的健康状态，或访问 `http://127.0.0.1:8000/health`。Compose 挂载宿主机的 `data/`、`config/` 和 `knowledge/`；共享技能随镜像构建。
+
 ### 生成第一批邀请码
 
 ```powershell

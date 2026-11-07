@@ -891,13 +891,6 @@ p { margin: 0 0 1.1em; max-width: 62ch; }
   var DEMO_MAX = 3;
   var used = 0;
 
-  // Try to read usage from localStorage
-  try {
-    var today = new Date().toISOString().slice(0, 10);
-    var saved2 = localStorage.getItem('cos_demo_' + today);
-    used = saved2 ? parseInt(saved2) : 0;
-  } catch (e) {}
-
   function updateCount() {
     var remaining = DEMO_MAX - used;
     if (remaining <= 0) {
@@ -931,17 +924,11 @@ p { margin: 0 0 1.1em; max-width: 62ch; }
       .replace(/\n/g, '<br>');
   }
 
-  form.addEventListener('submit', function (e) {
+  form.addEventListener('submit', async function (e) {
     e.preventDefault();
     var query = input.value.trim();
-    if (!query || used >= DEMO_MAX) return;
-
-    // Save usage
-    used++;
-    try {
-      var today = new Date().toISOString().slice(0, 10);
-      localStorage.setItem('cos_demo_' + today, String(used));
-    } catch (e) {}
+    if (!query || btn.disabled || used >= DEMO_MAX) return;
+    var zh = document.documentElement.lang === 'zh-CN';
 
     // Hide empty state
     if (empty) empty.style.display = 'none';
@@ -964,83 +951,70 @@ p { margin: 0 0 1.1em; max-width: 62ch; }
 
     log.scrollTop = log.scrollHeight;
 
-    // SSE request
     var ctrl = new AbortController();
-    fetch('/api/v1/demo', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: query }),
-      signal: ctrl.signal,
-    }).then(function (resp) {
+    var timeout = setTimeout(function () { ctrl.abort(); }, 270000);
+    try {
+      var resp = await fetch('/api/v1/demo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: query }),
+        signal: ctrl.signal,
+      });
       if (resp.status === 429) {
-        aDiv.classList.remove('demo-typing');
-        aDiv.className = 'demo-error';
-        aDiv.textContent = 'Rate limited — please try again tomorrow or sign up.';
         used = DEMO_MAX;
-        updateCount();
-        return;
+        throw new Error(zh ? '今日试用次数已用完。' : 'Daily demo limit reached.');
       }
-      if (!resp.ok) {
-        aDiv.classList.remove('demo-typing');
-        aDiv.className = 'demo-error';
-        aDiv.textContent = 'Error: ' + resp.status;
-        return;
-      }
-
+      if (!resp.ok) throw new Error(zh ? '服务暂时不可用，请稍后再试。' : 'Service unavailable. Please try again later.');
+      var remaining = resp.headers.get('X-RateLimit-Remaining');
+      used = remaining === null ? used + 1 : DEMO_MAX - Number(remaining);
       var reader = resp.body.getReader();
       var decoder = new TextDecoder();
       var buffer = '';
       var fullText = '';
-
-      function read() {
-        reader.read().then(function (chunk) {
-          if (chunk.done) {
-            aDiv.classList.remove('demo-typing');
-            btn.querySelector('span').textContent = (document.documentElement.lang === 'zh-CN') ? '提问' : 'Ask';
-            if (used < DEMO_MAX) { input.disabled = false; btn.disabled = false; }
-            updateCount();
-            return;
+      var completed = false;
+      while (true) {
+        var chunk = await reader.read();
+        buffer += decoder.decode(chunk.value, { stream: !chunk.done });
+        var lines = buffer.split('\n');
+        buffer = chunk.done ? '' : lines.pop();
+        for (var line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          var evt = JSON.parse(line.slice(6));
+          if (evt.type === 'run.failed' || evt.type === 'error') {
+            throw new Error(zh ? '此次分析未完成，请重试。' : 'Analysis failed. Please try again.');
           }
-          buffer += decoder.decode(chunk.value, { stream: true });
-          var lines = buffer.split('\n');
-          buffer = lines.pop();
-
-          for (var i = 0; i < lines.length; i++) {
-            var line = lines[i].trim();
-            if (!line.startsWith('data: ')) continue;
-            try {
-              var evt = JSON.parse(line.slice(6));
-
-              if (evt.type === 'message.assistant_added' && evt.content) {
-                fullText += evt.content;
-                aDiv.innerHTML = renderMd(fullText);
-                log.scrollTop = log.scrollHeight;
-              }
-              if (evt.type === 'run.tool_requested' || evt.type === 'run.tool_completed') {
-                var toolDiv = document.createElement('div');
-                toolDiv.className = 'demo-tool';
-                toolDiv.textContent = (evt.type === 'run.tool_requested' ? '⟳ ' : '✓ ')
-                  + (evt.data && evt.data.name ? evt.data.name : 'tool');
-                aDiv.parentNode.insertBefore(toolDiv, aDiv);
-              }
-              if (evt.type === 'error') {
-                aDiv.classList.remove('demo-typing');
-                aDiv.className = 'demo-error';
-                aDiv.textContent = evt.message || 'Something went wrong.';
-              }
-            } catch (e) {}
+          if (evt.type === 'message.assistant_delta' || evt.type === 'message.assistant_added') {
+            var answer = evt.answer_chunk || evt.content || '';
+            if (evt.type === 'message.assistant_delta') fullText += answer;
+            else if (answer) fullText = answer;
+            aDiv.innerHTML = renderMd(fullText);
           }
-          read();
-        });
+          if (evt.type === 'run.tool_requested' || evt.type === 'run.tool_completed' || evt.type === 'run.tool_failed') {
+            var toolDiv = document.createElement('div');
+            toolDiv.className = 'demo-tool';
+            var symbol = evt.type === 'run.tool_requested' ? '⟳ ' : evt.type === 'run.tool_failed' ? '✕ ' : '✓ ';
+            toolDiv.textContent = symbol + (evt.tool_name || 'tool');
+            log.insertBefore(toolDiv, aDiv);
+          }
+          if (evt.type === 'run.completed') completed = true;
+          log.scrollTop = log.scrollHeight;
+        }
+        if (chunk.done) break;
       }
-      read();
-    }).catch(function (err) {
-      aDiv.classList.remove('demo-typing');
+      if (!completed || !fullText.trim()) throw new Error(zh ? '回答未完整返回，请重试。' : 'Incomplete answer. Please try again.');
+    } catch (err) {
       aDiv.className = 'demo-error';
-      aDiv.textContent = 'Connection failed.';
-      btn.querySelector('span').textContent = (document.documentElement.lang === 'zh-CN') ? '提问' : 'Ask';
-      if (used < DEMO_MAX) { input.disabled = false; btn.disabled = false; }
-    });
+      aDiv.textContent = err.name === 'AbortError' || err instanceof TypeError
+        ? (zh ? '连接中断或超时，请重试。' : 'Connection interrupted or timed out. Please try again.')
+        : err.message;
+    } finally {
+      clearTimeout(timeout);
+      ctrl.abort();
+      aDiv.classList.remove('demo-typing');
+      btn.querySelector('span').textContent = zh ? '提问' : 'Ask';
+      input.disabled = btn.disabled = used >= DEMO_MAX;
+      updateCount();
+    }
   });
 })();
 </script>

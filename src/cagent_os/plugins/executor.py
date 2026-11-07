@@ -63,19 +63,23 @@ class ToolDispatcher:
         """Attach or replace the fact registry (e.g., per turn)."""
         self._fact_registry = registry
 
-    def execute(self, request: ToolRequest) -> ToolResult:
+    def execute(
+        self, request: ToolRequest, *, fact_registry: FactRegistry | None = None,
+    ) -> ToolResult:
         """Authorise (if a guard is set) and dispatch a tool request.
 
         After execution, if a FactRegistry is attached and the result
         is successful, the result is automatically registered.
         """
+        if fact_registry is None:
+            fact_registry = self._fact_registry
         if self._policy is not None:
             self._policy.authorize(request.capability_id)
         handler = self._registry.resolve(request.capability_id)
         result = handler(request)
 
         # ★ Auto-register facts from successful tool results
-        if self._fact_registry is not None:
+        if fact_registry is not None:
             # Record the target ticker(s) of this tool call — used later
             # to detect tickers where ALL structured tools failed.
             # Read ALL ticker-like argument keys (different adapters use different names).
@@ -83,15 +87,15 @@ class ToolDispatcher:
             for key in ("ticker", "symbols", "asset", "symbol"):
                 val = args.get(key)
                 if isinstance(val, str) and val.strip():
-                    self._fact_registry.note_tool_target(val)
+                    fact_registry.note_tool_target(val)
                 elif isinstance(val, list):
                     for s in val:
                         if isinstance(s, str) and s.strip():
-                            self._fact_registry.note_tool_target(s)
+                            fact_registry.note_tool_target(s)
 
             if result.status == "ok":
                 try:
-                    registered = self._fact_registry.register_tool_result(
+                    registered = fact_registry.register_tool_result(
                         capability_id=request.capability_id,
                         result=result,
                         arguments=request.arguments,
@@ -116,7 +120,7 @@ class ToolDispatcher:
                 if content.get("unavailable") and content.get("reason") == "institutional":
                     ticker = request.arguments.get("ticker", "") if request.arguments else ""
                     if ticker:
-                        self._fact_registry.mark_out_of_coverage(
+                        fact_registry.mark_out_of_coverage(
                             ticker, content.get("error", "unknown"),
                         )
                         logger.info(

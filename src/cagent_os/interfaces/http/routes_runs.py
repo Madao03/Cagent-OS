@@ -3,8 +3,10 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import queue
+import threading
 import time
-from collections.abc import Iterator
+from collections.abc import AsyncIterator
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -14,6 +16,7 @@ from cagent_os.config.cost_tracker import BudgetExceeded, ConcurrencyExceeded, C
 from cagent_os.conversations.service import ConversationService
 from cagent_os.interfaces.http.auth_context import require_principal_id
 from cagent_os.interfaces.http.rate_limiter import limiter
+from cagent_os.interfaces.http.routes_llm_keys import platform_models
 from cagent_os.interfaces.http.run_events import project_stream_payload
 from cagent_os.interfaces.http.schemas import (
     OneshotRunRequest,
@@ -57,6 +60,27 @@ def build_runs_router(
             except Exception:
                 logger.debug("Query recording failed (non-fatal)", exc_info=True)
 
+        # ── BYOK: resolve per-user backend + model (falls back to platform) ──
+        model_override = None
+        backend_override = None
+        if payload.model_source == "platform":
+            if payload.model and payload.model not in platform_models():
+                return JSONResponse(status_code=400, content={"detail": "平台未提供此模型"})
+            model_override = payload.model
+        elif payload.model_source == "user":
+            backend_override = backend_registry.probe_backend(principal_id) if backend_registry else None
+            if not backend_override or not payload.model:
+                return JSONResponse(status_code=400, content={"detail": "请配置个人 API Key 并选择模型"})
+            model_override = payload.model
+        elif backend_registry is not None:
+            try:
+                resolved = backend_registry.resolve_for(principal_id)
+                if resolved.is_user_key:
+                    backend_override = resolved.backend
+                    model_override = payload.model or resolved.default_model
+            except Exception:
+                logger.debug("BYOK resolution failed, using platform backend", exc_info=True)
+
         # ── Concurrency check ──
         if cost_tracker is not None:
             try:
@@ -64,18 +88,24 @@ def build_runs_router(
             except ConcurrencyExceeded as exc:
                 return JSONResponse(status_code=429, content={"detail": str(exc)})
 
-        # ── Auto-create conversation ──
         try:
-            conversation_service.get_conversation(principal_id, conversation_id)
-        except (KeyError, LookupError):
-            user_skill_snapshot = user_skill_service.load_snapshot(principal_id)
-            conversation_service.create_conversation(
-                principal_id=principal_id,
-                user_id=principal_id,
-                user_skill_snapshot=user_skill_snapshot,
-                conversation_id=conversation_id,
-            )
-            logger.info("Auto-created conversation %s for principal %s", conversation_id, principal_id)
+            # ── Auto-create conversation ──
+            try:
+                conversation_service.get_conversation(principal_id, conversation_id)
+            except (KeyError, LookupError):
+                user_skill_snapshot = user_skill_service.load_snapshot(principal_id)
+                conversation_service.create_conversation(
+                    principal_id=principal_id,
+                    user_id=principal_id,
+                    user_skill_snapshot=user_skill_snapshot,
+                    conversation_id=conversation_id,
+                )
+                logger.info("Auto-created conversation %s for principal %s", conversation_id, principal_id)
+
+        except Exception:
+            if cost_tracker is not None:
+                cost_tracker.release(principal_id)
+            raise
 
         logger.info(
             "Conversation message request received %s",
@@ -95,23 +125,8 @@ def build_runs_router(
         # The agent runs to completion even if the client disconnects.
         # Results are persisted to DB by run_engine regardless of SSE state.
         # The SSE reader simply drains the queue and exits when done.
-        event_queue: asyncio.Queue = asyncio.Queue(maxsize=256)
-
-        # ── BYOK: resolve per-user backend + model (falls back to platform) ──
-        model_override = None
-        backend_override = None
-        if backend_registry is not None:
-            try:
-                resolved = backend_registry.resolve_for(principal_id)
-                if resolved.is_user_key:
-                    backend_override = resolved.backend
-                    model_override = resolved.default_model
-            except Exception:
-                logger.debug("BYOK resolution failed, using platform backend", exc_info=True)
-
-        # ★ Request-level model wins (quick switcher) — only with a user backend
-        if backend_override is not None and payload.model:
-            model_override = payload.model
+        event_queue: queue.SimpleQueue[str | None] = queue.SimpleQueue()
+        disconnected = threading.Event()
 
         def _run_agent_thread() -> None:
             """Run agent in a thread, push events to queue."""
@@ -123,74 +138,59 @@ def build_runs_router(
                     model_override=model_override,
                     backend_override=backend_override,
                 ):
-                    payload_dict = project_stream_payload(event, conversation_id=conversation_id)
-                    try:
-                        event_queue.put_nowait(json.dumps(payload_dict, ensure_ascii=False))
-                    except asyncio.QueueFull:
-                        logger.warning("SSE queue full, dropping event for conv=%s", conversation_id)
+                    if not disconnected.is_set():
+                        payload_dict = project_stream_payload(event, conversation_id=conversation_id)
+                        event_queue.put(json.dumps(payload_dict, ensure_ascii=False))
             except BudgetExceeded as exc:
                 error_data = json.dumps(
                     {"type": "error", "message": str(exc), "retry_after_sec": exc.retry_after_sec},
                     ensure_ascii=False,
                 )
-                try:
-                    event_queue.put_nowait(error_data)
-                except asyncio.QueueFull:
-                    pass
+                event_queue.put(error_data)
             except Exception:
                 logger.exception("Agent run failed in background thread conv=%s", conversation_id)
                 error_data = json.dumps(
                     {"type": "error", "message": "Agent run failed unexpectedly"},
                     ensure_ascii=False,
                 )
-                try:
-                    event_queue.put_nowait(error_data)
-                except asyncio.QueueFull:
-                    pass
+                event_queue.put(error_data)
             finally:
                 # Signal end of stream
-                try:
-                    event_queue.put_nowait(None)  # type: ignore[arg-type]
-                except asyncio.QueueFull:
-                    pass
+                event_queue.put(None)
                 # Release concurrency slot
                 if cost_tracker is not None:
                     try:
                         cost_tracker.release(principal_id)
                     except Exception:
-                        pass
+                        logger.exception("Failed to release concurrency slot for %s", principal_id)
 
-        async def sse() -> Iterator[str]:
-            """Stream events from queue to client.
-
-            If client disconnects, this generator stops — but the background
-            thread continues running until the agent completes or wall-clock
-            timeout. Results are persisted to DB regardless.
-            """
-            import concurrent.futures
-            import threading
-
-            # Start agent in a daemon thread (not asyncio task — run_engine is sync)
-            thread = threading.Thread(target=_run_agent_thread, daemon=True)
-            thread.start()
-
+        async def sse() -> AsyncIterator[str]:
             try:
                 while True:
-                    # Use run_in_executor to make Queue.get_nowait non-blocking-friendly
-                    # in async context. Poll with small sleep.
                     try:
                         raw = event_queue.get_nowait()
-                        if raw is None:
-                            break  # End of stream sentinel
-                        yield f"data: {raw}\n\n"
-                    except asyncio.QueueEmpty:
+                    except queue.Empty:
                         await asyncio.sleep(0.05)
                         continue
-            except asyncio.CancelledError:
-                # Client disconnected — agent thread keeps running
-                logger.info("SSE client disconnected, agent continues in background conv=%s", conversation_id)
+                    if raw is None:
+                        return
+                    yield f"data: {raw}\n\n"
+            finally:
+                disconnected.set()
 
-        return StreamingResponse(sse(), media_type="text/event-stream")
+        # Start before returning the response so an early disconnect cannot
+        # skip the worker that releases the acquired concurrency slot.
+        try:
+            threading.Thread(target=_run_agent_thread, daemon=True).start()
+        except RuntimeError:
+            if cost_tracker is not None:
+                cost_tracker.release(principal_id)
+            raise
+        return StreamingResponse(
+            sse(),
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
+        )
 
     @router.post("/api/v1/runs/oneshot")
     def oneshot_run(payload: OneshotRunRequest, request: Request) -> dict:

@@ -8,6 +8,7 @@ import logging
 import sys
 from pathlib import Path
 
+from cagent_os.config.paths import resolve_project_root
 from cagent_os.agents import AgentRuntime
 from cagent_os.config import get_settings
 from cagent_os.conversations import (
@@ -277,7 +278,7 @@ def main() -> None:
 
     # Resolve relative paths against project root (derived from __file__)
     # so that skills/ and data/skills/ are found regardless of CWD.
-    _project_root = Path(__file__).resolve().parent.parent.parent.parent
+    _project_root = resolve_project_root()
     skill_store = FilesystemUserSkillStore(
         data_dir=(_project_root / settings.skills_data_dir).resolve(),
         shared_skills_dir=(_project_root / settings.shared_skills_dir).resolve() if settings.shared_skills_dir else None,

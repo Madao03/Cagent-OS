@@ -107,6 +107,7 @@ class _AgentRunState:
     iteration: int = 0
     consecutive_exceptional_failures: int = 0
     tool_results: list[dict] = field(default_factory=list)
+    fact_registry: FactRegistry = field(default_factory=FactRegistry)
     provenance_retry_count: int = 0
     # Best-attempt tracking: when gate retries, keep the output with fewest untraced
     best_output_text: str | None = None
@@ -325,10 +326,7 @@ class AgentRuntime:
 
         state = _AgentRunState()
         started_at = time.perf_counter()
-        # ★ Provenance: fresh FactRegistry per run, attached to the dispatcher.
-        # Every successful tool result is auto-registered at field level.
-        fact_registry = FactRegistry(turn=0)
-        self._capability_executor.attach_fact_registry(fact_registry)
+        fact_registry = state.fact_registry
         try:
             logger.info(
                 "Run started %s",
@@ -706,9 +704,7 @@ class AgentRuntime:
 
         state = _AgentRunState()
         started_at = time.perf_counter()
-        # ★ Provenance: fresh FactRegistry per run, attached to the dispatcher.
-        fact_registry = FactRegistry(turn=0)
-        self._capability_executor.attach_fact_registry(fact_registry)
+        fact_registry = state.fact_registry
         try:
             logger.info(
                 "Streaming run started %s",
@@ -1406,7 +1402,7 @@ class AgentRuntime:
         fact_refs: list[str] | None = None
         try:
             # Snapshot fact count before execution to detect new registrations
-            fact_registry = getattr(self._capability_executor, 'fact_registry', None)
+            fact_registry = state.fact_registry if state is not None else self._capability_executor.fact_registry
             facts_before = len(fact_registry.facts) if fact_registry else 0
 
             result = self._capability_executor.execute(
@@ -1414,7 +1410,8 @@ class AgentRuntime:
                     capability_id=capability_id,
                     arguments=arguments,
                     context={"user_id": user_id, "session_id": conversation_id},
-                )
+                ),
+                fact_registry=fact_registry,
             )
 
             # Collect newly registered fact IDs for LLM-visible annotations.

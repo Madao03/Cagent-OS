@@ -16,7 +16,7 @@
   // Which features are still mock UI — get "(建设中)" suffix in sidebar
   const WIP_PAGES = ["每日简报", "知识库"];
   // The actual model used by the backend (matches what chat.js sets)
-  const MODEL_DISPLAY = "DeepSeek V4 Pro";
+  const MODEL_DISPLAY = "平台默认模型";
 
   // ── Sidebar nav definition — single source of truth ──
   // Rendered by shell.js on every page. Never duplicate in HTML.
@@ -81,15 +81,14 @@
   }
 
   function normalizeModelTag() {
+    if (document.getElementById("quickModelBadge")) return;
     document.querySelectorAll(".ds-tag.ds-tag-primary").forEach((tag) => {
       const t = (tag.textContent || "").toLowerCase();
       if (t.startsWith("model:")) {
         tag.textContent = `Model: ${MODEL_DISPLAY}`;
       }
     });
-    // Also sync the input bar's model selector on chat page
-    const modelSel = document.querySelector(".chat-model-selector");
-    if (modelSel) modelSel.textContent = MODEL_DISPLAY;
+
   }
 
   function wireSidebar() {

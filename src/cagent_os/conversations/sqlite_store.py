@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from dataclasses import asdict
 from pathlib import Path
 
 from cagent_os.conversations.models import JournalEntry, SessionSnapshot
 from cagent_os.conversations.repository import ConversationRepository, EventStore
+from cagent_os.domain.models import MemorySnapshot, PolicyView, SessionOverrides, UserPersona
+from cagent_os.user_skills.models import UserSkillDocument, UserSkillSnapshot
 
 
 class SqliteConversationRepository(ConversationRepository, EventStore):
@@ -187,21 +190,24 @@ class SqliteConversationRepository(ConversationRepository, EventStore):
 
     @staticmethod
     def _serialize_record(record: SessionSnapshot) -> str:
-        return json.dumps({
-            "conversation_id": record.conversation_id,
-            "principal_id": record.principal_id,
-            "user_id": record.user_id,
-        }, ensure_ascii=False)
+        return json.dumps(asdict(record), ensure_ascii=False)
 
     @staticmethod
     def _deserialize_record(raw: str) -> SessionSnapshot:
         data = json.loads(raw)
-        from cagent_os.user_skills.models import UserSkillSnapshot
+        skills = data.get("user_skill_snapshot", {"user_id": data["user_id"]})
+        policy = data.get("policy_snapshot", {"allowed_capability_ids": data.get("allowed_capability_ids", [])})
         return SessionSnapshot(
             conversation_id=data["conversation_id"],
             principal_id=data["principal_id"],
             user_id=data["user_id"],
-            user_skill_snapshot=UserSkillSnapshot(user_id=data["user_id"]),
+            user_skill_snapshot=UserSkillSnapshot.from_documents(
+                skills["user_id"], (UserSkillDocument(**doc) for doc in skills.get("documents", []))
+            ),
+            policy_snapshot=PolicyView(**policy),
+            user_prompt_preferences_snapshot=UserPersona(**data.get("user_prompt_preferences_snapshot", {})),
+            session_prompt_overrides=SessionOverrides(**data.get("session_prompt_overrides", {})),
+            memory_context=MemorySnapshot(**data.get("memory_context", {})),
         )
 
     @staticmethod

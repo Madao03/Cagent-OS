@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from collections.abc import Callable
 import logging
-from pathlib import Path
 
+from cagent_os.config.paths import resolve_project_root
 from cagent_os.plugins.contracts import ToolRequest, ToolResult, ToolTrustLevel
 from cagent_os.plugins.manifests import ToolSpec, PluginSpec
 from cagent_os.config import Settings
@@ -17,7 +17,7 @@ WRITE_ALLOWED_ROOTS = ["knowledge"]
 class WritePlugin(Plugin):
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
-        self._cwd = Path(__file__).resolve().parent.parent.parent.parent.parent
+        self._cwd = resolve_project_root()
 
     def manifest(self) -> PluginSpec:
         return PluginSpec(
@@ -75,7 +75,7 @@ class WritePlugin(Plugin):
             )
         resolved = (self._cwd / rel_path).resolve()
         if not any(
-            str(self._cwd / root) in str(resolved) or str((self._cwd / root).resolve()) in str(resolved)
+            resolved.is_relative_to(self._cwd / root)
             for root in WRITE_ALLOWED_ROOTS
         ):
             return ToolResult(

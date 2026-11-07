@@ -173,13 +173,14 @@ class BackendRegistry:
             platform_model=self._platform_model,
         )
 
-    def probe_backend(self, user_id: str) -> LLMBackend | None:
+    def probe_backend(self, user_id: str, cfg: UserLLMConfig | None = None) -> LLMBackend | None:
         """Raw user backend WITHOUT fallback — for key connectivity testing.
 
         A broken key must surface as an error here, not be masked by the
         platform fallback.
         """
-        cfg = self._key_store.get(user_id)
+        if cfg is None:
+            cfg = self._key_store.get(user_id)
         if cfg is None:
             return None
         return _build_user_backend(cfg, self._settings)

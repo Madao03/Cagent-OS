@@ -5,8 +5,8 @@ from enum import Enum
 
 try:
     from dotenv import load_dotenv
-    from pathlib import Path
-    _project_root = Path(__file__).resolve().parent.parent.parent.parent
+    from cagent_os.config.paths import resolve_project_root
+    _project_root = resolve_project_root()
     _dotenv_path = _project_root / ".env"
     load_dotenv(dotenv_path=str(_dotenv_path))
 except ImportError:

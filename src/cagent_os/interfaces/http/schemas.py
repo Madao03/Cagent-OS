@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
 class PostMessageRequest(BaseModel):
     content: str
     stream: bool = True
+    model_source: Literal["platform", "user"] | None = None
     model: str | None = None  # per-request model override (BYOK quick switcher)
 
 

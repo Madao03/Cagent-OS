@@ -34,6 +34,7 @@ from cagent_os.agents.run_engine import AgentRuntime
 from cagent_os.conversations.repository import InMemoryConversationRepository
 from cagent_os.conversations.service import ConversationService
 from cagent_os.conversations.sqlite_store import SqliteConversationRepository
+from cagent_os.config.paths import resolve_project_root
 from cagent_os.config import get_settings
 from cagent_os.config.cost_tracker import CostTracker
 from cagent_os.data_layer import DataLayer
@@ -83,19 +84,7 @@ def create_app() -> FastAPI:
 
     llm_backend = create_backend(settings)
 
-    # Project root resolution — walk up from this file until we hit
-    # pyproject.toml. Robust against accidental parent-count mistakes
-    # (this file lives at <root>/src/cagent_os/interfaces/http/app.py,
-    # so 4 .parent calls happen to yield <root>/src — wrong!).
-    def _resolve_project_root() -> Path:
-        here = Path(__file__).resolve()
-        for ancestor in [here.parent, *here.parents]:
-            if (ancestor / "pyproject.toml").exists():
-                return ancestor
-        # Fallback: assume 5 .parent calls reach the root
-        return here.parents[4]
-
-    _project_root = _resolve_project_root()
+    _project_root = resolve_project_root()
 
     # BYOK: per-user LLM key store + backend registry
     from cagent_os.auth.user_llm_key_store import UserLLMKeyStore
@@ -587,3 +576,11 @@ def create_app() -> FastAPI:
     app.include_router(build_opinions_router(_project_root / "data" / "opinions.db"))
 
     return app
+
+
+def main() -> None:
+    """Start the HTTP service via the installed cagent-os-server command."""
+    import uvicorn
+
+    settings = get_settings()
+    uvicorn.run(create_app(), host=settings.api_host, port=settings.api_port)

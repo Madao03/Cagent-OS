@@ -93,10 +93,7 @@
       }
     }
 
-    // Update top-bar model selector text
-    // (shell.js also normalizes the top-right "Model: ..." tag for all pages)
-    const modelSel = document.querySelector(".chat-model-selector");
-    if (modelSel) modelSel.textContent = "DeepSeek V4 Pro";
+
   }
 
   // ───────────────────────────────────────────────────────────────
@@ -527,7 +524,7 @@
             content: text,
             user_id: USER_ID,
             stream: true,
-            model: (localStorage.getItem("cos_active_model") || undefined),
+            ...window.chatModelRequest(),
           }),
         }
       );

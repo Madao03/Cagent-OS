@@ -46,7 +46,6 @@
     backdrop.hidden = false;
     setResult("");
     loadSettings();
-    loadModels();
   }
 
   function close() {
@@ -70,6 +69,7 @@
           btnLabel.textContent = "模型设置";
           openBtn.classList.remove("is-custom");
         }
+        refreshModelSuggestions();
       })
       .catch(function () {
         setResult("加载设置失败", false);
@@ -88,10 +88,7 @@
       .catch(function () { /* non-fatal */ });
   }
 
-  function loadModels() {
-    refreshModelSuggestions();
-    providerSel.addEventListener("change", refreshModelSuggestions);
-  }
+  providerSel.addEventListener("change", refreshModelSuggestions);
 
   // ── actions ──
   function save() {
@@ -116,6 +113,7 @@
       .then(function (res) {
         if (res.ok) {
           setResult("已保存 ✓", true);
+          refreshPicker(true);
           loadSettings(); // refresh masked hint + sidebar label
           setTimeout(close, 800);
         } else {
@@ -129,48 +127,37 @@
       });
   }
 
-  function testKey() {
+  async function testKey() {
     testBtn.disabled = true;
     testBtn.textContent = "测试中…";
     setResult("");
-
-    var runTest = function () {
-      api("/api/v1/llm/test", { method: "POST" })
-        .then(function (r) { return r.json(); })
-        .then(function (d) {
-          if (d.ok) setResult("连接成功 ✓ " + (d.model || ""), true);
-          else setResult("失败：" + (d.detail || "未知错误"), false);
-        })
-        .catch(function () { setResult("网络错误", false); })
-        .finally(function () {
-          testBtn.disabled = false;
-          testBtn.textContent = "测试连接";
-        });
-    };
-
-    // If user typed a new key, save it first so the test uses it
-    var key = keyInput.value.trim();
-    if (key) {
-      api("/api/v1/llm/settings", {
-        method: "PUT",
+    try {
+      var response = await api("/api/v1/llm/test", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           provider: providerSel.value,
-          api_key: key,
+          api_key: keyInput.value.trim(),
           default_model: modelInput.value.trim() || null,
         }),
-      })
-        .then(function () { keyInput.value = ""; runTest(); })
-        .catch(runTest);
-    } else {
-      runTest();
+      });
+      var data = await response.json();
+      if (response.ok && data.ok) setResult("连接成功 ✓ " + data.model, true);
+      else setResult("失败：" + (data.detail || "未知错误"), false);
+    } catch {
+      setResult("网络错误", false);
+    } finally {
+      testBtn.disabled = false;
+      testBtn.textContent = "测试连接";
     }
   }
 
   function clearKey() {
     if (!confirm("确定清除已保存的 API Key？之后将使用平台默认模型。")) return;
     api("/api/v1/llm/settings", { method: "DELETE" })
-      .then(function () {
+      .then(function (response) {
+        if (!response.ok) throw new Error();
+        refreshPicker(false);
         setResult("已清除，回落平台模型", true);
         keyInput.value = "";
         keyHint.textContent = "";
@@ -197,94 +184,72 @@
   // ============================================================
   // Quick model switcher (badge next to chat input)
   // ============================================================
-  var badge = document.getElementById("quickModelBadge");
-  var popover = document.getElementById("quickModelPopover");
-  var customList = document.getElementById("quickModelCustomList");
-  var customEmpty = document.getElementById("quickModelCustomEmpty");
-  var cfgBtn = document.getElementById("quickModelOpenSettings");
+  var picker = document.getElementById("quickModelBadge");
+  var preferenceKey;
+  var tag = document.getElementById("activeModelTag");
+  var names = {"deepseek-flash": "DeepSeek V4.1 Flash", "deepseek-v4-pro": "DeepSeek V4 Pro"};
 
-  if (badge && popover) {
-    var currentModel = localStorage.getItem("cos_active_model") || "";
+  window.chatModelRequest = function () {
+    var option = picker.selectedOptions[0];
+    return {model_source: option.dataset.source || "platform", model: option.dataset.model || undefined};
+  };
 
-    function badgeText() {
-      return currentModel ? currentModel.split("/").pop() + " ▾" : "DeepSeek V4 Pro ▾";
-    }
-
-    function refreshBadge() {
-      badge.textContent = badgeText();
-      badge.classList.toggle("is-custom", !!currentModel);
-    }
-
-    function closePopover() { popover.hidden = true; }
-
-    function loadQuickModels() {
-      Promise.all([
-        api("/api/v1/llm/settings").then(function (r) { return r.json(); }),
-        api("/api/v1/llm/models").then(function (r) { return r.json(); }),
-      ]).then(function (res) {
-        var settings = res[0], models = res[1];
-        var items = "";
-        if (settings.configured) {
-          var models2 = (models.models_by_provider || {})[settings.provider] || [];
-          models2.forEach(function (m) {
-            var active = m === currentModel ? " is-active" : "";
-            items += '<button class="model-popover__item' + active + '" data-model="' + m + '">' + m + '</button>';
-          });
-        }
-        if (items) {
-          customList.innerHTML = items;
-          customEmpty.hidden = true;
-          // wire clicks
-          customList.querySelectorAll(".model-popover__item").forEach(function (b) {
-            b.addEventListener("click", function () {
-              currentModel = b.getAttribute("data-model");
-              localStorage.setItem("cos_active_model", currentModel);
-              refreshBadge();
-              closePopover();
-            });
-          });
-        } else {
-          customList.innerHTML = "";
-          customEmpty.hidden = false;
-        }
-        // mark platform default active state
-        var defBtn = popover.querySelector('[data-model=""]');
-        if (defBtn) defBtn.classList.toggle("is-active", !currentModel);
-      }).catch(function () { /* non-fatal */ });
-    }
-
-    badge.addEventListener("click", function (e) {
-      e.stopPropagation();
-      popover.hidden = !popover.hidden;
-      if (!popover.hidden) loadQuickModels();
-    });
-    badge.addEventListener("keydown", function (e) {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        badge.click();
-      }
-    });
-    document.addEventListener("click", function (e) {
-      if (!popover.hidden && !popover.contains(e.target) && e.target !== badge) closePopover();
-    });
-
-    // platform default
-    var defBtn = popover.querySelector('[data-model=""]');
-    if (defBtn) {
-      defBtn.addEventListener("click", function () {
-        currentModel = "";
-        localStorage.removeItem("cos_active_model");
-        refreshBadge();
-        closePopover();
-      });
-    }
-    if (cfgBtn) {
-      cfgBtn.addEventListener("click", function () {
-        closePopover();
-        open();
-      });
-    }
-
-    refreshBadge();
+  function syncLabel() {
+    tag.textContent = "Model: " + picker.selectedOptions[0].text;
   }
+
+  function addGroup(title, source, models, provider) {
+    var group = document.createElement("optgroup");
+    group.label = title;
+    models.forEach(function (model) {
+      var option = new Option(names[model] || model, JSON.stringify([source, provider, model]));
+      option.dataset.source = source;
+      option.dataset.model = model;
+      group.appendChild(option);
+    });
+    picker.appendChild(group);
+  }
+
+  var refreshVersion = 0;
+  async function refreshPicker(usePersonal) {
+    var version = ++refreshVersion;
+    try {
+      var response = await api("/api/v1/llm/models");
+      if (!response.ok) throw new Error();
+      var data = await response.json();
+      if (version !== refreshVersion) return;
+      preferenceKey = "cos_model_choice:" + data.user_id;
+      var saved = localStorage.getItem(preferenceKey);
+      picker.replaceChildren();
+      addGroup("平台模型", "platform", data.platform_models, "");
+      var provider = data.configured_provider;
+      if (provider) {
+        var models = new Set([data.user_default, ...(data.models_by_provider[provider] || [])]);
+        addGroup("我的 Key · " + provider, "user", Array.from(models).filter(Boolean), provider);
+      }
+      // Migrate a saved personal model only if this account offers it.
+      if (!saved && provider) {
+        var legacy = localStorage.getItem("cos_active_model");
+        var match = Array.from(picker.options).find(function (option) {
+          return option.dataset.source === "user" && option.dataset.model === legacy;
+        });
+        if (match) saved = match.value;
+      }
+      var preferred = usePersonal && picker.querySelector('[data-source="user"]');
+      picker.value = preferred ? preferred.value : saved || "";
+      if (picker.selectedIndex < 0) picker.selectedIndex = 0;
+      localStorage.setItem(preferenceKey, picker.value);
+      syncLabel();
+      picker.title = "选择对话模型";
+    } catch {
+      picker.title = "加载模型失败，点击重试";
+      picker.onclick = function () { picker.onclick = null; refreshPicker(false); };
+    }
+  }
+
+  picker.addEventListener("change", function () {
+    if (preferenceKey) localStorage.setItem(preferenceKey, picker.value);
+    syncLabel();
+  });
+  refreshPicker(false);
 })();

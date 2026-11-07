@@ -24,11 +24,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from cagent_os.config.paths import resolve_project_root
 from cagent_os.multi_agent.supervisor import Supervisor, SupervisorConfig, SupervisorResult
 
 logger = logging.getLogger(__name__)
 
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+_PROJECT_ROOT = resolve_project_root()
 _KNOWLEDGE_ROOT = _PROJECT_ROOT / "knowledge"
 _DAILY_DIR = _KNOWLEDGE_ROOT / "02_Daily"
 

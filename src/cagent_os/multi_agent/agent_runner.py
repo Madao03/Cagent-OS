@@ -27,6 +27,7 @@ import logging
 from typing import Awaitable, Callable
 from uuid import uuid4
 
+from cagent_os.config.paths import resolve_project_root
 from cagent_os.agents.run_engine import AgentRuntime
 from cagent_os.conversations.service import ConversationService
 from cagent_os.user_skills import UserSkillService
@@ -187,7 +188,6 @@ def build_default_runner() -> Callable[[str], Awaitable[str]] | None:
         from cagent_os.plugins.skills.plugin import SkillsPlugin
         from cagent_os.plugins.web.plugin import WebPlugin
         from cagent_os.user_skills import FilesystemUserSkillStore, UserSkillService
-        from pathlib import Path
     except ImportError as exc:
         logger.warning("Default runner unavailable (missing deps): %s", exc)
         return None
@@ -198,7 +198,7 @@ def build_default_runner() -> Callable[[str], Awaitable[str]] | None:
     conversation_repository = InMemoryConversationRepository()
     conversation_service = ConversationService(repository=conversation_repository)
 
-    project_root = Path(__file__).resolve().parent.parent.parent.parent
+    project_root = resolve_project_root()
     skills_data_dir = (project_root / settings.skills_data_dir).resolve()
     shared_skills_dir = (
         (project_root / settings.shared_skills_dir).resolve()

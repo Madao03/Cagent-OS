@@ -12,6 +12,7 @@ from collections.abc import Callable
 from pathlib import Path
 from urllib.parse import urlparse
 
+from cagent_os.config.paths import resolve_project_root
 from cagent_os.plugins.contracts import ToolRequest, ToolResult, ToolTrustLevel
 from cagent_os.plugins.manifests import ToolSpec, PluginSpec
 from cagent_os.config import Settings
@@ -320,7 +321,7 @@ _VISION_API_URL = os.environ.get(
 _VISION_MODEL = os.environ.get("CAGENTOS_VISION_MODEL", "gpt-4o")
 
 # -- Project root (for resolving save paths) -----------------------------
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
+_PROJECT_ROOT = resolve_project_root()
 _KNOWLEDGE_INBOX = _PROJECT_ROOT / "knowledge" / "00_Inbox"
 
 

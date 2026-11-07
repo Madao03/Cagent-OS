@@ -12,6 +12,7 @@ Usage:
 """
 from __future__ import annotations
 
+import base64
 import logging
 import os
 import sqlite3
@@ -19,6 +20,8 @@ import threading
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+
+from cryptography.fernet import Fernet
 
 logger = logging.getLogger(__name__)
 
@@ -43,55 +46,20 @@ class UserLLMConfig:
     default_model: str | None
 
 
-def _new_fernet():
-    """Build Fernet cipher from CAGENTOS_KEY_ENCRYPTION_SECRET.
-
-    Falls back to a deterministic dev key (with warning) when unset.
-    """
-    secret = os.environ.get(_MASTER_SECRET_ENV, "").strip()
-    if secret:
-        try:
-            if secret.startswith("gAAAA"):
-                from cryptography.fernet import Fernet
-                return Fernet(secret.encode())
-            return _fernet_from_hex(secret)
-        except Exception as exc:
-            logger.error("Failed to build Fernet from CAGENTOS_KEY_ENCRYPTION_SECRET: %s", exc)
-
-    # Dev fallback — NOT for production.
-    logger.warning(
-        "CAGENTOS_KEY_ENCRYPTION_SECRET not set — using insecure dev fallback. "
-        "Set it in production: openssl rand -hex 32"
-    )
-    import base64
-    import hashlib
-    from cryptography.fernet import Fernet
-    digest = hashlib.sha256(b"cagentos-dev-key-fallback").digest()
-    return Fernet(base64.urlsafe_b64encode(digest))
+class KeyStoreUnavailable(RuntimeError):
+    """The server cannot encrypt user credentials without a valid master secret."""
 
 
-def _fernet_from_hex(hex_str: str):
-    import base64
-    import binascii
-    raw = binascii.unhexlify(hex_str)
-    if len(raw) != 32:
-        raise ValueError("hex secret must be 32 bytes (openssl rand -hex 32)")
-    from cryptography.fernet import Fernet
-    return Fernet(base64.urlsafe_b64encode(raw))
-
-
-def _new_fernet():
-    """Clean constructor for _get_fernet (the inline version above is hard to read)."""
+def _new_fernet() -> Fernet | None:
     secret = os.environ.get(_MASTER_SECRET_ENV, "").strip()
     if not secret:
         return None
     try:
-        if secret.startswith("gAAAA"):
-            from cryptography.fernet import Fernet
-            return Fernet(secret.encode())
-        return _fernet_from_hex(secret)
-    except Exception as exc:
-        logger.error("Failed to build Fernet from CAGENTOS_KEY_ENCRYPTION_SECRET: %s", exc)
+        if len(secret) == 64:
+            return Fernet(base64.urlsafe_b64encode(bytes.fromhex(secret)))
+        return Fernet(secret.encode("ascii"))
+    except ValueError:
+        logger.error("Invalid %s; expected a 32-byte hex secret or Fernet key", _MASTER_SECRET_ENV)
         return None
 
 
@@ -118,6 +86,8 @@ class UserLLMKeyStore:
         """Store or update a user's LLM credentials (encrypted)."""
         if not provider or not api_key:
             raise ValueError("provider and api_key are required")
+        if self._fernet is None:
+            raise KeyStoreUnavailable("个人模型密钥存储未配置，请联系管理员。")
         encrypted = self._fernet.encrypt(api_key.encode())
         now = datetime.now(timezone.utc).isoformat()
         with self._lock, self._conn() as conn:
@@ -140,7 +110,7 @@ class UserLLMKeyStore:
                 "SELECT provider, api_key_encrypted, default_model FROM user_llm_keys WHERE user_id = ?",
                 (user_id,),
             ).fetchone()
-        if not row:
+        if not row or self._fernet is None:
             return None
         provider, encrypted, default_model = row
         try:

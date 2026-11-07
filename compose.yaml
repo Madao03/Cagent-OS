@@ -3,10 +3,12 @@ services:
     build: .
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     environment:
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-      - OPENROUTER_BASE_URL=${OPENROUTER_BASE_URL}
-      - DEFAULT_MODEL_ALIAS=${DEFAULT_MODEL_ALIAS:-claude-balanced}
+      - LLM_PROVIDER=${LLM_PROVIDER:-deepseek}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - DEFAULT_MODEL_ALIAS=${DEFAULT_MODEL_ALIAS:-deepseek-flash}
       - SQLITE_DATA_DIR=/app/data
       - CONVERSATION_DB_PATH=/app/data/conversations.db
       - MEMORY_DB_PATH=/app/data/memory.db
@@ -18,6 +20,7 @@ services:
     volumes:
       - ./data:/app/data
       - ./config:/app/config
+      - ./knowledge:/app/knowledge
     restart: unless-stopped
 
   # PostgreSQL — stage 1+ for user/auth/session persistence

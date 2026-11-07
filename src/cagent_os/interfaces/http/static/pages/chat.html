@@ -1136,6 +1136,9 @@ pre {
   .chat-input::placeholder { color: var(--text-tertiary); }
   .chat-input:focus { border-color: var(--border-contrast); }
   .chat-model-selector {
+    max-width: min(40%, 17rem);
+    min-width: 0;
+    text-overflow: ellipsis;
     display: inline-flex;
     align-items: center;
     font-family: var(--font-family-mono);
@@ -1160,73 +1163,7 @@ pre {
     border-color: var(--status-success-default);
     color: var(--status-success-default);
   }
-  .model-popover {
-    position: absolute;
-    bottom: calc(100% + 6px);
-    right: 0;
-    z-index: 300;
-    min-width: 240px;
-    max-height: 320px;
-    overflow-y: auto;
-    background: var(--bg-surface-default);
-    border: 1px solid var(--border-neutral-l1);
-    border-radius: var(--radius-md, 8px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
-    padding: var(--spacer-6);
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-  .model-popover[hidden] { display: none; }
-  .model-popover__title {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    color: var(--text-quaternary);
-    padding: var(--spacer-6) var(--spacer-8) var(--spacer-4);
-    text-transform: uppercase;
-  }
-  .model-popover__item {
-    display: flex;
-    align-items: center;
-    gap: var(--spacer-6);
-    text-align: left;
-    border: 0;
-    background: none;
-    color: var(--text-secondary);
-    font-family: var(--font-family-mono);
-    font-size: var(--body-sm-font-size);
-    padding: var(--spacer-8) var(--spacer-10);
-    border-radius: var(--radius-6);
-    cursor: pointer;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .model-popover__cfg-icon {
-    width: 14px;
-    height: 14px;
-    flex-shrink: 0;
-  }
-  .model-popover__item:hover {
-    background: var(--bg-overlay-l1);
-    color: var(--text-default);
-  }
-  .model-popover__item.is-active {
-    color: var(--text-brand);
-    font-weight: 600;
-  }
-  .model-popover__item--cfg {
-    border-top: 1px solid var(--border-neutral-l1);
-    border-radius: 0;
-    margin-top: var(--spacer-4);
-    color: var(--text-tertiary);
-  }
-  .model-popover__empty {
-    font-size: var(--body-sm-font-size);
-    color: var(--text-quaternary);
-    padding: var(--spacer-4) var(--spacer-8) var(--spacer-8);
-  }
+
 
   /* ---- Right context panel ---- */
   .chat-right {
@@ -1725,7 +1662,7 @@ pre {
           </div>
           <div class="model-modal__body">
             <p class="model-modal__hint">
-              默认使用平台提供的模型。配置自己的 API Key 后，所有对话将使用你指定的模型与额度。
+              默认使用平台提供的模型。配置自己的 API Key 后，可以在输入框旁切换个人模型。
               Key 仅用于直连模型服务商，不会用于其他用途。
             </p>
             <label class="model-modal__label" for="llmProvider">服务商</label>
@@ -1766,7 +1703,7 @@ pre {
           <h1 class="app-page-title" data-dom-id="page-title">对话面板</h1>
         </div>
         <div class="app-topbar-right">
-          <span class="ds-tag ds-tag-primary">Model: gpt-4o</span>
+          <span id="activeModelTag" class="ds-tag ds-tag-primary">Model: 平台默认模型</span>
           <span class="ds-tag">RAG: 1,247 chunks</span>
           <button class="theme-toggle" data-dom-id="theme-toggle" onclick="toggleTheme()" aria-label="切换深色模式">
             <span class="theme-toggle-track">
@@ -1926,20 +1863,9 @@ pre {
             <!-- Message input bar -->
             <div class="chat-input-bar">
               <textarea class="chat-input" placeholder="输入分析请求...按 Enter 发送" rows="1"></textarea>
-              <span class="chat-model-selector" id="quickModelBadge" role="button" tabindex="0"
-                    title="点击切换模型">gpt-4o ▾</span>
-              <div class="model-popover" id="quickModelPopover" hidden>
-                <div class="model-popover__title">平台模型</div>
-                <button class="model-popover__item" data-model="">默认（DeepSeek V4 Pro）</button>
-                <div class="model-popover__title">我的 Key 模型</div>
-                <div class="model-popover__empty" id="quickModelCustomEmpty">
-                  未配置 — 侧栏“模型设置”添加 API Key
-                </div>
-                <div id="quickModelCustomList"></div>
-                <button class="model-popover__item model-popover__item--cfg" id="quickModelOpenSettings">
-                  <span data-icon="settings" class="model-popover__cfg-icon" aria-hidden="true"></span>模型设置…
-                </button>
-              </div>
+              <select id="quickModelBadge" class="chat-model-selector" aria-label="选择对话模型">
+                <option value="">平台默认模型</option>
+              </select>
               <button class="ds-btn ds-btn-primary" type="button">
                 <span data-icon="arrow-right" aria-hidden="true"></span>
                 <span>发送</span>
@@ -2064,10 +1990,10 @@ pre {
   })();
 </script>
   <!-- app-injected-scripts -->
-  <script src="/static/assets/js/shell.js"></script>
+  <script src="/static/assets/js/shell.js?v=2"></script>
   <script src="/static/assets/js/auth.js"></script>
-  <script src="/static/assets/js/model-settings.js?v=2"></script>
-  <script src="/static/assets/js/chat.js?v=3"></script>
+  <script src="/static/assets/js/model-settings.js?v=4"></script>
+  <script src="/static/assets/js/chat.js?v=4"></script>
   <!-- /app-injected-scripts -->
 <script>
 (function loadDS() {

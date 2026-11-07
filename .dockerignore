@@ -1,0 +1,11 @@
+**
+!pyproject.toml
+!src/
+!src/cagent_os/
+!src/cagent_os/**
+!config/
+!config/**
+!skills/
+!skills/**
+**/__pycache__/
+**/*.pyc

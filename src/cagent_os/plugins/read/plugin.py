@@ -4,6 +4,7 @@ from collections.abc import Callable
 import logging
 from pathlib import Path
 
+from cagent_os.config.paths import resolve_project_root
 from cagent_os.plugins.contracts import ToolRequest, ToolResult, ToolTrustLevel
 from cagent_os.plugins.manifests import ToolSpec, PluginSpec
 from cagent_os.config import Settings
@@ -88,7 +89,7 @@ class ReadPlugin(Plugin):
             )
         return ToolResult(status="ok", content=payload)
 
-    _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent.parent
+    _PROJECT_ROOT = resolve_project_root()
 
     @classmethod
     def _resolve_path(cls, source: str, arguments: dict) -> Path | None:
